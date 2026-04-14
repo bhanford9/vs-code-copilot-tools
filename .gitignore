@@ -1,0 +1,12 @@
+# Runtime / machine-local files — never commit these
+*.zip
+*.log
+
+# VS Code Copilot runtime data
+command-history-state.json
+config.json
+
+# Prompts to retire (replaced by git workflow)
+prompts/consolidate-copilot-tools.prompt.md
+prompts/pack-copilot-tools.prompt.md
+prompts/unpack-copilot-tools.prompt.md

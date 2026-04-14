@@ -1,0 +1,28 @@
+{
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "chat.tools.autoApprove": true,
+    "chat.agent.maxRequests": 500,
+    "chat.useNestedAgentsMdFiles": true,
+    "chat.customAgentInSubagent.enabled": true,
+    "github.copilot.chat.cli.customAgents.enabled": true,
+    "chat.useAgentSkills": true,
+    "chat.exploreAgent.defaultModel": "Claude Sonnet 4.6 (copilot)",
+    "chat.subagents.allowInvocationsFromSubagents": true,
+    "chat.useCustomAgentHooks": true,
+    "github.copilot.chat.agentDebugLog.enabled": true,
+    "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
+    "chat.viewSessions.orientation": "stacked",
+    "chat.promptFilesLocations": {
+        "C:/Repos/copilot-configs/prompts": true,
+        "C:/Repos/copilot-configs/agents": true
+    },
+    "chat.instructionsFilesLocations": {
+        "C:/Repos/copilot-configs/instructions": true
+    },
+    "chat.tools.urls.autoApprove": {
+        "https://code.visualstudio.com": true,
+        "https://github.com/microsoft/vscode/wiki/*": true,
+        "file:///C:/Repos/copilot-configs": true,
+        "https://www.google.com/search": true
+    }
+}

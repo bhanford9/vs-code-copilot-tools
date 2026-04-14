@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -File \"$env:USERPROFILE/.copilot/hooks/scripts/check-test-comments.ps1\"",
+        "command": "powershell -File \"~/.copilot/hooks/scripts/check-test-comments.ps1\"",
+        "timeout": 15
+      }
+    ]
+  }
+}
