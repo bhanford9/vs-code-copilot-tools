@@ -31,7 +31,6 @@
     "chat.tools.urls.autoApprove": {
         "https://code.visualstudio.com": true,
         "https://github.com/microsoft/vscode/wiki/*": true,
-        "file:///C:/Users/{username}/Repos/copilot-configs": true,
         "https://www.google.com/search": true
     }
 }
