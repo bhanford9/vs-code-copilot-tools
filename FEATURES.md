@@ -50,6 +50,8 @@ An agent that writes comprehensive NUnit unit tests through methodical code and 
 
 **Skill:** `writing-csharp-tests` — conventions, common pitfalls, known project helpers
 
+**Overview:** [`feature-overviews/unit-test-writer/unit-test-writer.md`](feature-overviews/unit-test-writer/unit-test-writer.md)
+
 ---
 
 ## Azure DevOps Story Creation
