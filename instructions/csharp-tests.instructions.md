@@ -11,4 +11,4 @@ applyTo: "**/*Tests.cs"
 - Mock dependencies via Moq; use the Verifiable pattern for mocked calls with expectations: `.Setup(x => x.M()).Verifiable()` ... act ... `mock.Verify()`
 - For simple parameter variations (true/false, enum permutations where setup and assertions are identical per case), use `[TestCase]` or `[Values]` instead of separate methods
 
-> Before writing tests, load the `writing-csharp-tests` skill — it reads `COMMON-PITFALLS.md` and `PROJECT-HELPERS.md` from `~/.copilot/skills/writing-csharp-tests/` which contain critical codebase-specific guidance (enum disambiguation, non-mockable types, support helpers)
+> Before writing tests, load the `writing-csharp-tests` skill — it reads `COMMON-PITFALLS.md` and `PROJECT-HELPERS.md` from `~/Repos/copilot-configs/skills/writing-csharp-tests/` which contain critical codebase-specific guidance (enum disambiguation, non-mockable types, support helpers)

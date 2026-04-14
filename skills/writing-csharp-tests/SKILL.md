@@ -5,7 +5,7 @@ description: Guidelines for writing NUnit tests in CSharp codebase including nam
 
 # Writing C# Unit Tests
 
-> Basic conventions (naming, no comments, TestCase usage) are enforced automatically via [`csharp-tests.instructions.md`](~/.copilot/instructions/csharp-tests.instructions.md) on all `*Tests.cs` files. This skill provides the detailed workflow, examples, and codebase-specific references.
+> Basic conventions (naming, no comments, TestCase usage) are enforced automatically via [`csharp-tests.instructions.md`](~/Repos/copilot-configs/instructions/csharp-tests.instructions.md) on all `*Tests.cs` files. This skill provides the detailed workflow, examples, and codebase-specific references.
 >
 > For full test-writing sessions, use the `@UnitTestWriter` agent — it enforces this skill's complete workflow including all pre-read steps.
 

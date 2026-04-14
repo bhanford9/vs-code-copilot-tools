@@ -13,11 +13,11 @@ An 8-agent discovery workflow that frontloads uncertainty before committing to i
 | `@InitialPlanner` | Start the pipeline — describe a feature or task |
 | `/CreateWorkItems` | Convert a completed plan into Azure DevOps stories |
 
-**Agents involved:** `InitialPlanner` → `GapFinder` → `GapResolver` → `RefinedPlanner` → `ArchitecturalDesigner` → `WorkPlanner` → `WorkItemCreator` → `Implementation`
+**Agents involved:** `InitialPlanner` → `GapFinder` → `GapResolver` → `RefinedPlanner` → `ArchitecturalDesigner` → `WorkPlanner` → `@AzureStoryCreation` → `Implementation`
 
 **Common paths:**
 - **Exploratory**: InitialPlanner → GapFinder → GapResolver → RefinedPlanner → Implementation
-- **Design-First**: InitialPlanner → ArchitecturalDesigner → WorkPlanner → WorkItemCreator → Implementation
+- **Design-First**: InitialPlanner → ArchitecturalDesigner → WorkPlanner → @AzureStoryCreation → Implementation
 - **Fast Track**: InitialPlanner → Implementation (simple/well-understood features)
 
 **Detailed docs:** [feature-overviews/planning-pipeline/planning-pipeline.md](feature-overviews/planning-pipeline/planning-pipeline.md) · [Quick Reference](feature-overviews/planning-pipeline/planning-pipeline-quick-reference.md)
@@ -105,16 +105,27 @@ Auto-attached rules and skills that improve C# coding workflows without requirin
 
 ---
 
+## Always-On Instructions
+
+Instruction files that apply to every chat session regardless of context.
+
+| File | Applies To | What It Does |
+|------|------------|--------------|
+| `general-agent-behavior.instructions.md` | `**` (all files) | Requires clarifying questions any time confidence is below 90% |
+| `REVIEW-CONVENTIONS.instructions.md` | `**/code-review/*.md` | Injects shared code review conventions (severity levels, output format, actionable recommendations) when working inside the `/code-review/` output directory |
+
+---
+
 ## Hooks
 
 Small pre/post-turn scripts that run automatically during agent sessions.
 
-| Hook | Trigger | What It Does |
-|------|---------|--------------|
-| `ensure-freeform` | PreToolUse | Blocks agent sessions from locking into a rigid tool-use pattern; preserves freeform reasoning |
-| `test-no-comments` | PostToolUse | Checks that newly written test code doesn't contain comments (enforces commenting conventions) |
-| `block-devops-fetch` | PreToolUse | Prevents the Requirements Auditor from making external API/DevOps fetch calls during review |
-| `check-auditor-output` | SubagentStop | Verifies each parallel code review auditor produced its expected output file |
+| Hook | Trigger | Scope | What It Does |
+|------|---------|-------|--------------|
+| `ensure-freeform` | PreToolUse | Global (`hooks/ensure-freeform.json`) | Blocks agent sessions from locking into a rigid tool-use pattern; preserves freeform reasoning |
+| `test-no-comments` | PostToolUse | Global (`hooks/test-no-comments.json`) | Checks that newly written test code doesn't contain comments (enforces commenting conventions) |
+| `block-devops-fetch` | PreToolUse | Agent-scoped (inline in `REVIEW-RequirementsAuditor.agent.md`) | Prevents the Requirements Auditor from making external API/DevOps fetch calls during review |
+| `check-auditor-output` | SubagentStop | Agent-scoped (inline in `REVIEW-ParallelAuditCoordinator.agent.md`) | Verifies each parallel code review auditor produced its expected output file |
 
 ---
 

@@ -5,8 +5,8 @@ disable-model-invocation: true
 hooks:
   PreToolUse:
     - type: command
-      windows: 'powershell -File "~/.copilot/hooks/scripts/block-devops-fetch.ps1"'
-      command: 'powershell -File "~/.copilot/hooks/scripts/block-devops-fetch.ps1"'
+      windows: 'powershell -File "$env:USERPROFILE/Repos/copilot-configs/hooks/scripts/block-devops-fetch.ps1"'
+      command: 'powershell -File "~/Repos/copilot-configs/hooks/scripts/block-devops-fetch.ps1"'
       timeout: 10
 tools:
     - search

@@ -30,7 +30,7 @@ For full architecture and usage details, see [feature-overviews/code-review-pipe
 
 ## Conventions
 
-All agents are governed at runtime by `REVIEW-CONVENTIONS.instructions.md` (auto-injected via `applyTo: "**"`). Key conventions:
+All agents are governed at runtime by `REVIEW-CONVENTIONS.instructions.md` (auto-injected via `applyTo: "**/code-review/*.md"` — applied when working inside the `/code-review/` output directory). Key conventions:
 
 - Output directory: `/code-review/` in the reviewed repo
 - Severity levels: Critical / High / Medium / Low

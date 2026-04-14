@@ -1,3 +1,8 @@
+---
+name: merge-copilot-settings
+description: Merge settings.base.json from ~/Repos/copilot-configs into the local VS Code settings.json. Use when syncing copilot settings after a git pull, setting up a new machine, or when asked to merge or apply base settings.
+---
+
 # Merge Copilot Settings — SKILL.md
 
 ## Purpose
@@ -56,3 +61,9 @@ Confirm in VS Code Settings UI or by checking `settings.json` that:
 - Machine-specific settings (`mssql.connections`, `terminal.integrated.env`, `chat.tools.terminal.autoApprove`) are intentionally **not** in `settings.base.json` and will never be overwritten.
 - If `settings.base.json` is updated in the repo, run this merge again after `git pull`.
 - The merge is idempotent — running it multiple times is safe.
+
+## Feedback Loop
+
+Before starting, read `~/Repos/copilot-configs/skills/merge-copilot-settings/LessonsLearned.md` if it exists and apply any recorded watch-outs.
+
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/merge-copilot-settings/LessonsLearned.md`.

@@ -68,7 +68,7 @@ Designs system architecture emphasizing testability, separation of concerns, and
 **File**: `06-WorkPlanner.agent.md`  
 **Purpose**: Break down features into development phases with dependencies  
 **Tools**: Read-only + file creation (search, createFile, usages, problems, fetch)  
-**Handoffs**: WorkItemCreator, Implementation
+**Handoffs**: `@AzureStoryCreation`, Implementation
 
 Creates phased work breakdown identifying parallel development opportunities and critical paths.
 

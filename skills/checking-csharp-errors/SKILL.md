@@ -5,7 +5,7 @@ description: Check C# files for errors, warnings, and diagnostics using VS Code 
 
 # Checking C# Errors
 
-> The core rules (use Check Changed Files, never get_errors, don't run dotnet build) are enforced automatically via [`csharp-diagnostics.instructions.md`](~/.copilot/instructions/csharp-diagnostics.instructions.md) on all `*.cs` files. This skill provides the detailed workflow and step-by-step checklist.
+> The core rules (use Check Changed Files, never get_errors, don't run dotnet build) are enforced automatically via [`csharp-diagnostics.instructions.md`](~/Repos/copilot-configs/instructions/csharp-diagnostics.instructions.md) on all `*.cs` files. This skill provides the detailed workflow and step-by-step checklist.
 
 ## Workflow
 

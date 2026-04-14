@@ -66,8 +66,8 @@ graph LR
 | 3 | **GapResolver** | Resolve gaps | Read + Create | RefinedPlanner |
 | 4 | **RefinedPlanner** | Plan with resolved gaps | Read-only | GapFinder (iterate), ArchitecturalDesigner, Implementation |
 | 5 | **ArchitecturalDesigner** | Design architecture | Read + Create | WorkPlanner, Implementation |
-| 6 | **WorkPlanner** | Break into phases | Read + Create | WorkItemCreator, Implementation |
-| 7 | **WorkItemCreator** | Create work items | Read + Create | Implementation |
+| 6 | **WorkPlanner** | Break into phases | Read + Create | AzureStoryCreation, Implementation |
+| 7 | **AzureStoryCreation** | Create work items | Read + Create | Implementation |
 | 8 | **Implementation** | Write code | Full access | GapFinder (re-investigate) |
 
 ## Decision Tree: Which Path Should I Take?
@@ -85,7 +85,7 @@ graph TD
     Complex -->|Yes| Discovery[Exploratory Discovery:<br/>InitialPlanner → GapFinder<br/>→ GapResolver → RefinedPlanner]
     Complex -->|No| DesignNeeded{Need Architectural<br/>Design?}
     
-    DesignNeeded -->|Yes| DesignFirst[Design-First:<br/>InitialPlanner → ArchitecturalDesigner<br/>→ WorkPlanner → WorkItemCreator]
+    DesignNeeded -->|Yes| DesignFirst[Design-First:<br/>InitialPlanner → ArchitecturalDesigner<br/>→ WorkPlanner → AzureStoryCreation]
     DesignNeeded -->|No| Discovery
     
     Existing -->|Has Gaps?| Discovery
@@ -189,7 +189,7 @@ graph TD
 | RefinedPlanner | ✅ | ❌ | ❌ | ❌ |
 | ArchitecturalDesigner | ✅ | ❌ | ✅ | ❌ |
 | WorkPlanner | ✅ | ❌ | ✅ | ❌ |
-| WorkItemCreator | ✅ | ❌ | ✅ | ❌ |
+| AzureStoryCreation | ✅ | ❌ | ✅ | ❌ |
 | Implementation | ✅ | ✅ | ✅ | ✅ |
 
 ## When to Loop Back
@@ -234,7 +234,7 @@ You can mix patterns - e.g., Exploratory Discovery + Design-First
 | GapResolver | `gap-resolutions.md` |
 | ArchitecturalDesigner | `architectural-design-[name].md` |
 | WorkPlanner | `work-plan-[name].md` |
-| WorkItemCreator | `work-items-[name].md` |
+| AzureStoryCreation | `work-items-[name].md` |
 
 ## Getting Help
 

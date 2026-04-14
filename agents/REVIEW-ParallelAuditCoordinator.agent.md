@@ -6,8 +6,8 @@ argument-hint: Launch all parallel auditors to run simultaneously
 hooks:
   SubagentStop:
     - type: command
-      windows: 'powershell -File "~/.copilot/hooks/scripts/check-auditor-output.ps1"'
-      command: 'powershell -File "~/.copilot/hooks/scripts/check-auditor-output.ps1"'
+      windows: 'powershell -File "$env:USERPROFILE/Repos/copilot-configs/hooks/scripts/check-auditor-output.ps1"'
+      command: 'powershell -File "~/Repos/copilot-configs/hooks/scripts/check-auditor-output.ps1"'
       timeout: 10
 tools: 
     - agent

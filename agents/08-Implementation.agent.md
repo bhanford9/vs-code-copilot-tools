@@ -43,7 +43,7 @@ Before implementing, gather context from:
 - Plans (from InitialPlanner or RefinedPlanner)
 - Architectural designs (from ArchitecturalDesigner)
 - Work plans (from WorkPlanner)
-- Work items (from WorkItemCreator)
+- Work items (from AzureStoryCreation)
 - Gap resolutions (from GapResolver)
 - User instructions
 
