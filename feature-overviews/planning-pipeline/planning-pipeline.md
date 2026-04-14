@@ -1,10 +1,10 @@
-# Discovery Pipeline - Multi-Agent Workflow System
+# Planning Pipeline
 
-A comprehensive multi-agent workflow system for VS Code Copilot that transforms complex feature development from uncertain exploration into systematic discovery, planning, and execution.
+A multi-agent workflow system for VS Code Copilot that transforms complex feature development from uncertain exploration into systematic discovery, planning, and execution.
 
 ## Overview
 
-The Discovery Pipeline is an 8-agent system that guides you from initial feature ideas through gap discovery, architectural design, work planning, and implementation. Each agent specializes in a specific phase and uses handoffs to create guided sequential workflows that put you in control.
+The Planning Pipeline is an 8-phase system that guides you from initial feature ideas through gap discovery, architectural design, and work planning. Each agent specializes in a specific phase and uses handoffs to create guided sequential workflows that put you in control.
 
 ### The Core Philosophy
 
@@ -75,10 +75,8 @@ Creates phased work breakdown identifying parallel development opportunities and
 ---
 
 ### Phase 7: Work Item Creator
-**File**: `07-WorkItemCreator.agent.md`  
-**Purpose**: Convert plans into Azure DevOps work items  
-**Tools**: Read-only + file creation (search, createFile, usages, problems)  
-**Handoffs**: Implementation
+
+> **Note**: Work item creation has been extracted into the standalone `AzureStoryCreation` agent with its own skill and format conventions. Use `@AzureStoryCreation` after completing your work plan rather than an inline pipeline phase.
 
 Transforms work plans into structured Azure DevOps user stories with clear acceptance criteria and dependencies.
 
@@ -215,11 +213,11 @@ Choose your path in real-time based on feature complexity and confidence.
 
 ## Getting Started
 
-1. **Install** the discovery pipeline by placing this directory in your VS Code workspace or user profile
-2. **Open Chat** and select an agent from the agent dropdown
-3. **Start Simple**: Begin with Initial Planner for any new feature
-4. **Follow Handoffs**: Use the handoff buttons to navigate the pipeline based on your needs
-5. **Iterate**: Don't hesitate to go back to Gap Finder if you discover new unknowns
+1. **Open Chat** and select `InitialPlanner` from the agent dropdown (or type `@InitialPlanner`)
+2. **Start Simple**: Describe the feature you want to build — Initial Planner handles the rest
+3. **Follow Handoffs**: Use the handoff buttons to move between pipeline phases
+4. **Iterate**: Don't hesitate to go back to Gap Finder if you discover new unknowns
+5. **Create Work Items**: After work planning, use `@AzureStoryCreation` to convert the plan into Azure DevOps stories
 
 ## File Artifacts
 
@@ -261,12 +259,11 @@ Each agent is a `.agent.md` file. Customize instructions, tools, or handoffs to 
 ### Adding Agents
 Extend the pipeline with additional agents (e.g., CodeReviewer, TestGenerator) following the same XML + Markdown format.
 
-## Support and Feedback
+## Lessons Learned
 
-This pipeline is based on VS Code's custom agent feature (v1.106+). For issues or enhancements, refer to the official VS Code documentation on custom agents.
+The planning pipeline does not currently have a dedicated Lessons Learned file. Accumulated knowledge for related features lives alongside their respective skills:
 
----
+- `creating-azure-stories` skill → `skills/creating-azure-stories/LessonsLearned.md` (work item formatting patterns, common mistakes)
+- `writing-csharp-tests` skill → `skills/writing-csharp-tests/LessonsLearned.md` (patterns relevant during implementation)
 
-**Version**: 1.0  
-**Last Updated**: November 14, 2025  
-**Requires**: VS Code 1.106+ with GitHub Copilot
+If recurring pipeline-level patterns emerge (e.g., gap discovery strategies, common planning mistakes), add a `LessonsLearned.md` alongside this file.

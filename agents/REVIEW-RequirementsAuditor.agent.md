@@ -39,6 +39,10 @@ Your mission: Understand what the code changes are trying to accomplish at a hig
 
 <workflow>
 
+## 0. Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
+
 ## 1. Analyze Code Changes
 
 Use git commands via #tool:execute/runInTerminal to examine all changes since master branch:
@@ -122,6 +126,10 @@ Show the user a brief summary:
 Then tell the user they can click the **"Continue to Code Correctness Audit"** handoff when ready.
 
 **STOP HERE.** Do NOT proceed to the Code Correctness Audit yourself. Do NOT invoke any other agent. The user must click the handoff button to advance the pipeline. Your work is complete at this point.
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 
 </workflow>
 

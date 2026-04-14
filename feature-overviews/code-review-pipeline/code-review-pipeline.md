@@ -26,11 +26,11 @@ flowchart TD
     Coordinator --> Performance[Performance<br/>Auditor]
     Coordinator --> Extensibility[Extensibility<br/>Auditor]
     
-    UnitTest --> Orchestrator2[REVIEW-CodeReviewOrchestrator<br/>Synthesize Final Review]
-    Maintainability --> Orchestrator2
-    Testability --> Orchestrator2
-    Performance --> Orchestrator2
-    Extensibility --> Orchestrator2
+    UnitTest --> FinalSynth[REVIEW-FinalSynthesizer<br/>Synthesize Final Review]
+    Maintainability --> FinalSynth
+    Testability --> FinalSynth
+    Performance --> FinalSynth
+    Extensibility --> FinalSynth
     
     style Start fill:#90EE90
     style Orchestrator1 fill:#87CEEB
@@ -43,7 +43,7 @@ flowchart TD
     style Testability fill:#98FB98
     style Performance fill:#98FB98
     style Extensibility fill:#98FB98
-    style Orchestrator2 fill:#87CEEB
+    style FinalSynth fill:#87CEEB
 ```
 
 ## Agents
@@ -51,9 +51,17 @@ flowchart TD
 ### REVIEW-CodeReviewOrchestrator
 **File**: `REVIEW-CodeReviewOrchestrator.agent.md`
 
-Entry point and final synthesizer. Guides users through the review process and combines all audit outputs into a comprehensive final review.
+Entry point for all reviews. Guides users through the pipeline and hands off to `REVIEW-FinalSynthesizer` after parallel audits complete.
 
 **When to use**: Start every code review here
+
+### REVIEW-FinalSynthesizer
+**File**: `REVIEW-FinalSynthesizer.agent.md`
+
+Reads all 7 audit reports, applies patterns from `REVIEW-LessonsLearned.md`, and synthesizes a unified final review with merge recommendation.
+
+**Outputs**: `/code-review/final-review.md`  
+**Invoked by**: Orchestrator handoff after parallel audits complete
 
 ### Requirements Auditor
 **File**: `REVIEW-RequirementsAuditor.agent.md`
@@ -279,7 +287,7 @@ This supports trunk-based development workflows.
 
 ## Conventions
 
-All agents follow shared conventions defined in `code-review-conventions.md`:
+All agents follow shared conventions at runtime via the auto-injected `REVIEW-CONVENTIONS.instructions.md` (applied to all files via `applyTo: "**"`). The source of truth for those conventions is documented in [code-review-conventions.md](code-review-conventions.md):
 - Standardized output format
 - Consistent severity levels
 - Actionable recommendations
@@ -376,6 +384,18 @@ For troubleshooting commit list reviews, see [README-CommitReview.md](../../prom
 - **[README-CommitReview.md](../../prompts/README-CommitReview.md)** - Detailed guide for commit list review workflow
 - **[code-review-conventions.md](code-review-conventions.md)** - Shared conventions used by all auditors
 - **Individual agent files** - `REVIEW-*.agent.md` for specific auditor details
+
+## Lessons Learned
+
+Accumulated knowledge from completed review sessions lives in `skills/code-review-pipeline/LessonsLearned.md` alongside the skill definition.
+
+**REVIEW-FinalSynthesizer reads this file before synthesizing every final review**, applying known recurring patterns and false positives to improve accuracy.
+
+Append a new entry after each significant review session using the template already present in the file. Useful things to capture:
+- Recurring patterns found across the codebase that auditors keep re-flagging
+- Known false positives (established conventions that look wrong but aren't)
+- Missing coverage areas found after the fact
+- Notes on what each auditor caught vs. missed
 
 ## Future Enhancements
 

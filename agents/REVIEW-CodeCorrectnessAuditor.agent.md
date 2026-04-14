@@ -33,6 +33,10 @@ Your mission: Verify that the code implementation correctly achieves the goals a
 
 <workflow>
 
+## 0. Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
+
 ## 1. Read Requirements Audit
 
 Load and thoroughly understand `/code-review/requirements-audit.md`:
@@ -143,6 +147,10 @@ If there are critical correctness issues, recommend fixing them before proceedin
 If code is functionally correct (or only has minor issues), tell the user they can click the **"Launch Parallel Audits"** handoff when ready.
 
 **STOP HERE.** Do NOT proceed to launch parallel audits yourself. Do NOT invoke any other agent. The user must click the handoff button to advance the pipeline. Your work is complete at this point.
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 
 </workflow>
 

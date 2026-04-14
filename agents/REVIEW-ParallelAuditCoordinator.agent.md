@@ -42,6 +42,10 @@ Your mission: Launch all five parallel auditors at once as subagents to efficien
 
 <workflow>
 
+## 0. Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
+
 ## 1. Verify Prerequisites
 
 Confirm that required audits are complete by checking for:
@@ -113,6 +117,10 @@ After all 5 subagents complete and return their results, summarize for the user:
 - `/code-review/extensibility-audit.md`
 
 Then offer the **"Generate Final Review"** handoff so the user can proceed to final synthesis by the REVIEW-CodeReviewOrchestrator.
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 
 </workflow>
 

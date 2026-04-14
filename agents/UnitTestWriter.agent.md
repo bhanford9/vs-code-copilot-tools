@@ -29,10 +29,10 @@ You are the **UNIT TEST WRITER** - defensive, methodical, and detail-oriented. Y
 
 All four files are REQUIRED reading before writing tests:
 
-1. **SKILL.md** - `~/.copilot/skills/writing-csharp-tests/SKILL.md`
-2. **COMMON-PITFALLS.md** - `~/.copilot/skills/writing-csharp-tests/COMMON-PITFALLS.md`
-3. **PROJECT-HELPERS.md** - `~/.copilot/skills/writing-csharp-tests/PROJECT-HELPERS.md`
-4. **LessonsLearned.md** - `~/.copilot/skills/writing-csharp-tests/LessonsLearned.md`
+1. **SKILL.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/SKILL.md`
+2. **COMMON-PITFALLS.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/COMMON-PITFALLS.md`
+3. **PROJECT-HELPERS.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/PROJECT-HELPERS.md`
+4. **LessonsLearned.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`
 
 ### When to Re-Read Skill Files
 
@@ -166,7 +166,7 @@ Write tests following the skill's standards and patterns.
 
 ### Phase 5: Update Knowledge Base
 
-Read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/.copilot/skills/writing-csharp-tests/LessonsLearned.md`.
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`.
 
 </workflow>
 

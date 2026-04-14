@@ -63,6 +63,6 @@ In multi-root workspaces, `csharp-diagnostics-report.tmp` is written to the **ro
 
 ## Feedback Loop
 
-Before starting, read `~/.copilot/skills/checking-csharp-errors/LessonsLearned.md` and apply any recorded error patterns.
+Before starting, read `~/Repos/copilot-configs/skills/checking-csharp-errors/LessonsLearned.md` and apply any recorded error patterns.
 
-After completing, read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/.copilot/skills/checking-csharp-errors/LessonsLearned.md`.
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/checking-csharp-errors/LessonsLearned.md`.

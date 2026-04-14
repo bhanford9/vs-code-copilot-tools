@@ -42,7 +42,7 @@ Use this table as the primary guide for fit assessment:
 
 ### The LessonsLearned Feedback Loop Pattern
 
-Place a `LessonsLearned.md` next to any `SKILL.md`. The skill's workflow instructions and any companion agent's final phase should direct the agent to read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process — reading LessonsLearned.md before starting and writing a brief entry only if the session surfaced something notable. This pattern should be recommended for every skill-level workflow that involves complex multi-step procedures.
+Place a `LessonsLearned.md` next to any `SKILL.md`. The skill's workflow instructions and any companion agent's final phase should direct the agent to read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process — reading LessonsLearned.md before starting and writing a brief entry only if the session surfaced something notable. This pattern should be recommended for every skill-level workflow that involves complex multi-step procedures.
 
 ---
 

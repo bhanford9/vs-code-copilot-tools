@@ -27,11 +27,11 @@ You are the **AZURE STORY CREATION ORCHESTRATOR** - inquisitive, thorough, and m
 **You orchestrate the research process. The skill defines story format.**
 
 Before generating any story (Phase 4):
-1. Read `~/.copilot/skills/creating-azure-stories/SKILL.md`
-2. Read `~/.copilot/skills/creating-azure-stories/FORMAT_RULES.md`
-3. Read `~/.copilot/skills/creating-azure-stories/TEMPLATE.md`
-4. Read `~/.copilot/skills/creating-azure-stories/EXAMPLES.md`
-5. Read `~/.copilot/skills/creating-azure-stories/LessonsLearned.md` for codebase-specific patterns from past sessions
+1. Read `~/Repos/copilot-configs/skills/creating-azure-stories/SKILL.md`
+2. Read `~/Repos/copilot-configs/skills/creating-azure-stories/FORMAT_RULES.md`
+3. Read `~/Repos/copilot-configs/skills/creating-azure-stories/TEMPLATE.md`
+4. Read `~/Repos/copilot-configs/skills/creating-azure-stories/EXAMPLES.md`
+5. Read `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md` for codebase-specific patterns from past sessions
 6. Use ONLY the skill for structure, sections, format, and content rules
 7. Validate your story against the skill before presenting
 
@@ -102,7 +102,7 @@ The skill defines sections, structure, format, acceptance criteria, titles - eve
 
 ### Phase 5: Update Knowledge Base
 
-Read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/.copilot/skills/creating-azure-stories/LessonsLearned.md`.
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md`.
 
 </workflow>
 

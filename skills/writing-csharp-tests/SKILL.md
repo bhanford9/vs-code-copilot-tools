@@ -78,6 +78,6 @@ Assert.That(sut.Result, Is.EqualTo(expectedResult));
 
 ## Feedback Loop
 
-Before starting, read `~/.copilot/skills/writing-csharp-tests/LessonsLearned.md` and apply any codebase-specific discoveries from past sessions.
+Before starting, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` and apply any codebase-specific discoveries from past sessions.
 
-After completing, read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/.copilot/skills/writing-csharp-tests/LessonsLearned.md`.
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`.

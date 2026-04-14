@@ -72,4 +72,4 @@ Checkbox list of testable business requirements:
 
 Before writing a story, read [LessonsLearned.md](LessonsLearned.md) and apply any codebase-specific patterns from past sessions.
 
-After completing, read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/.copilot/skills/creating-azure-stories/LessonsLearned.md`.
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md`.

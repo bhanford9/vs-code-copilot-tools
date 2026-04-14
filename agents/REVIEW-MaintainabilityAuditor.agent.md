@@ -19,7 +19,7 @@ Your mission: Evaluate how easy the code will be to understand, modify, and main
 
 ## 0. Read REVIEW-LessonsLearned
 
-Read `~/AppData/Roaming/Code/User/prompts/REVIEW-LessonsLearned.md` and apply any recorded patterns.
+Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
 
 ## 1. Read Prior Audit Context
 
@@ -132,7 +132,7 @@ Write findings to `/code-review/maintainability-audit.md` following <audit_repor
 
 ## 7. Update REVIEW-LessonsLearned
 
-Read `~/.copilot/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/AppData/Roaming/Code/User/prompts/REVIEW-LessonsLearned.md`.
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 
 </workflow>
 
