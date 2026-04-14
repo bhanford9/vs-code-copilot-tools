@@ -20,7 +20,7 @@ This is a **shallow merge of top-level keys only** — nested objects (like `cha
 ### Step 1 — Run the merge script
 
 ```powershell
-$basePath  = "C:\Repos\copilot-configs\settings.base.json"
+$basePath  = "C:\Users\$env:USERNAME\Repos\copilot-configs\settings.base.json"
 $localPath = "$env:APPDATA\Code\User\settings.json"
 
 $base  = Get-Content $basePath  -Raw | ConvertFrom-Json
@@ -42,8 +42,8 @@ After the script completes, reload VS Code (`Ctrl+Shift+P` → `Developer: Reloa
 ### Step 3 — Verify
 
 Confirm in VS Code Settings UI or by checking `settings.json` that:
-- `chat.promptFilesLocations` contains both `C:/Repos/copilot-configs/prompts` and `C:/Repos/copilot-configs/agents`
-- `chat.instructionsFilesLocations` contains `C:/Repos/copilot-configs/instructions`
+- `chat.promptFilesLocations` contains both `~/Repos/copilot-configs/prompts` and `~/Repos/copilot-configs/agents`
+- `chat.instructionsFilesLocations` contains `~/Repos/copilot-configs/instructions`
 - `chat.useAgentSkills` is `true`
 - `chat.useCustomAgentHooks` is `true`
 

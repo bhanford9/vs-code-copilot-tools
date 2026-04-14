@@ -13,16 +13,16 @@
     "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
     "chat.viewSessions.orientation": "stacked",
     "chat.promptFilesLocations": {
-        "C:/Repos/copilot-configs/prompts": true,
-        "C:/Repos/copilot-configs/agents": true
+        "~/Repos/copilot-configs/prompts": true,
+        "~/Repos/copilot-configs/agents": true
     },
     "chat.instructionsFilesLocations": {
-        "C:/Repos/copilot-configs/instructions": true
+        "~/Repos/copilot-configs/instructions": true
     },
     "chat.tools.urls.autoApprove": {
         "https://code.visualstudio.com": true,
         "https://github.com/microsoft/vscode/wiki/*": true,
-        "file:///C:/Repos/copilot-configs": true,
+        "file:///C:/Users/{username}/Repos/copilot-configs": true,
         "https://www.google.com/search": true
     }
 }
