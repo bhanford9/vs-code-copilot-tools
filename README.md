@@ -65,6 +65,12 @@ Use the `/update-copilot-tools` prompt to pull, analyze what changed, and handle
 
 ---
 
+## Feature Map
+
+See [FEATURES.md](FEATURES.md) for a conceptual index of every tool — what it does, how to invoke it, and which files it spans — without needing to dig into the directory structure.
+
+---
+
 ## What Is Not in This Repo
 
 Machine-local files — logs, session state, runtime config, and machine-specific `settings.json` entries — are intentionally excluded. Only configuration that is meaningful on every machine belongs here.
