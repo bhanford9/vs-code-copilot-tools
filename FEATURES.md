@@ -6,20 +6,27 @@ A conceptual index of every tool in this repo. Each entry describes what the too
 
 ## Planning Pipeline
 
-A multi-agent workflow for turning a vague feature idea into a fully structured implementation plan with gap analysis and work breakdown.
+An 8-agent discovery workflow that frontloads uncertainty before committing to implementation. The core philosophy: **discover what you don't know before writing code**. Systematic gap finding and resolution reduces mid-implementation surprises, costly refactors, and requirements drift.
 
 | Invoke | How |
 |--------|-----|
-| `/CreatePlan` | Start the pipeline — describe a feature or task |
+| `@InitialPlanner` | Start the pipeline — describe a feature or task |
 | `/CreateWorkItems` | Convert a completed plan into Azure DevOps stories |
 
-**Agents involved:** `InitialPlanner` → `GapFinder` → `GapResolver` → `RefinedPlanner` → `ArchitecturalDesigner` → `WorkPlanner` → `Implementation`
+**Agents involved:** `InitialPlanner` → `GapFinder` → `GapResolver` → `RefinedPlanner` → `ArchitecturalDesigner` → `WorkPlanner` → `WorkItemCreator` → `Implementation`
+
+**Common paths:**
+- **Exploratory**: InitialPlanner → GapFinder → GapResolver → RefinedPlanner → Implementation
+- **Design-First**: InitialPlanner → ArchitecturalDesigner → WorkPlanner → WorkItemCreator → Implementation
+- **Fast Track**: InitialPlanner → Implementation (simple/well-understood features)
+
+**Detailed docs:** [feature-overviews/planning-pipeline/planning-pipeline.md](feature-overviews/planning-pipeline/planning-pipeline.md) · [Quick Reference](feature-overviews/planning-pipeline/planning-pipeline-quick-reference.md)
 
 ---
 
 ## Code Review Pipeline
 
-A multi-agent pipeline that runs a structured audit of code changes across six quality dimensions: requirements, correctness, test coverage, maintainability, testability, performance, and extensibility. Produces per-dimension audit reports and a final synthesized summary.
+A multi-agent pipeline that runs a structured audit of code changes across seven quality dimensions: requirements, correctness, test coverage, maintainability, testability, performance, and extensibility. Sequential audits establish context; five specialty auditors then run in parallel as subagents. Produces per-dimension reports and a synthesized final review with merge recommendation.
 
 | Invoke | How |
 |--------|-----|
@@ -27,7 +34,9 @@ A multi-agent pipeline that runs a structured audit of code changes across six q
 | `/ReviewLocal` | Review uncommitted local changes |
 | `/CleanupCommitReview` | Restore the repo and remove temp branches after review |
 
-**Agents involved:** `REVIEW-CodeReviewOrchestrator`, seven specialist auditors, `REVIEW-ParallelAuditCoordinator`, `REVIEW-FinalSynthesizer`
+**Agents involved:** `REVIEW-CodeReviewOrchestrator` → `REVIEW-RequirementsAuditor` → `REVIEW-CodeCorrectnessAuditor` → `REVIEW-ParallelAuditCoordinator` (spawns 5 parallel auditors) → final synthesis
+
+**Detailed docs:** [feature-overviews/code-review-pipeline/code-review-pipeline.md](feature-overviews/code-review-pipeline/code-review-pipeline.md) · [Conventions](feature-overviews/code-review-pipeline/code-review-conventions.md)
 
 ---
 

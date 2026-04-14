@@ -241,10 +241,10 @@ You can mix patterns - e.g., Exploratory Discovery + Design-First
 1. **Start**: Choose Initial Planner from agent dropdown
 2. **Navigate**: Use handoff buttons to move between phases
 3. **Iterate**: Loop back to earlier phases if needed
-4. **Reference**: Check README.md for detailed documentation
+4. **Reference**: Check `planning-pipeline.md` for detailed documentation
 
 ---
 
 **Quick Start**: Open Chat → Select "InitialPlanner" → Describe your feature → Follow handoff buttons
 
-**Need Help?**: See `README.md` for comprehensive guide
+**Need Help?**: See `planning-pipeline.md` for comprehensive guide

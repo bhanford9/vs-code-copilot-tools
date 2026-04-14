@@ -312,7 +312,7 @@ If code is functionally correct (or only has minor issues), tell the user they c
 </audit_report_template>
 
 <conventions>
-Follow all standards defined in [REVIEW-CONVENTIONS.md](REVIEW-CONVENTIONS.md):
+Follow all standards defined in [REVIEW-CONVENTIONS.instructions.md](REVIEW-CONVENTIONS.instructions.md):
 - Output directory: `/code-review/`
 - File name: `code-correctness-audit.md`
 - Severity levels: Critical, High, Medium, Low

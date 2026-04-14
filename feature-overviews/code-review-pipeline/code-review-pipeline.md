@@ -279,7 +279,7 @@ This supports trunk-based development workflows.
 
 ## Conventions
 
-All agents follow shared conventions defined in `REVIEW-CONVENTIONS.md`:
+All agents follow shared conventions defined in `code-review-conventions.md`:
 - Standardized output format
 - Consistent severity levels
 - Actionable recommendations
@@ -365,7 +365,7 @@ handoffs:
 
 ### Commit List Review Issues
 
-For troubleshooting commit list reviews, see [README-CommitReview.md](README-CommitReview.md) which covers:
+For troubleshooting commit list reviews, see [README-CommitReview.md](../../prompts/README-CommitReview.md) which covers:
 - Conflict resolution strategies
 - Cleanup failures
 - Missing configuration files
@@ -373,8 +373,8 @@ For troubleshooting commit list reviews, see [README-CommitReview.md](README-Com
 
 ## Additional Resources
 
-- **[README-CommitReview.md](README-CommitReview.md)** - Detailed guide for commit list review workflow
-- **[REVIEW-CONVENTIONS.md](REVIEW-CONVENTIONS.md)** - Shared conventions used by all auditors
+- **[README-CommitReview.md](../../prompts/README-CommitReview.md)** - Detailed guide for commit list review workflow
+- **[code-review-conventions.md](code-review-conventions.md)** - Shared conventions used by all auditors
 - **Individual agent files** - `REVIEW-*.agent.md` for specific auditor details
 
 ## Future Enhancements
