@@ -65,6 +65,8 @@ An agent that produces correctly structured Azure DevOps work items with require
 
 **Skill:** `creating-azure-stories` — format rules, templates, examples
 
+**Overview:** [`feature-overviews/azure-story-creation/azure-story-creation.md`](feature-overviews/azure-story-creation/azure-story-creation.md)
+
 ---
 
 ## Copilot Tools Management
@@ -77,6 +79,8 @@ Tools for keeping this repo's configuration in sync across machines.
 | `/merge-copilot-settings` | Apply `settings.base.json` on top of local `settings.json` |
 
 **Skills:** `update-copilot-tools`, `merge-copilot-settings`
+
+**Overview:** [`feature-overviews/copilot-tools-management/copilot-tools-management.md`](feature-overviews/copilot-tools-management/copilot-tools-management.md)
 
 ---
 
