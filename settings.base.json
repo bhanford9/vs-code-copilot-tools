@@ -19,6 +19,15 @@
     "chat.instructionsFilesLocations": {
         "~/Repos/copilot-configs/instructions": true
     },
+    "chat.agentFilesLocations": {
+        "~/Repos/copilot-configs/agents": true
+    },
+    "chat.agentSkillsLocations": {
+        "~/Repos/copilot-configs/skills": true
+    },
+    "chat.hookFilesLocations": {
+        "~/Repos/copilot-configs/hooks": true
+    },
     "chat.tools.urls.autoApprove": {
         "https://code.visualstudio.com": true,
         "https://github.com/microsoft/vscode/wiki/*": true,

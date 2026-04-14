@@ -44,6 +44,9 @@ After the script completes, reload VS Code (`Ctrl+Shift+P` → `Developer: Reloa
 Confirm in VS Code Settings UI or by checking `settings.json` that:
 - `chat.promptFilesLocations` contains both `~/Repos/copilot-configs/prompts` and `~/Repos/copilot-configs/agents`
 - `chat.instructionsFilesLocations` contains `~/Repos/copilot-configs/instructions`
+- `chat.agentFilesLocations` contains `~/Repos/copilot-configs/agents`
+- `chat.agentSkillsLocations` contains `~/Repos/copilot-configs/skills`
+- `chat.hookFilesLocations` contains `~/Repos/copilot-configs/hooks`
 - `chat.useAgentSkills` is `true`
 - `chat.useCustomAgentHooks` is `true`
 
