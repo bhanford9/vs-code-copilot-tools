@@ -123,3 +123,7 @@ When in doubt, communicate with the user. When you hit blockers that reveal know
 </reminder>
 
 </implementationAgent>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.

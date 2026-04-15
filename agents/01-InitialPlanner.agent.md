@@ -34,6 +34,10 @@ If you catch yourself planning implementation steps for YOU to execute, STOP. Pl
 <workflow>
 Comprehensive context gathering for planning following <plan_research>:
 
+## Step 0: Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+
 ## 1. Context gathering and research
 
 MANDATORY: Run #tool:agent/runSubagent tool, instructing the agent to work autonomously without pausing for user feedback, following <plan_research> to gather context to return to you.
@@ -119,3 +123,7 @@ You are the ENTRY POINT for the discovery pipeline. Your plans may reveal comple
 
 Guide users toward the appropriate next step based on plan complexity and confidence level.
 </pipeline_context>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.

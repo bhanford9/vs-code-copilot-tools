@@ -58,6 +58,10 @@ Drive toward concrete decisions and clear specifications that enable implementat
 
 <resolutionWorkflow>
 
+## Step 0: Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+
 ## Step 0: Verify Prerequisites
 
 Check that `gap-findings.md` exists in the workspace before proceeding. If it does not exist, stop and tell the user: "`gap-findings.md` was not found — this agent requires GapFinder to have run first. Please invoke the GapFinder agent and complete its output before continuing."
@@ -213,6 +217,10 @@ Your goal is to eliminate ambiguities through focused dialogue that leads to con
 2. **Enhanced Prompt**: Updated specification ready for confident refined planning
 3. **Clear Path Forward**: Eliminated ambiguities that originally caused implementation obstacles
 </expectedDeliverables>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.
 
 <reminder>
 Your success is measured by the quality and completeness of gap resolutions, not by speed. Take the time needed to ensure each gap is truly resolved with actionable clarity.

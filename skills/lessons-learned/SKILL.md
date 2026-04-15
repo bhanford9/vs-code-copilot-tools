@@ -29,14 +29,23 @@ Before appending anything, ask:
 
 If the answer to all of these is **no**, skip the update entirely. Routine sessions do not produce entries.
 
-### 3. What to Write
+### 3. Check for Duplicates First
+
+Before writing, scan the existing LessonsLearned.md for entries on the same topic:
+- If a matching entry exists, **update it** (strengthen it, add the new example) rather than creating a duplicate
+- If this same topic has appeared as a new incident **three or more times**, it is an escalation candidate — do not add another entry; instead flag it for promotion to SKILL.md or conversion to a hook
+
+### 4. What to Write
 
 - A short descriptive heading (not a date)
 - 2–5 lines of specific, actionable notes
+- A **category tag** on the first line: `Category: Codebase` or `Category: Process/Model`
+  - **Codebase** — facts about the project: type locations, naming conventions, non-mockable types, team patterns. These are stable and almost never go stale.
+  - **Process/Model** — observations about agent behavior, workflow gaps, or harness decisions. These may go stale when the model improves.
 - Use DO's/DON'Ts section when alternate viable approaches exist and it's important to clarify which one to take
 - Focus on: what to watch out for, what to avoid, what was unexpectedly hard
 
-### 4. What NOT to Write
+### 5. What NOT to Write
 
 - Things the agent does easily and correctly every time
 - Step-by-step summaries of what you did — that belongs in SKILL.md
@@ -63,6 +72,27 @@ Some lessons reveal a defect or gap in the skill itself — something that would
 
 **If you're not at least 90% confident that a lesson is globally applicable, stop and ask the user to provide guidance on whether it should be promoted to SKILL.md or remain in LessonsLearned.md.**
 
+## Escalation Path: From Guidance to Enforcement
+
+A lesson in a markdown file is passive — the agent must read and remember it. When passive guidance keeps failing, escalate:
+
+```
+Observed once → LessonsLearned.md entry  (inferential, read before each session)
+Recurs after lesson exists → Promote to SKILL.md rule  (inferential, always present)
+Still recurs after promotion → Escalate to a hook  (computational, always enforced)
+```
+
+Escalation indicators:
+- The same mistake appears as a new LessonsLearned entry despite an existing one on the same topic
+- A SKILL.md rule tagged `CRITICAL` keeps being violated
+- The rule is binary (either violated or not) and its violation is detectable in output files
+
+Not all rules are hookable. Binary, file-detectable violations (e.g., test file contains comments) are strong hook candidates. Contextual, semantic judgments (e.g., «this confidence threshold wasn't high enough») must remain inferential.
+
+## Model-Upgrade Review
+
+When upgrading to a new model version, scan all `Process/Model` category entries and evaluate whether each still applies. `Codebase` entries are stable and do not need this scan. Entries that no longer apply should be removed or archived.
+
 ## Format
 
 No required template. Each entry should have:
@@ -74,6 +104,7 @@ No required template. Each entry should have:
 
 ```
 ### Enum Namespace Resolution in This Codebase
+Category: Codebase
 
 MaterialType enums are in `MaterialModel.Enums`, not the domain layer.
 Always check namespace before writing test usings for this project.

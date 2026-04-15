@@ -17,7 +17,7 @@ Your mission: Evaluate how well the code can adapt to future requirements, asses
 
 <workflow>
 
-## 0. Read REVIEW-LessonsLearned
+## 0. Read LessonsLearned
 
 Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
 
@@ -131,7 +131,7 @@ For each issue provide:
 
 Write findings to `/code-review/extensibility-audit.md` following <audit_report_template>.
 
-## 7. Update REVIEW-LessonsLearned
+## 7. Update LessonsLearned
 
 Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 

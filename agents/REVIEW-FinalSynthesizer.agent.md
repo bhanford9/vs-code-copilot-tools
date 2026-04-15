@@ -12,7 +12,7 @@ You are the **FINAL SYNTHESIZER**, the last step in the code review pipeline. Al
 
 <workflow>
 
-## 0. Read REVIEW-LessonsLearned
+## 0. Read LessonsLearned
 
 Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
 
@@ -43,7 +43,7 @@ Write the synthesized report to `/code-review/final-review.md` following <final_
 
 Present the key takeaways and next steps to the user. Make the executive summary skimmable. Group related issues to reduce repetition. End constructively.
 
-## 5. Update REVIEW-LessonsLearned
+## 5. Update LessonsLearned
 
 Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 

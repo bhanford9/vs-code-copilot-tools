@@ -69,6 +69,10 @@ Note recurring gaps that suggest systemic knowledge deficits requiring broader i
 
 <gapDiscoveryProcess>
 
+## Step 0: Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+
 ## Step 0: Verify You Have a Plan
 
 Before attempting any implementation, confirm that an initial plan or feature description has been provided (via the handoff from InitialPlanner or directly by the user). If no plan is present, stop and ask: "What is the feature or task you want me to attempt implementing? I need a plan to work from."
@@ -131,6 +135,10 @@ Create or update a `gap-findings.md` file with the following structure:
 
 For each gap discovered, ensure you document all required fields to enable effective resolution.
 </documentationFormat>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.
 
 <successIndicators>
 - Comprehensive list of knowledge gaps discovered before attempting full implementation

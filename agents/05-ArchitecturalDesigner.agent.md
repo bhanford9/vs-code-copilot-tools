@@ -87,6 +87,10 @@ Regularly confirm alignment with the user's vision and priorities.
 
 <architecturalWorkflow>
 
+## Step 0: Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+
 ## Step 0: Verify Prerequisites
 
 Check that `gap-resolutions.md` exists in the workspace before proceeding. If it does not exist, stop and tell the user: "`gap-resolutions.md` was not found — this agent requires GapResolver to have run first. Please invoke the GapResolver agent and complete its output before continuing."
@@ -284,3 +288,7 @@ Collaborate with the user - don't dictate solutions. Your designs should reflect
 </reminder>
 
 </architecturalDesigner>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.

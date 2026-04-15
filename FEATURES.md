@@ -22,6 +22,8 @@ An 8-agent discovery workflow that frontloads uncertainty before committing to i
 
 **Detailed docs:** [feature-overviews/planning-pipeline/planning-pipeline.md](feature-overviews/planning-pipeline/planning-pipeline.md) · [Quick Reference](feature-overviews/planning-pipeline/planning-pipeline-quick-reference.md)
 
+**LessonsLearned:** `skills/planning-pipeline/LessonsLearned.md` — read by all pipeline agents at session start, updated after sessions where something notable occurred
+
 ---
 
 ## Code Review Pipeline
@@ -146,6 +148,10 @@ Small pre/post-turn scripts that run automatically during agent sessions.
 ## Lessons Learned System
 
 A feedback loop built into every skill and agent workflow. After completing a session, the agent reflects on what was hard or surprising and appends findings to a `LessonsLearned.md` file alongside the relevant skill. Future sessions read it first to avoid repeating mistakes.
+
+| Invoke | How |
+|--------|-----|
+| `/fork-and-improve` | Capture a mid-session course correction — apply the config fix and write a LessonsLearned entry while context is fresh |
 
 **Skill:** `lessons-learned`
 

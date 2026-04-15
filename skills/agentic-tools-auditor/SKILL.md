@@ -146,12 +146,16 @@ Check for:
 
 Where could a LessonsLearned.md feedback loop create continuous improvement?
 
-Evaluate:
-- Is there a `LessonsLearned.md` alongside this skill? If not, should there be?
-- Which parts of this workflow are most likely to surface codebase-specific edge cases?
-- Are there PostToolUse hooks that could append observations in real-time?
+**Existence check:**
+- Is there a `LessonsLearned.md` alongside this skill or agent? If not, should there be?
+- Does the skill/agent workflow include a read step at the start and an update step at the end?
 
-For seeding a new LessonsLearned.md, use the failure modes identified in Dimensions 2 and 3. The `lessons-learned` skill defines how the file should be maintained.
+**Health check** (for existing LessonsLearned.md files):
+- **Escalation candidates**: Does the same topic appear across 3+ separate entries? Flag for promotion to SKILL.md or conversion to a hook.
+- **Category distribution**: Are entries tagged `Codebase` vs. `Process/Model`? If not tagged, note that the new category tagging convention should be applied. If > 60% are `Process/Model`, note that many entries may need model-upgrade review.
+- **Cross-skill duplicates**: Does a pattern in this LessonsLearned.md also appear in another skill's file? It may belong in a shared instruction instead.
+
+**Seeding a new LessonsLearned.md**: Use the failure modes identified in Dimensions 2 and 3. The `lessons-learned` skill (`~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`) defines how the file should be maintained, including the escalation path from guidance to enforcement.
 
 ### 5. Automation Opportunities (Hooks)
 

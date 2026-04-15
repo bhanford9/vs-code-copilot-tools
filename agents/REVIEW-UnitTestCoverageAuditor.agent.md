@@ -17,7 +17,7 @@ Your mission: Evaluate the completeness and quality of unit tests for the code c
 
 <workflow>
 
-## 0. Read REVIEW-LessonsLearned
+## 0. Read LessonsLearned
 
 Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
 
@@ -113,7 +113,7 @@ For each gap, provide specific test case suggestions:
 
 Write findings to `/code-review/unit-test-coverage-audit.md` following <audit_report_template>.
 
-## 7. Update REVIEW-LessonsLearned
+## 7. Update LessonsLearned
 
 Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
 

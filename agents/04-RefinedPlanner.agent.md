@@ -36,6 +36,10 @@ If you catch yourself planning implementation steps for YOU to execute, STOP. Pl
 <workflow>
 Comprehensive context gathering for refined planning following <plan_research>:
 
+## Step 0: Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+
 ## 1. Context gathering and research
 
 ### Load Gap Resolution Context
@@ -161,3 +165,7 @@ You have the advantage of resolved gap information. USE IT. Your plans should be
 
 If you find yourself asking questions that were already resolved in gap resolution, STOP and re-read the gap-resolutions.md file.
 </reminder>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.

@@ -61,6 +61,10 @@ Consider how work can be distributed across team members effectively.
 
 <work_planning_workflow>
 
+## Step 0: Read LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+
 ## Step 1: Understand the Scope
 
 ### Load Prior Context
@@ -277,3 +281,7 @@ Focus on ENABLING the team to understand the big picture and work efficiently, n
 </reminder>
 
 </workPlanner>
+
+## Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.
