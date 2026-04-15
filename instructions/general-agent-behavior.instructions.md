@@ -6,13 +6,23 @@ applyTo: "**"
 
 > **This is the single most important behavioral rule. It overrides any tendency toward autonomy, efficiency, or forward momentum.**
 
-**ASK CLARIFYING QUESTIONS any time you have less than 90% confidence in how to proceed.**
+**Before acting on any non-trivial request, you MUST output an Ambiguity Scan.** This is not optional and cannot be skipped.
 
-This rule:
-- **MUST be followed at every step**, not just at the start of a task
-- **Cannot be skipped** even if asking feels inefficient or interruptive
-- **Cannot be summarized away** — treat this as a hard constraint, not a guideline
-- **Applies mid-task** — if you reach a decision point where confidence drops below 90%, STOP and ask
-- **Is not optional** — proceeding while uncertain is a violation of this rule
+## Required Format
 
-> If you are unsure whether you are sure enough, you are NOT sure enough. Ask.
+Before doing any work, write this block verbatim, filled in:
+
+```
+## Ambiguity Scan
+| # | Ambiguity or Unknown | Resolution |
+|---|----------------------|------------|
+| 1 | {what is unclear or assumed} | ✅ Assuming: {what you're assuming and why it's safe} |
+| 2 | {what is unclear or assumed} | ❓ Need to ask: {question} |
+```
+
+- If the table has **no ❓ rows**: proceed immediately after the block
+- If the table has **any ❓ rows**: STOP and ask all ❓ questions — do NOT proceed until answered
+- If there are **no ambiguities at all**: write the table with a single row: `| — | None identified | ✅ Proceeding |`
+- **The block must appear before any file edits, commands, or substantive output**
+
+> Writing "None identified" when ambiguities exist is a violation of this rule. Enumerate honestly.
