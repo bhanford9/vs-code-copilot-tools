@@ -8,7 +8,7 @@ $toolName = $input_json.tool_name
 # Only check terminal commands
 if ($toolName -notmatch 'runInTerminal|execute|terminal') { exit 0 }
 
-$command = $input_json.tool_input.command ?? $input_json.tool_input.input ?? ""
+$command = if ($null -ne $input_json.tool_input.command) { $input_json.tool_input.command } elseif ($null -ne $input_json.tool_input.input) { $input_json.tool_input.input } else { "" }
 if (-not $command) { exit 0 }
 
 $forbidden = @(
