@@ -42,6 +42,12 @@ skills/
   ...
 ```
 
+## Entry Points
+
+| Invoke | When |
+|--------|------|
+| `/fork-and-improve` | Mid-session course correction — something went off the expected path. Captures what happened, identifies the config fix (SKILL.md, LessonsLearned.md, hook, or instruction file), applies it, and writes the LessonsLearned entry while full context is still fresh |
+
 ## Reference Files
 
 | File | Role |

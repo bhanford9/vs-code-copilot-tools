@@ -119,12 +119,13 @@ Auto-attached rules and skills that improve C# coding workflows without requirin
 
 ## Always-On Instructions
 
-Instruction files that apply to every chat session regardless of context.
+Instruction files that auto-apply to matching sessions without any invocation.
 
 | File | Applies To | What It Does |
-|------|------------|--------------|
-| `general-agent-behavior.instructions.md` | `**` (all files) | Requires clarifying questions any time confidence is below 90% |
-| `REVIEW-CONVENTIONS.instructions.md` | `**/code-review/*.md` | Injects shared code review conventions (severity levels, output format, actionable recommendations) when working inside the `/code-review/` output directory |
+|------|------------|--------------||
+| `general-agent-behavior.instructions.md` | `**` (all files) | Requires an Ambiguity Scan before acting on any non-trivial request |
+| `csharp-diagnostics.instructions.md` | `**/*.cs` | Enforces the "Check Changed Files" VS Code task for error checking — never `dotnet build` or `get_errors` |
+| `csharp-tests.instructions.md` | `**/*Tests.cs` | Injects baseline NUnit test conventions: naming pattern, no comments, Moq Verifiable, `[TestCase]` |
 
 **Overview:** [`feature-overviews/always-on-instructions/always-on-instructions.md`](feature-overviews/always-on-instructions/always-on-instructions.md)
 
@@ -156,3 +157,17 @@ A feedback loop built into every skill and agent workflow. After completing a se
 **Skill:** `lessons-learned`
 
 **Overview:** [`feature-overviews/lessons-learned-system/lessons-learned-system.md`](feature-overviews/lessons-learned-system/lessons-learned-system.md)
+
+---
+
+## Update Validated Joists Test Data
+
+A skill workflow that copies characterization test output files from a CI test-run download into the `ValidatedJoists` reference data directories in the repo. Used after a test run produces diffs representing a new intended baseline.
+
+| Invoke | How |
+|--------|-----|
+| `/update-validated-joists-test-data` | Run after a CI test run produces diffs requiring reference data updates |
+
+**Skill:** `update-validated-joists-test-data`
+
+**Overview:** [`feature-overviews/update-validated-joists-test-data/update-validated-joists-test-data.md`](feature-overviews/update-validated-joists-test-data/update-validated-joists-test-data.md)

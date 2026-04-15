@@ -19,7 +19,7 @@ graph LR
     subgraph "Phase 5-7: Design & Planning"
         AD[Architectural Designer<br/>Design System]
         WP[Work Planner<br/>Phase Breakdown]
-        WIC[Work Item Creator<br/>Azure DevOps Items]
+        WIC[@AzureStoryCreation<br/>Azure DevOps Items]
     end
     
     subgraph "Phase 8: Execution"
