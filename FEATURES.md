@@ -122,7 +122,7 @@ Auto-attached rules and skills that improve C# coding workflows without requirin
 Instruction files that auto-apply to matching sessions without any invocation.
 
 | File | Applies To | What It Does |
-|------|------------|--------------||
+|------|------------|--------------|
 | `general-agent-behavior.instructions.md` | `**` (all files) | Requires an Ambiguity Scan before acting on any non-trivial request |
 | `csharp-diagnostics.instructions.md` | `**/*.cs` | Enforces the "Check Changed Files" VS Code task for error checking — never `dotnet build` or `get_errors` |
 | `csharp-tests.instructions.md` | `**/*Tests.cs` | Injects baseline NUnit test conventions: naming pattern, no comments, Moq Verifiable, `[TestCase]` |
