@@ -65,6 +65,21 @@ Use the `/update-copilot-tools` prompt to pull, analyze what changed, and handle
 
 ---
 
+## Self-Perfecting Configuration
+
+Every skill and agent workflow includes a **LessonsLearned feedback loop** — a `LessonsLearned.md` file alongside each `SKILL.md` that accumulates user-specific discoveries across sessions. Agents read it before starting and update it when something notable happens, so the tooling improves without manual refactoring after every session.
+
+Two prompts maintain this loop:
+
+| Prompt | When to use |
+|--------|-------------|
+| `/fork-and-improve` | Mid-session — something went off the rails. Capture the failure, apply the config fix, write the LessonsLearned entry while context is fresh |
+| `/review-lessons` | Periodically — scan all LessonsLearned files across all skills, identify entries that should be promoted to a SKILL.md rule or enforced as a hook, and surface a prioritized action list |
+
+The escalation path keeps passive guidance from staying passive when it keeps failing: a one-off discovery stays in LessonsLearned, a recurring pattern moves into the SKILL.md body, and a pattern that keeps recurring despite being in the skill becomes a hook.
+
+---
+
 ## Feature Map
 
 See [FEATURES.md](FEATURES.md) for a conceptual index of every tool — what it does, how to invoke it, and which files it spans — without needing to dig into the directory structure.
