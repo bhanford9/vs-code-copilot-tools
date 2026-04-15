@@ -62,6 +62,10 @@ Each flow typically contains:
 </domain_context>
 
 <workflow>
+## 0. Read LessonsLearned
+
+Before doing anything else, read `~/Repos/copilot-configs/skills/material-selection-doc/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded patterns or caveats from past documentation sessions.
+
 ## 1. Clarify User Intent
 
 Before any research, confirm with the user:
@@ -132,6 +136,10 @@ After creating the file, ask:
 > - Condensed or simplified
 > - Restructured or reordered
 > - Updated with additional context"
+
+## 6. Update LessonsLearned
+
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/material-selection-doc/LessonsLearned.md`.
 </workflow>
 
 <research_checklist>

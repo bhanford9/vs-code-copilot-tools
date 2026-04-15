@@ -45,6 +45,10 @@ If you skip reading the skill, you will create rework and fail your core respons
 
 ## Workflow
 
+## Step 0: Read LessonsLearned
+
+Before starting any phase, read `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns to your research and story generation.
+
 ### Phase 1: Scope Discovery
 Understand what areas of the codebase will be affected.
 

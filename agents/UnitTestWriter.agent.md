@@ -68,6 +68,10 @@ All four files are REQUIRED reading before writing tests:
 
 ## Workflow
 
+## Step 0: Read LessonsLearned
+
+Before starting any phase, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns and pitfalls to this session.
+
 ### Phase 1: Code Analysis
 Understand the source code and extract what needs testing.
 
