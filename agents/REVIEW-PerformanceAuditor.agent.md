@@ -219,7 +219,7 @@ Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the fe
 </audit_report_template>
 
 <conventions>
-Follow all standards defined in [REVIEW-CONVENTIONS.instructions.md](REVIEW-CONVENTIONS.instructions.md):
+Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md`:
 - Output directory: `/code-review/`
 - File name: `performance-audit.md`
 - Severity levels: Critical, High, Medium, Low

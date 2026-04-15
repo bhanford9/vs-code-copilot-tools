@@ -104,7 +104,7 @@ When first invoked:
 </workflow>
 
 <conventions>
-Follow all standards defined in [REVIEW-CONVENTIONS.instructions.md](REVIEW-CONVENTIONS.instructions.md):
+Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md`:
 - Severity levels: Critical, High, Medium, Low
 - Actionable, specific recommendations
 </conventions>
