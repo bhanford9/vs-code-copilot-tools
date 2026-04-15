@@ -54,3 +54,4 @@ skills/
 | File | Role |
 |------|------|
 | [`skills/lessons-learned/SKILL.md`](../../skills/lessons-learned/SKILL.md) | Governs when and what to write — the canonical feedback loop process |
+| [`skills/review-lessons/SKILL.md`](../../skills/review-lessons/SKILL.md) | Periodic escalation review — discovers all LessonsLearned files, evaluates entries in parallel, synthesizes action report |
