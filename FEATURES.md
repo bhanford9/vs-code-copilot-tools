@@ -153,6 +153,7 @@ A feedback loop built into every skill and agent workflow. After completing a se
 | Invoke | How |
 |--------|-----|
 | `/fork-and-improve` | Capture a mid-session course correction — apply the config fix and write a LessonsLearned entry while context is fresh |
+| `/review-lessons` | Scan all LessonsLearned files, identify escalation candidates (promote to SKILL.md or convert to hook), and surface a prioritized action list |
 
 **Skill:** `lessons-learned`
 

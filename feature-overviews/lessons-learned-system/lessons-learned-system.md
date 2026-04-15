@@ -47,6 +47,7 @@ skills/
 | Invoke | When |
 |--------|------|
 | `/fork-and-improve` | Mid-session course correction — something went off the expected path. Captures what happened, identifies the config fix (SKILL.md, LessonsLearned.md, hook, or instruction file), applies it, and writes the LessonsLearned entry while full context is still fresh |
+| `/review-lessons` | Periodic maintenance — scans all LessonsLearned files across all skills, flags entries that should be promoted to SKILL.md or converted to hooks, and surfaces stale Process/Model entries for removal |
 
 ## Reference Files
 
