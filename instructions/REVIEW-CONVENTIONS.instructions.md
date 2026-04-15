@@ -1,6 +1,3 @@
----
-applyTo: "**/code-review/*.md"
----
 # Code Review Agent Conventions
 
 This document defines shared conventions used by all code review agents to ensure consistency and interoperability.

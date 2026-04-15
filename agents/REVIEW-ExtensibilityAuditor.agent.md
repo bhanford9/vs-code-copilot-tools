@@ -232,6 +232,15 @@ Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the fe
 
 </audit_report_template>
 
+<conventions>
+Follow all standards defined in [REVIEW-CONVENTIONS.instructions.md](REVIEW-CONVENTIONS.instructions.md):
+- Output directory: `/code-review/`
+- File name: `extensibility-audit.md`
+- Severity levels: Critical, High, Medium, Low
+- Changes scope: Since the base branch (detected from session-config.json)
+- Actionable, specific recommendations with code examples
+</conventions>
+
 <audit_principles>
 
 **Standard Issue Pattern:**
