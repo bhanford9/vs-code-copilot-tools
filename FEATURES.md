@@ -95,6 +95,8 @@ An orchestrated audit of all VS Code Copilot agentic tool configurations in the 
 **Agent:** `individual-auditor` (sub-agent, spawned per config item)
 **Skill:** `agentic-tools-auditor`
 
+**Overview:** [`feature-overviews/agentic-tools-auditor/agentic-tools-auditor.md`](feature-overviews/agentic-tools-auditor/agentic-tools-auditor.md)
+
 ---
 
 ## C# Development Assistance
@@ -109,6 +111,8 @@ Auto-attached rules and skills that improve C# coding workflows without requirin
 **Instructions:** `csharp-diagnostics.instructions.md`, `csharp-tests.instructions.md` (auto-applied to `*.cs` files)
 **Skills:** `checking-csharp-errors`, `writing-csharp-tests`
 
+**Overview:** [`feature-overviews/csharp-development/csharp-development.md`](feature-overviews/csharp-development/csharp-development.md)
+
 ---
 
 ## Always-On Instructions
@@ -119,6 +123,8 @@ Instruction files that apply to every chat session regardless of context.
 |------|------------|--------------|
 | `general-agent-behavior.instructions.md` | `**` (all files) | Requires clarifying questions any time confidence is below 90% |
 | `REVIEW-CONVENTIONS.instructions.md` | `**/code-review/*.md` | Injects shared code review conventions (severity levels, output format, actionable recommendations) when working inside the `/code-review/` output directory |
+
+**Overview:** [`feature-overviews/always-on-instructions/always-on-instructions.md`](feature-overviews/always-on-instructions/always-on-instructions.md)
 
 ---
 
@@ -133,6 +139,8 @@ Small pre/post-turn scripts that run automatically during agent sessions.
 | `block-devops-fetch` | PreToolUse | Agent-scoped (inline in `REVIEW-RequirementsAuditor.agent.md`) | Prevents the Requirements Auditor from making external API/DevOps fetch calls during review |
 | `check-auditor-output` | SubagentStop | Agent-scoped (inline in `REVIEW-ParallelAuditCoordinator.agent.md`) | Verifies each parallel code review auditor produced its expected output file |
 
+**Overview:** [`feature-overviews/hooks/hooks.md`](feature-overviews/hooks/hooks.md)
+
 ---
 
 ## Lessons Learned System
@@ -140,3 +148,5 @@ Small pre/post-turn scripts that run automatically during agent sessions.
 A feedback loop built into every skill and agent workflow. After completing a session, the agent reflects on what was hard or surprising and appends findings to a `LessonsLearned.md` file alongside the relevant skill. Future sessions read it first to avoid repeating mistakes.
 
 **Skill:** `lessons-learned`
+
+**Overview:** [`feature-overviews/lessons-learned-system/lessons-learned-system.md`](feature-overviews/lessons-learned-system/lessons-learned-system.md)
