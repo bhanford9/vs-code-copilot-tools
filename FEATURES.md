@@ -159,16 +159,4 @@ A feedback loop built into every skill and agent workflow. After completing a se
 
 **Overview:** [`feature-overviews/lessons-learned-system/lessons-learned-system.md`](feature-overviews/lessons-learned-system/lessons-learned-system.md)
 
----
 
-## Update Validated Joists Test Data
-
-A skill workflow that copies characterization test output files from a CI test-run download into the `ValidatedJoists` reference data directories in the repo. Used after a test run produces diffs representing a new intended baseline.
-
-| Invoke | How |
-|--------|-----|
-| `/update-validated-joists-test-data` | Run after a CI test run produces diffs requiring reference data updates |
-
-**Skill:** `update-validated-joists-test-data`
-
-**Overview:** [`feature-overviews/update-validated-joists-test-data/update-validated-joists-test-data.md`](feature-overviews/update-validated-joists-test-data/update-validated-joists-test-data.md)
