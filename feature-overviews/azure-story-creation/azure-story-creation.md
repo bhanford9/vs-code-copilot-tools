@@ -22,7 +22,7 @@ Discover scope → Research the codebase → Clarify with user → Generate stor
 
 4. **Generate** — Read the full skill reference (format rules, template, examples, lessons learned) immediately before writing. The story structure is defined entirely by the skill — not model assumptions.
 
-The `LessonsLearned.md` file accumulates project-specific patterns across sessions so research doesn't repeat.
+The `LessonsLearned` files accumulate patterns across sessions so research doesn't repeat. `LessonsLearned.GLOBAL.md` holds process/format improvements (tracked in git); `LessonsLearned.md` holds project-specific story patterns (gitignored, per-user).
 
 ## Story Structure
 
@@ -52,5 +52,5 @@ The skill enforces the distinction between outcome-focused language (Goal/Accept
 | [`skills/creating-azure-stories/FORMAT_RULES.md`](../../skills/creating-azure-stories/FORMAT_RULES.md) | Detailed formatting requirements per section |
 | [`skills/creating-azure-stories/TEMPLATE.md`](../../skills/creating-azure-stories/TEMPLATE.md) | Canonical story template |
 | [`skills/creating-azure-stories/EXAMPLES.md`](../../skills/creating-azure-stories/EXAMPLES.md) | Good and bad story examples |
-| [`skills/creating-azure-stories/LessonsLearned.md`](../../skills/creating-azure-stories/LessonsLearned.md) | Accumulated patterns from past sessions |
+| [`skills/creating-azure-stories/LessonsLearned.GLOBAL.md`](../../skills/creating-azure-stories/LessonsLearned.GLOBAL.md) | Accumulated process/format patterns (tracked in git) |
 | [`agents/AzureStoryCreation.agent.md`](../../agents/AzureStoryCreation.agent.md) | Full agent definition and phase-by-phase workflow |

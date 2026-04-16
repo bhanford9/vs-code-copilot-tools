@@ -2,6 +2,11 @@
 *.zip
 *.log
 
+# Per-user lessons learned — workspace/codebase-specific, never shared
+# Each user's LessonsLearned.md grows independently per workspace.
+# Globally-applicable process notes live in LessonsLearned.GLOBAL.md (tracked).
+**/LessonsLearned.md
+
 # VS Code Copilot runtime data
 command-history-state.json
 config.json
@@ -10,3 +15,5 @@ config.json
 prompts/consolidate-copilot-tools.prompt.md
 prompts/pack-copilot-tools.prompt.md
 prompts/unpack-copilot-tools.prompt.md
+
+.github/**

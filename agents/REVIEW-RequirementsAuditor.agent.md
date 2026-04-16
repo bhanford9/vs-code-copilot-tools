@@ -41,7 +41,7 @@ Your mission: Understand what the code changes are trying to accomplish at a hig
 
 ## 0. Read LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` and apply any recorded patterns.
+Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
 
 ## 1. Analyze Code Changes
 
@@ -129,7 +129,11 @@ Then tell the user they can click the **"Continue to Code Correctness Audit"** h
 
 ## Update LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`.
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (false positives specific to this codebase, project-specific patterns) → write to `LessonsLearned.md`
+- **Process/Model findings** (recurring false positive types, agent behavior gaps across any codebase) → write to `LessonsLearned.GLOBAL.md`
+
+Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/`.
 
 </workflow>
 

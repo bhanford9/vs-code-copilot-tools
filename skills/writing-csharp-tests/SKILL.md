@@ -1,6 +1,6 @@
 ---
 name: writing-csharp-tests
-description: Guidelines for writing NUnit tests in CSharp codebase including naming conventions, mocking with Moq, and verification patterns. Use when writing unit tests, test methods, creating test classes, setting up mocks, or when user mentions testing, NUnit, Moq, test cases, assertions, test fixtures, unit testing, mock setup, test standards, or test conventions. CRITICAL - Always read COMMON-PITFALLS.md before writing tests to avoid frequent failures.
+description: Guidelines for writing NUnit tests in CSharp codebase including naming conventions, mocking with Moq, and verification patterns. Use when writing unit tests, test methods, creating test classes, setting up mocks, or when user mentions testing, NUnit, Moq, test cases, assertions, test fixtures, unit testing, mock setup, test standards, or test conventions.
 ---
 
 # Writing C# Unit Tests
@@ -20,27 +20,25 @@ Unit Test Checklist:
 - [ ] Dependencies mocked with Moq where possible
 - [ ] Verifiable pattern used for mock expectations
 - [ ] Parameterized tests for simple variations
-- [ ] Read [COMMON-PITFALLS.md](COMMON-PITFALLS.md) for type verification
-- [ ] Read [PROJECT-HELPERS.md](PROJECT-HELPERS.md) for non-mockable types
-- [ ] Read LessonsLearned.md for past codebase-specific discoveries
+- [ ] Read LessonsLearned.GLOBAL.md for process notes
+- [ ] Read LessonsLearned.md for codebase-specific type/mock discoveries (if it exists)
 ```
 
-## CRITICAL: Read These Files First
+## Before Writing Tests: Read Both LessonsLearned Files
 
 **Before writing any tests, read:**
-- **[COMMON-PITFALLS.md](COMMON-PITFALLS.md)** - Enum namespace disambiguation, enum value verification, property type verification, nested property mocking
-- **[PROJECT-HELPERS.md](PROJECT-HELPERS.md)** - Non-mockable classes, project-specific support helpers (DomainTestHelper, TestFixtureHelper)
-- **[LessonsLearned.md](LessonsLearned.md)** — Codebase-specific discoveries from past sessions: enum namespace resolutions, type surprises, mocking approaches
+- **[LessonsLearned.GLOBAL.md](LessonsLearned.GLOBAL.md)** — Process notes, workflow guidance, and patterns that apply across any C# codebase
+- **[LessonsLearned.md](LessonsLearned.md)** — Your codebase-specific discoveries: enum namespaces, non-mockable types, support helper locations, property type surprises (exists on disk but not tracked in git; may not exist in a fresh clone)
 
-These files contain critical information about frequent test failures. Reading them first will prevent compilation errors and incorrect test setups.
+These files accumulate codebase-specific knowledge over time. Reading them first prevents compilation errors and avoids repeating past mistakes.
 
 ## Complete Example
 
 This example demonstrates all best practices:
 
 ```csharp
-// Note: Direction usage here is illustrative. Always verify the actual namespace before use
-// — identical enum names exist across multiple namespaces in this codebase (see COMMON-PITFALLS.md).
+// Note: Always verify the actual namespace before using enum types.
+// — identical enum names can exist across multiple namespaces in a codebase.
 [TestCase(Direction.Left, ExpectedResult = 100.0)]
 [TestCase(Direction.Right, ExpectedResult = 100.0)]
 public double ShouldCalculateValueWhenDirectionIsSet(Direction direction)
@@ -64,7 +62,7 @@ public double ShouldCalculateValueWhenDirectionIsSet(Direction direction)
 
 ### Prefer Mocking
 Mock dependencies (other classes/services) using Moq to isolate the unit under test.
-**Refer to [PROJECT-HELPERS.md](PROJECT-HELPERS.md) for details on how to handle non-mockable types**
+For non-mockable types (records, structs, concrete classes), check `LessonsLearned.md` for project-specific support helpers.
 
 ### Verifiable Pattern
 For mocked dependencies with expectations, use Verifiable pattern:
@@ -78,6 +76,8 @@ Assert.That(sut.Result, Is.EqualTo(expectedResult));
 
 ## Feedback Loop
 
-Before starting, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` and apply any codebase-specific discoveries from past sessions.
+Before starting, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`. Apply any recorded patterns to this session.
 
-After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`.
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (type locations, enum namespaces, non-mockable types, support helpers) → write to `LessonsLearned.md`
+- **Process/Model findings** (agent behavior, workflow gaps) → write to `LessonsLearned.GLOBAL.md`

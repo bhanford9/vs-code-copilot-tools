@@ -64,6 +64,10 @@ Confirm in VS Code Settings UI or by checking `settings.json` that:
 
 ## Feedback Loop
 
-Before starting, read `~/Repos/copilot-configs/skills/merge-copilot-settings/LessonsLearned.md` if it exists and apply any recorded watch-outs.
+Before starting, read `~/Repos/copilot-configs/skills/merge-copilot-settings/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/merge-copilot-settings/LessonsLearned.md`. Apply any recorded watch-outs.
 
-After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/merge-copilot-settings/LessonsLearned.md`.
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (machine-specific paths, local settings quirks) → write to `LessonsLearned.md`
+- **Process findings** (merge workflow improvements) → write to `LessonsLearned.GLOBAL.md`
+
+Both files are at `~/Repos/copilot-configs/skills/merge-copilot-settings/`.

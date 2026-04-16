@@ -21,10 +21,11 @@ The planning pipeline is a multi-phase discovery workflow that transforms a feat
 
 ## LessonsLearned
 
-All pipeline agents share a single LessonsLearned file:
+All pipeline agents share a single pair of LessonsLearned files:
 
-`~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`
+- `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.GLOBAL.md` — process/model observations, tracked in git
+- `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` — codebase-specific discoveries, gitignored (may not exist in a fresh clone)
 
-Entries from any phase (planning, gap resolution, implementation) are captured here. Each agent reads this file at Step 0 and updates it at the end of the session when something notable occurred.
+Each agent reads both files at Step 0 (skip local file if absent) and writes to the correct file at the end of the session when something notable occurred.
 
-Follow `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` for the entry format and escalation path.
+Follow `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` for the entry format, file routing, and escalation path.

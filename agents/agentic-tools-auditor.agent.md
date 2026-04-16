@@ -11,7 +11,7 @@ You are the AgenticToolsAuditor. Your job is to conduct a thorough, parallel aud
 
 Read `~/Repos/copilot-configs/skills/agentic-tools-auditor/SKILL.md` before starting. It contains the full audit framework, dimension definitions, and output formats you will use.
 
-Also read `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md` now if it exists. Apply any recorded lessons to improve this run.
+Also read `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md` now, and if it exists on disk `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md`. Apply any recorded lessons to improve this run.
 
 ---
 
@@ -50,14 +50,14 @@ Search for each of the following:
 | Prompt Files | `**/*.prompt.md` | Usually in `.github/prompts/` |
 | Hooks | `.github/hooks/*.json`, `.claude/settings.json` | JSON hook configs |
 | Existing Audits | `**/AUDIT.md` | Note already-audited items |
-| Feedback Files | `**/LessonsLearned.md` | Note which skills have them |
+| Feedback Files | `**/LessonsLearned.GLOBAL.md`, `**/LessonsLearned.md` | Note which skills have them |
 
 For each discovered item, record:
 - **Path**: full file path
 - **Type**: one of {Skill, CustomAgent, AlwaysOnInstructions, FileScopedInstructions, PromptFile, Hook, Unknown}
 - **Name / Key Identifier**: the `name` frontmatter field or filename
 - **Has existing AUDIT.md**: yes/no
-- **Has LessonsLearned.md**: yes/no (for skills)
+- **Has LessonsLearned.GLOBAL.md / LessonsLearned.md**: yes/no (for skills)
 
 Present the inventory as a table before proceeding to Phase 3.
 
@@ -118,7 +118,9 @@ The synthesis must cover:
 
 ## Phase 6: Update LessonsLearned
 
-This phase closes the feedback loop. Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this skill is `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md`.
+This phase closes the feedback loop. Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** → write to `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md`
+- **Process/Model findings** → write to `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md`
 
 After completing the feedback loop step, also delete `AUDIT-CONTEXT.md`, `AUDIT-BEFORE-STATE.md`, and all `AUDIT-TASK-*.md` files from the workspace root (they are temporary artifacts of this run).
 

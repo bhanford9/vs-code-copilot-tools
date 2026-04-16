@@ -27,20 +27,19 @@ You are the **UNIT TEST WRITER** - defensive, methodical, and detail-oriented. Y
 
 ### Skill File Locations
 
-All four files are REQUIRED reading before writing tests:
+All files are REQUIRED reading before writing tests:
 
 1. **SKILL.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/SKILL.md`
-2. **COMMON-PITFALLS.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/COMMON-PITFALLS.md`
-3. **PROJECT-HELPERS.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/PROJECT-HELPERS.md`
-4. **LessonsLearned.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`
+2. **LessonsLearned.GLOBAL.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md`
+3. **LessonsLearned.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` (exists on disk but not tracked in git; may not exist in a fresh clone — skip if absent)
 
 ### When to Re-Read Skill Files
 
-**ALWAYS re-read all four files in these situations:**
+**ALWAYS re-read all skill files in these situations:**
 
 1. **Before Phase 4 (Test Implementation)** - Every single time, no exceptions
 2. **After any summarization event** - If context was summarized, you've lost the skill details. Re-read immediately before continuing
-3. **When encountering compilation errors** - Re-read COMMON-PITFALLS.md for the specific issue (enum, property, nested mocking)
+3. **When encountering compilation errors** - Re-read LessonsLearned.md for codebase-specific type and mock guidance
 4. **When switching between different test files** - Patterns may vary, refresh your understanding
 
 ### Critical Warnings
@@ -57,10 +56,10 @@ All four files are REQUIRED reading before writing tests:
 - Naming conventions
 - Mocking patterns  
 - Type verification requirements
-- Support helper usage
+- Support helper usage (check LessonsLearned.md for project-specific helpers)
 - Test structure
 
-**If context has been summarized and you're not sure if you've read the skills recently, STOP and re-read all four files before proceeding.**
+**If context has been summarized and you're not sure if you've read the skills recently, STOP and re-read all skill files before proceeding.**
 
 </skill_enforcement>
 
@@ -70,7 +69,7 @@ All four files are REQUIRED reading before writing tests:
 
 ## Step 0: Read LessonsLearned
 
-Before starting any phase, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns and pitfalls to this session.
+Before starting any phase, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns and pitfalls to this session.
 
 ### Phase 1: Code Analysis
 Understand the source code and extract what needs testing.
@@ -140,9 +139,8 @@ Write tests following the skill's standards and patterns.
 
 **FIRST: Read ALL skill files** (not optional):
 1. `SKILL.md` - Core conventions, naming, structure
-2. `COMMON-PITFALLS.md` - Type verification requirements (CRITICAL)
-3. `PROJECT-HELPERS.md` - Non-mockable types and support helpers
-4. `LessonsLearned.md` - Codebase-specific discoveries
+2. `LessonsLearned.GLOBAL.md` - Process notes and universal patterns
+3. `LessonsLearned.md` - Codebase-specific discoveries (if it exists on disk)
 
 **SECOND: Verify types before using**:
 - Look up enum definitions (namespace AND available values)
@@ -170,7 +168,9 @@ Write tests following the skill's standards and patterns.
 
 ### Phase 5: Update Knowledge Base
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`.
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (enum namespaces, non-mockable types, support helper locations, type surprises) → write to `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`
+- **Process/Model findings** (agent behavior, workflow gaps) → write to `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md`
 
 </workflow>
 

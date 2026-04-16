@@ -17,7 +17,7 @@ Azure Story Creation:
 - [ ] Specify technical details (where/what, no code)
 - [ ] Create 3-7 high-level acceptance criteria
 - [ ] Review against format requirements
-- [ ] Append to LessonsLearned.md if new codebase patterns were discovered
+- [ ] Append to LessonsLearned.md (codebase patterns) or LessonsLearned.GLOBAL.md (process/format improvements) if something notable was discovered
 ```
 
 ## Required Story Structure
@@ -70,6 +70,10 @@ Checkbox list of testable business requirements:
 
 ## Feedback Loop
 
-Before writing a story, read [LessonsLearned.md](LessonsLearned.md) and apply any codebase-specific patterns from past sessions.
+Before writing a story, read [LessonsLearned.GLOBAL.md](LessonsLearned.GLOBAL.md) and, if it exists on disk, [LessonsLearned.md](LessonsLearned.md). Apply any recorded patterns from past sessions.
 
-After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. LessonsLearned file: `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md`.
+After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (story patterns specific to this codebase, work item formats, team conventions) → write to `LessonsLearned.md`
+- **Process/format improvements** (story structure guidance applicable to any codebase) → write to `LessonsLearned.GLOBAL.md`
+
+Both files are at `~/Repos/copilot-configs/skills/creating-azure-stories/`.

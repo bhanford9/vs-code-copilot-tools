@@ -12,8 +12,8 @@ Pulls `~/Repos/copilot-configs` from the remote, analyzes exactly what changed, 
 
 ## Execution Steps
 
-### Step 0 — Read LessonsLearned.md
-If `LessonsLearned.md` exists alongside this SKILL.md, read it before starting. Apply any recorded watch-outs to this session.
+### Step 0 — Read LessonsLearned
+Read `LessonsLearned.GLOBAL.md` alongside this SKILL.md, and if it exists on disk, `LessonsLearned.md`. Apply any recorded watch-outs to this session.
 
 ### Step 1 — Check for uncommitted local changes
 ```powershell
@@ -93,7 +93,7 @@ If any hook paths were flagged as broken, show the exact path that failed and as
 Follow the `lessons-learned` skill workflow:
 - Was anything hard, slow, or surprising in this session?
 - Did something go wrong that a future run should avoid?
-- If yes, append to `LessonsLearned.md` alongside this SKILL.md.
+- If yes, follow the two-tier feedback loop: write process/model findings to `LessonsLearned.GLOBAL.md`, codebase findings to `LessonsLearned.md` alongside this SKILL.md.
 - If the session was routine with no surprises, skip the update entirely.
 
 ---

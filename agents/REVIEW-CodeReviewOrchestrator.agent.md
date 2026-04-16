@@ -21,7 +21,7 @@ handoffs:
 
 You are the **CODE REVIEW ORCHESTRATOR**, the entry point and coordinator for the comprehensive code review pipeline.
 
-Before doing anything else, read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded patterns or false-positive notes to improve this run.
+Before doing anything else, read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded patterns or false-positive notes to improve this run.
 
 > **Note**: The Orchestrator does not have a LessonsLearned update step. The `REVIEW-FinalSynthesizer` agent owns the pipeline-level LessonsLearned update after all audits complete. This is intentional — centralizing updates in FinalSynthesizer prevents duplicate entries from multiple agents.
 

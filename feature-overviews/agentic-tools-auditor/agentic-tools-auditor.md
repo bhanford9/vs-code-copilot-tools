@@ -24,7 +24,7 @@ Fetch docs → Discover all configs → Plan batches → Audit in parallel → S
 
 5. **Synthesize** — The orchestrator reads all `AUDIT.md` outputs and produces `AUDIT-SYNTHESIS.md`: an executive summary, cross-cutting themes, conflicts between items, shared abstractions worth extracting, architectural improvement proposals, and a phased implementation roadmap. Redundant recommendations are collapsed before sequencing.
 
-6. **LessonsLearned** — Any notable audit patterns or workflow surprises are appended to `LessonsLearned.md`.
+6. **LessonsLearned** — Any notable process/model findings are appended to `LessonsLearned.GLOBAL.md`. Codebase-specific findings go to the local `LessonsLearned.md` (gitignored).
 
 ## Why Parallel Sub-Agents and a Synthesis Phase
 
@@ -47,6 +47,6 @@ The separation also enables a stronger synthesis phase. Because each sub-agent f
 | File | Role |
 |------|------|
 | [`skills/agentic-tools-auditor/SKILL.md`](../../skills/agentic-tools-auditor/SKILL.md) | Audit framework, dimension definitions, tool type reference table, output formats |
-| [`skills/agentic-tools-auditor/LessonsLearned.md`](../../skills/agentic-tools-auditor/LessonsLearned.md) | Accumulated watch-outs from past audit sessions |
+| [`skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md`](../../skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md) | Accumulated watch-outs from past audit sessions (process/model, tracked in git) |
 | [`agents/agentic-tools-auditor.agent.md`](../../agents/agentic-tools-auditor.agent.md) | Orchestrator agent — full six-phase workflow |
 | [`agents/individual-auditor.agent.md`](../../agents/individual-auditor.agent.md) | Sub-agent — per-item audit execution |

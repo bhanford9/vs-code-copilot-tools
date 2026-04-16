@@ -19,7 +19,8 @@ Determine which file owns the fix:
 | If the issue is... | Fix goes in... |
 |--------------------|----------------|
 | A rule the agent keeps forgetting | SKILL.md or agent workflow |
-| A codebase-specific fact (types, paths, conventions) | LessonsLearned.md |
+| A codebase-specific fact (types, paths, conventions) | LessonsLearned.md (gitignored, local) |
+| A process/model observation (agent behavior gap) | LessonsLearned.GLOBAL.md (tracked in git) |
 | A binary rule that keeps being violated | Escalate to a hook |
 | A rule that applies to every session | `.instructions.md` with `applyTo: "**"` |
 | A rule specific to a file type | `.instructions.md` with scoped `applyTo` |
@@ -32,12 +33,14 @@ Make the targeted change to the identified file. Keep it minimal — fix only wh
 
 ## Step 4: Write the LessonsLearned Entry
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process to write an entry capturing:
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process to write an entry capturing:
 - What the failure was
 - What was changed to fix it
 - Category tag: `Codebase` (project-specific fact) or `Process/Model` (agent behavior/workflow gap)
 
-Write to the LessonsLearned.md file for the relevant skill. If no LessonsLearned.md exists for that skill yet, create it as a stub alongside the SKILL.md.
+Route based on category:
+- `Category: Codebase` → write to `LessonsLearned.md` for the relevant skill (gitignored; create if it doesn't exist)
+- `Category: Process/Model` → write to `LessonsLearned.GLOBAL.md` for the relevant skill (tracked in git; create if it doesn't exist)
 
 ## Step 5: Confirm and Return
 

@@ -60,7 +60,7 @@ Drive toward concrete decisions and clear specifications that enable implementat
 
 ## Step 0: Read LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` and apply any recorded patterns or watch-outs to improve this session.
+Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`. Apply any recorded patterns or watch-outs to improve this session.
 
 ## Step 0: Verify Prerequisites
 
@@ -220,7 +220,11 @@ Your goal is to eliminate ambiguities through focused dialogue that leads to con
 
 ## Update LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process. The LessonsLearned file for this workflow is `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md`.
+Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (project patterns, team conventions, discovered behaviors) → write to `LessonsLearned.md`
+- **Process/Model findings** (agent behavior, workflow gaps) → write to `LessonsLearned.GLOBAL.md`
+
+Both files are at `~/Repos/copilot-configs/skills/planning-pipeline/`.
 
 <reminder>
 Your success is measured by the quality and completeness of gap resolutions, not by speed. Take the time needed to ensure each gap is truly resolved with actionable clarity.

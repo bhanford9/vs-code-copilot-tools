@@ -5,7 +5,7 @@ description: "Audit VS Code Copilot agentic workspace configurations including S
 
 # Agentic Tools Auditor
 
-Before beginning any audit work, read [LessonsLearned.md](./LessonsLearned.md) if it exists in this skill directory.
+Before beginning any audit work, read [LessonsLearned.GLOBAL.md](./LessonsLearned.GLOBAL.md) and, if it exists on disk, [LessonsLearned.md](./LessonsLearned.md).
 
 ## Purpose
 
@@ -42,7 +42,11 @@ Use this table as the primary guide for fit assessment:
 
 ### The LessonsLearned Feedback Loop Pattern
 
-Place a `LessonsLearned.md` next to any `SKILL.md`. The skill's workflow instructions and any companion agent's final phase should direct the agent to read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the feedback loop process — reading LessonsLearned.md before starting and writing a brief entry only if the session surfaced something notable. This pattern should be recommended for every skill-level workflow that involves complex multi-step procedures.
+Each skill directory uses a **two-tier** system:
+- `LessonsLearned.GLOBAL.md` — tracked in git; process/model notes applicable across any workspace
+- `LessonsLearned.md` — gitignored, per-user; codebase-specific facts (type locations, naming conventions, team patterns)
+
+Place both files next to any `SKILL.md`. The skill's workflow instructions and any companion agent's final phase should direct the agent to read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process. This pattern should be recommended for every skill-level workflow that involves complex multi-step procedures.
 
 ---
 
@@ -59,7 +63,8 @@ When auditing a workspace, scan for all of the following before planning individ
 | `.github/instructions/*.instructions.md` | File-scoped Instructions | May be nested in subdirectories |
 | `.github/prompts/*.prompt.md` | Prompt File | May be nested in subdirectories |
 | `.github/hooks/*.json` | Hooks | Also check `.claude/settings.json` |
-| `**/LessonsLearned.md` | Feedback loop | Note which skills have them and which are missing |
+| `**/LessonsLearned.GLOBAL.md` | Feedback loop (global) | Note which skills have them and which are missing |
+| `**/LessonsLearned.md` | Feedback loop (local) | Note which skills have a local file (gitignored, per-user) |
 
 ---
 
@@ -150,12 +155,12 @@ Where could a LessonsLearned.md feedback loop create continuous improvement?
 - Is there a `LessonsLearned.md` alongside this skill or agent? If not, should there be?
 - Does the skill/agent workflow include a read step at the start and an update step at the end?
 
-**Health check** (for existing LessonsLearned.md files):
+**Health check** (for existing LessonsLearned files):
 - **Escalation candidates**: Does the same topic appear across 3+ separate entries? Flag for promotion to SKILL.md or conversion to a hook.
-- **Category distribution**: Are entries tagged `Codebase` vs. `Process/Model`? If not tagged, note that the new category tagging convention should be applied. If > 60% are `Process/Model`, note that many entries may need model-upgrade review.
-- **Cross-skill duplicates**: Does a pattern in this LessonsLearned.md also appear in another skill's file? It may belong in a shared instruction instead.
+- **Category routing**: Are entries tagged `Codebase` vs. `Process/Model`? `Codebase` entries must be in `LessonsLearned.md` (gitignored). `Process/Model` entries must be in `LessonsLearned.GLOBAL.md`. If any `Codebase` entries are found in `LessonsLearned.GLOBAL.md`, flag as a content leak.
+- **Cross-skill duplicates**: Does a pattern in a LessonsLearned file also appear in another skill's file? It may belong in a shared instruction instead.
 
-**Seeding a new LessonsLearned.md**: Use the failure modes identified in Dimensions 2 and 3. The `lessons-learned` skill (`~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`) defines how the file should be maintained, including the escalation path from guidance to enforcement.
+**Seeding new LessonsLearned files**: Use the failure modes identified in Dimensions 2 and 3. The `lessons-learned` skill (`~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`) defines how the two-tier system works, including the escalation path from guidance to enforcement. Seed `LessonsLearned.GLOBAL.md` with process/model observations; `LessonsLearned.md` should be seeded only by the user locally (it is gitignored).
 
 ### 5. Automation Opportunities (Hooks)
 
@@ -364,8 +369,8 @@ After completing roadmap items, verify the changes work as intended:
 - [ ] Renamed skills: confirm `name` frontmatter matches directory name exactly; test semantic matching with a relevant prompt
 - [ ] New `.instructions.md` files: open a matching file type in VS Code and confirm the instructions appear in the agent context
 - [ ] Pruned skill content: confirm the skill still covers its full workflow; nothing needed was removed
-- [ ] New `LessonsLearned.md` files: confirm the seeded content is accurate and not contradicted by the skill's existing reference files
-- [ ] Feedback loop wiring: trigger the agent through one session and confirm it reaches the LessonsLearned update step
+- [ ] New `LessonsLearned.GLOBAL.md` files: confirm seeded content is accurate and contains only `Process/Model` entries (no codebase-specific content)
+- [ ] Feedback loop wiring: trigger the agent through one session and confirm it reaches the LessonsLearned update step and routes to the correct file based on category
 - [ ] `disable-model-invocation` on sub-agents: confirm the agent does not appear when semantically matching a relevant prompt
 - [ ] Hook scripts: test the hook fires by checking the GitHub Copilot Chat Hooks output channel
 - [ ] Fixed handoffs: confirm the target agent name in `agent:` matches an existing agent's `name` frontmatter exactly

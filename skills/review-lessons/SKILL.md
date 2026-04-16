@@ -1,15 +1,17 @@
 ---
 name: review-lessons
-description: Scan all LessonsLearned.md files across all skills, evaluate each entry for escalation candidates using parallel subagents, and synthesize a prioritized action report. Use when running a periodic maintenance review of the LessonsLearned feedback loop.
+description: Scan all LessonsLearned.GLOBAL.md files across all skills, evaluate each entry for escalation candidates using parallel subagents, and synthesize a prioritized action report. Use when running a periodic maintenance review of the LessonsLearned feedback loop.
 ---
 
 # Review Lessons Workflow
 
-A periodic maintenance workflow that reads every `LessonsLearned.md` file in the skills directory, evaluates entries against the escalation criteria from the `lessons-learned` skill, and surfaces candidates that should be promoted to SKILL.md, converted to hooks, or removed as stale.
+A periodic maintenance workflow that reads every `LessonsLearned.GLOBAL.md` file in the skills directory, evaluates entries against the escalation criteria from the `lessons-learned` skill, and surfaces candidates that should be promoted to SKILL.md, converted to hooks, or removed as stale.
+
+> **Note on the two-tier system**: Only `LessonsLearned.GLOBAL.md` files are scanned here — these contain `Process/Model` entries that are candidates for escalation. Local `LessonsLearned.md` files are gitignored, per-user codebase files and are not reviewed in this workflow (they are user-specific and do not escalate to shared tooling).
 
 ## Before Starting
 
-Read `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded patterns to improve this session.
+Read `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.GLOBAL.md` per the `lessons-learned` skill. Apply any recorded patterns to improve this session.
 
 ## Step 1: Load Escalation Criteria
 
@@ -22,17 +24,17 @@ Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` in full. Extract 
 
 ## Step 2: Discover All LessonsLearned Files
 
-Use a glob or recursive search to find **all** `LessonsLearned.md` files under `~/Repos/copilot-configs/skills/`. Do not rely on a hardcoded list — the set of skills grows and shrinks over time.
+Use a glob or recursive search to find **all** `LessonsLearned.GLOBAL.md` files under `~/Repos/copilot-configs/skills/`. Do not rely on a hardcoded list — the set of skills grows and shrinks over time.
 
 ```powershell
-Get-ChildItem -Path "~/Repos/copilot-configs/skills" -Recurse -Filter "LessonsLearned.md" | Select-Object -ExpandProperty FullName
+Get-ChildItem -Path "~/Repos/copilot-configs/skills" -Recurse -Filter "LessonsLearned.GLOBAL.md" | Select-Object -ExpandProperty FullName
 ```
 
 Record the complete list before proceeding. If zero files are found, report that and stop.
 
 ## Step 3: Parallel Evaluation
 
-Spawn a subagent for each discovered `LessonsLearned.md` using the `runSubagent` tool. Spawn **all subagents simultaneously** — do not wait for one to finish before starting the next.
+Spawn a subagent for each discovered `LessonsLearned.GLOBAL.md` using the `runSubagent` tool. Spawn **all subagents simultaneously** — do not wait for one to finish before starting the next.
 
 Each subagent receives the prompt below, with `{path}` and `{skill_name}` substituted with actual values:
 
@@ -41,7 +43,7 @@ Each subagent receives the prompt below, with `{path}` and `{skill_name}` substi
 ### Subagent Prompt Template
 
 ```
-You are evaluating a single LessonsLearned.md file for escalation candidates.
+You are evaluating a single LessonsLearned.GLOBAL.md file for escalation candidates.
 
 Read this file in full: {path}
 
@@ -56,7 +58,7 @@ For every entry in the file, evaluate it against the criteria and assign exactly
 
 Return ONLY a markdown block in exactly this format. No preamble, no explanation outside the table.
 
-## {skill_name} (`skills/{skill_folder}/LessonsLearned.md`)
+## {skill_name} (`skills/{skill_folder}/LessonsLearned.GLOBAL.md`)
 
 | Entry | Category | Flag | Reasoning |
 |-------|----------|------|-----------|
@@ -91,8 +93,8 @@ Format:
 | Priority | Skill | Entry | Action | Files Affected |
 |----------|-------|-------|--------|----------------|
 | Hook | {skill} | {entry heading} | Create a hook that enforces: {description} | `hooks/`, `hooks/scripts/` |
-| Promote | {skill} | {entry heading} | Move to `{skill}/SKILL.md`; remove from LessonsLearned | `SKILL.md`, `LessonsLearned.md` |
-| Stale | {skill} | {entry heading} | Confirm with user — remove if no longer applicable | `LessonsLearned.md` |
+| Promote | {skill} | {entry heading} | Move to `{skill}/SKILL.md`; remove from LessonsLearned.GLOBAL.md | `SKILL.md`, `LessonsLearned.GLOBAL.md` |
+| Stale | {skill} | {entry heading} | Confirm with user — remove if no longer applicable | `LessonsLearned.GLOBAL.md` |
 
 If there are no non-OK entries across all files, report: "No escalation candidates found. All entries are appropriately placed."
 
@@ -106,4 +108,4 @@ Present the full report to the user. Then ask:
 
 ## After Completing
 
-Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.md` if warranted.
+Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content).

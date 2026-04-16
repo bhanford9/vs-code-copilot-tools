@@ -5,7 +5,7 @@ description: Multi-agent code review workflow covering requirements, correctness
 
 # Code Review Pipeline
 
-Before beginning any review work, read [LessonsLearned.md](./LessonsLearned.md) if it exists alongside this file and apply any recorded patterns to the session.
+Before beginning any review work, read [LessonsLearned.GLOBAL.md](./LessonsLearned.GLOBAL.md) and, if it exists on disk, [LessonsLearned.md](./LessonsLearned.md). Apply any recorded patterns to the session.
 
 ## Overview
 
@@ -39,11 +39,8 @@ All REVIEW-* agents must explicitly read `~/Repos/copilot-configs/skills/code-re
 
 ## Lessons Learned
 
-The `LessonsLearned.md` alongside this file captures accumulated patterns from completed review sessions:
+This skill uses the two-tier LessonsLearned system:
+- `LessonsLearned.GLOBAL.md` (tracked in git) — recurring false-positive types, workflow patterns applicable to any codebase
+- `LessonsLearned.md` (gitignored) — codebase-specific patterns: conventions that look wrong but are intentional, project-specific false positives to suppress
 
-- Recurring codebase patterns that look wrong but are intentional conventions
-- Known false positives to suppress or downgrade
-- Missing coverage areas discovered after the fact
-- Notes on what each auditor caught vs. missed
-
-`REVIEW-FinalSynthesizer` reads this file before every synthesis to apply known patterns. Append a new entry after any session that surfaces something a future agent should know. See the `lessons-learned` skill for guidance on what to write and when.
+`REVIEW-FinalSynthesizer` reads both files before every synthesis. Append entries after any session that surfaces something a future agent should know. See the `lessons-learned` skill for guidance on which file to write to and when.

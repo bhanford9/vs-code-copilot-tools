@@ -45,7 +45,7 @@ Can be invoked standalone (e.g., after setting up a new machine) or as part of t
 | File | Role |
 |------|------|
 | [`skills/update-copilot-tools/SKILL.md`](../../skills/update-copilot-tools/SKILL.md) | Full sync workflow with file classification table and step-by-step execution |
-| [`skills/update-copilot-tools/LessonsLearned.md`](../../skills/update-copilot-tools/LessonsLearned.md) | Accumulated watch-outs from past sync sessions |
+| [`skills/update-copilot-tools/LessonsLearned.GLOBAL.md`](../../skills/update-copilot-tools/LessonsLearned.GLOBAL.md) | Accumulated watch-outs from past sync sessions |
 | [`skills/merge-copilot-settings/SKILL.md`](../../skills/merge-copilot-settings/SKILL.md) | Settings merge workflow, merge script, and verification steps |
-| [`skills/merge-copilot-settings/LessonsLearned.md`](../../skills/merge-copilot-settings/LessonsLearned.md) | Accumulated watch-outs from past merge sessions |
+| [`skills/merge-copilot-settings/LessonsLearned.GLOBAL.md`](../../skills/merge-copilot-settings/LessonsLearned.GLOBAL.md) | Accumulated watch-outs from past merge sessions |
 | [`settings.base.json`](../../settings.base.json) | The shared settings that get merged into local settings.json |
