@@ -159,4 +159,18 @@ A feedback loop built into every skill and agent workflow. After completing a se
 
 **Overview:** [`feature-overviews/lessons-learned-system/lessons-learned-system.md`](feature-overviews/lessons-learned-system/lessons-learned-system.md)
 
+---
+
+## Temporary Debug Logging
+
+A skill-driven workflow for instrumenting a C# codebase with exhaustive temporary debug logging. Output is structured for consumption by a coding agent — not a human — so the goal is completeness, not brevity. Produces correlated log files that let an agent reconstruct the full execution story across thousands of iterations.
+
+| Invoke | How |
+|--------|-----|
+| Mention the skill | Describe the behavior or value under investigation |
+
+**Skill:** `temp-debug-logging` — six-step workflow: clarify intent, research code, plan format and data, review the plan, implement, notify
+
+**Overview:** [`feature-overviews/temp-debug-logging/temp-debug-logging.md`](feature-overviews/temp-debug-logging/temp-debug-logging.md)
+
 

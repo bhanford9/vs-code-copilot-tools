@@ -95,6 +95,8 @@ git status --short
 
 ## 4. Identify Extensibility Issues
 
+**Before flagging any symbol as dead code or unreferenced:** run a full-file usage search — not just the changed sections. Use `Select-String -Path <file> -Pattern <symbol>` in terminal or the `search/usages` tool. A symbol removed from one code path may still be referenced by other methods in the same file. An unverified dead-code finding is the most common extensibility auditor false positive.
+
 Categorize by severity:
 
 ### 🔴 Critical - Design prevents future changes

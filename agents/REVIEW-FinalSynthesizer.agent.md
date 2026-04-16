@@ -31,6 +31,7 @@ Load all audit reports from `/code-review/`:
 
 Across all reports:
 - Identify themes and patterns that appear in multiple audits
+- **Resolve conflicting factual claims before writing**: if two auditors make opposite assertions about the same code element (e.g., "X is dead code" vs. "X is still used"), verify the ground truth via `Select-String` or `search/usages` before including either finding. Factual conflicts are higher risk than conflicting recommendations — the latter are judgment calls, the former produce false positives in the final report.
 - Reconcile any conflicting recommendations
 - Prioritize issues by severity and impact
 - Highlight what's done exceptionally well
