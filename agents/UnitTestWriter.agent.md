@@ -103,7 +103,7 @@ Discover existing test patterns to maintain consistency.
 **Analyze test patterns**:
 - Naming conventions in practice
 - How are similar dependencies mocked?
-- Which support helpers are used (DomainTestHelper, TestFixtureHelper)?
+- Which support helpers are used (e.g., domain test helpers, factory methods)?
 - How are concrete types instantiated?
 - Common assertion patterns
 

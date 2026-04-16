@@ -7,6 +7,9 @@
 # Globally-applicable process notes live in LessonsLearned.GLOBAL.md (tracked).
 **/LessonsLearned.md
 
+# Project-specific skills that live in this folder locally but are not shared
+.github/skills/
+
 # VS Code Copilot runtime data
 command-history-state.json
 config.json

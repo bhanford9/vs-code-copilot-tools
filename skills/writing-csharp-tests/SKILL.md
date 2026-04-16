@@ -43,15 +43,15 @@ This example demonstrates all best practices:
 [TestCase(Direction.Right, ExpectedResult = 100.0)]
 public double ShouldCalculateValueWhenDirectionIsSet(Direction direction)
 {
-    var description = TestFixtureHelper.CreateDefaultConfig(name: "test-web");
+    var config = TestFixtureHelper.CreateDefaultConfig(name: "test-config");
     
     var mockDep = new Mock<IDependency>();
-    mockDep.SetupGet(x => x.Description).Returns(description);
-    mockDep.Setup(x => x.Calculate(side)).Returns(100.0).Verifiable(Times.Once);
+    mockDep.SetupGet(x => x.Config).Returns(config);
+    mockDep.Setup(x => x.Process(direction)).Returns(100.0).Verifiable(Times.Once);
     
     var sut = new ValueCalculator(mockDep.Object);
     
-    var result = sut.ComputeValue(side);
+    var result = sut.ComputeValue(direction);
     
     mockDep.Verify();
     return result;

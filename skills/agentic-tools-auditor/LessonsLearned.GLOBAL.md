@@ -97,7 +97,7 @@ The following terms from audited skills are reliable signals of low-determinism 
 
 - **Skill directory name mismatch** — appeared in 4 of 5 skills. Directory uses Title Case+spaces; `name` frontmatter uses lowercase-hyphens. VS Code may silently fail to load these skills. This was the single highest-frequency finding in the session and affects ALL skills in the `~/.copilot/skills/` directory. Always check this FIRST before any other dimension analysis.
 
-- **Hard-coded absolute paths in agent bodies** — appeared in 3 agents (AzureStoryCreation, UnitTestWriter, agentic-tools-auditor). All paths use `~\.copilot\skills\...` with spaces, compensating for the directory name mismatch in Theme 1. Once directories are renamed, all hard-coded paths must be updated simultaneously.
+- **Hard-coded absolute paths in agent bodies** — appeared in 3 agents (AzureStoryCreation, UnitTestWriter, agentic-tools-auditor). All paths use `~/.copilot/skills/...` with spaces in the directory name, compensating for the directory name mismatch in Theme 1. Once directories are renamed, all hard-coded paths must be updated simultaneously.
 
 - **Critical content defects** — 3 items had file-corrupting or runtime-breaking defects: (1) `CreatePlan.prompt.md` uses `${prompt}` (invalid — should be `${input:variableName}`); (2) `PrepareCommitReview.prompt.md` has truncated step + undefined variable; (3) `07-WorkItemCreator.md` has wrong extension (`.md` instead of `.agent.md`). These cause silent failures on every invocation.
 
@@ -132,11 +132,11 @@ The following terms from audited skills are reliable signals of low-determinism 
 
 - **Missing `agents:` frontmatter on subagent-spawning agents** — appeared in 4 agents (InitialPlanner, RefinedPlanner, AzureStoryCreation, UnitTestWriter). All use the `agent` tool to spawn subagents but omit the `agents:` frontmatter list. Always check this when any agent has `agent` in its tools list.
 
-- **Hard-coded absolute paths in agent bodies** — appeared in 3 agents (AzureStoryCreation, UnitTestWriter, a removed project-specific skill). All encode `~\.copilot\skills\...`. Replacing with `~/.copilot/skills/...` is the portable fix.
+- **Hard-coded absolute paths in agent bodies** — appeared in 3 agents (AzureStoryCreation, UnitTestWriter). All encode `~/.copilot/skills/...`. Replacing with `~/.copilot/skills/...` is the portable fix.
 
 - **Missing `disable-model-invocation: true` on pipeline sub-agents** — the `Implementation` agent (full terminal access) and all discovery mid-pipeline agents lacked this flag. Always flag this for any agent with `edit` or terminal tools that is not an entry point.
 
-- **Critical failure modes in LessonsLearned never promoted to SKILL body** — update-validated-joists-test-data and writing-csharp-tests both had this. Recommend a "Known Failure Modes" section in every SKILL.md populated from LessonsLearned entries.
+- **Critical failure modes in LessonsLearned never promoted to SKILL body** — writing-csharp-tests had this. Recommend a "Known Failure Modes" section in every SKILL.md populated from LessonsLearned entries.
 
 - **Broken skill reference** — `checking-csharp-errors` SKILL.md was entirely missing; only LessonsLearned.md existed. This causes silent failure on every skill load attempt. Always check for skill directories with ONLY a LessonsLearned.md.
 
