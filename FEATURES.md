@@ -173,4 +173,16 @@ A skill-driven workflow for instrumenting a C# codebase with exhaustive temporar
 
 **Overview:** [`feature-overviews/temp-debug-logging/temp-debug-logging.md`](feature-overviews/temp-debug-logging/temp-debug-logging.md)
 
+---
+
+## Paper Banana Infographic Prompts
+
+Generates structured, high-quality prompts for [Paper Banana](https://paper-banana.org/) from a source markdown file. Auto-suggests all categories (topic, audience, intent, visual style, structure, key elements, exclusions) from the source content so the user reviews suggestions rather than answering open-ended questions. Directly addresses the "extra/missing information" problem by requiring explicit key elements and exclusions in every prompt.
+
+| Invoke | How |
+|--------|-----|
+| Mention the skill | Provide a path to your source markdown file |
+
+**Skill:** `paper-banana-infographics` — eight-step workflow: read source, auto-suggest all categories, confirm with user, distill key elements, identify exclusions, compose prompt, review, save
+
 
