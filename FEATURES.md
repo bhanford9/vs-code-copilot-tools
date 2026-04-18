@@ -185,4 +185,18 @@ Generates structured, high-quality prompts for [Paper Banana](https://paper-bana
 
 **Skill:** `paper-banana-infographics` — eight-step workflow: read source, auto-suggest all categories, confirm with user, distill key elements, identify exclusions, compose prompt, review, save
 
+---
+
+## Summarize Meeting Transcript
+
+A skill for reading, comprehending, and summarizing a recorded workshop transcript. Handles the specific challenges of open workshop sessions — multi-group splits, crosstalk, soft-spoken participants, and auto-transcription noise. Produces a structured lesson overview with key takeaways, a session critique covering pacing, engagement, and learning growth, and optional participant dynamics notes.
+
+| Invoke | How |
+|--------|-----|
+| Mention the skill | Provide the transcript (file path or pasted content) and any session metadata |
+
+**Skill:** `summarize-meeting-transcript` — nine-step workflow: intake metadata, assess quality, flag low-confidence segments, reconstruct gaps, comprehend the lesson arc, write lesson overview, critique the session, document participant dynamics, update LessonsLearned
+
+**Output:** `lesson-overviews/{YYYY-MM-DD}-{topic-slug}.md` — self-contained overview readable without the original transcript
+
 
