@@ -31,9 +31,17 @@ Read both files for the relevant skill before beginning the workflow:
 
 Apply any recorded patterns, false positives, or "watch out for" notes from both files to improve this session.
 
-### 2. After Completing: Reflect Before Writing
+### 2. At Session Close: Always Prompt the User
 
-Before appending anything to either file, ask:
+When the skill workflow is complete, **always** output this prompt to the user as your closing message:
+
+> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
+
+Do not silently skip this. Do not make the prompt conditional on whether the session was routine. The user decides whether to proceed — your job is to make the option visible every time.
+
+### 3. After Completing: Reflect Before Writing
+
+When the user starts a lessons learned session, reflect before writing anything:
 
 - Was anything hard, slow, or surprising in this session?
 - Did something go wrong that a future agent should avoid?
@@ -41,7 +49,7 @@ Before appending anything to either file, ask:
 
 If the answer to all of these is **no**, skip the update entirely. Routine sessions do not produce entries.
 
-### 3. Choose the Right File
+### 4. Choose the Right File
 
 Before writing, classify the lesson using the category tag:
 
@@ -54,13 +62,13 @@ Before writing, classify the lesson using the category tag:
 
 **When in doubt, use `Category: Codebase` and write to the local `LessonsLearned.md`.** If you believe a lesson is globally applicable but are not 90% confident, write it locally and flag it for the user to decide whether to promote.
 
-### 4. Check for Duplicates First
+### 5. Check for Duplicates First
 
 Before writing to either file, scan it for existing entries on the same topic:
 - If a matching entry exists, **update it** (strengthen it, add the new example) rather than creating a duplicate.
 - If the same topic has appeared as a new incident **three or more times**, it is an escalation candidate — flag it for promotion to SKILL.md or conversion to a hook rather than adding another entry.
 
-### 5. What to Write
+### 6. What to Write
 
 - A short descriptive heading (not a date)
 - 2–5 lines of specific, actionable notes
@@ -68,7 +76,7 @@ Before writing to either file, scan it for existing entries on the same topic:
 - Use DO's/DON'Ts when alternate viable approaches exist and it's important to clarify which one to take
 - Focus on: what to watch out for, what to avoid, what was unexpectedly hard
 
-### 6. What NOT to Write
+### 7. What NOT to Write
 
 - Things the agent does easily and correctly every time
 - Step-by-step summaries of what you did — that belongs in SKILL.md

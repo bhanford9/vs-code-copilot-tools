@@ -302,3 +302,7 @@ Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-re
 - Help developers succeed
 
 </interaction_style>
+
+## Lessons Learned
+
+Before completing, read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`. Follow the lessons-learned skill workflow at `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`. Reflect on whether anything was hard, surprising, or produced a false positive specific to this codebase. Write any notable findings before completing — do not skip this step or wait for user input.

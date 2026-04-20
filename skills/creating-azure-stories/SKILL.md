@@ -72,7 +72,10 @@ Checkbox list of testable business requirements:
 
 Before writing a story, read [LessonsLearned.GLOBAL.md](LessonsLearned.GLOBAL.md) and, if it exists on disk, [LessonsLearned.md](LessonsLearned.md). Apply any recorded patterns from past sessions.
 
-After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+When this workflow is complete, **tell the user**:
+> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
+
+When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (story patterns specific to this codebase, work item formats, team conventions) → write to `LessonsLearned.md`
 - **Process/format improvements** (story structure guidance applicable to any codebase) → write to `LessonsLearned.GLOBAL.md`
 

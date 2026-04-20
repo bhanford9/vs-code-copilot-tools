@@ -78,6 +78,9 @@ Assert.That(sut.Result, Is.EqualTo(expectedResult));
 
 Before starting, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`. Apply any recorded patterns to this session.
 
-After completing, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+When this workflow is complete, **tell the user**:
+> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
+
+When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (type locations, enum namespaces, non-mockable types, support helpers) → write to `LessonsLearned.md`
 - **Process/Model findings** (agent behavior, workflow gaps) → write to `LessonsLearned.GLOBAL.md`

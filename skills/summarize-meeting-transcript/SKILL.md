@@ -300,9 +300,10 @@ This is optional — skip it if speaker labels are absent or too unreliable.
 
 ## Step 9: Reflect and Update LessonsLearned
 
-After completing the output, read the lessons-learned skill instructions at `skills/lessons-learned/SKILL.md` and follow them to reflect and update both files if warranted.
+When this workflow is complete, **tell the user**:
+> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-Ask these questions before writing anything:
+When the user runs lessons learned, read `skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
 - Was any phase of this process harder than expected due to transcript characteristics?
 - Were there domain terminology problems that recurred and should be noted for next time?
 - Did the output structure feel wrong for this session type? (e.g., a session with no group split needs different framing)

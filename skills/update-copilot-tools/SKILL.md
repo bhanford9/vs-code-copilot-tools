@@ -90,11 +90,10 @@ If the user approved the settings merge in Step 4, invoke the `merge-copilot-set
 If any hook paths were flagged as broken, show the exact path that failed and ask the user how to resolve it before continuing.
 
 ### Step 7 — Lessons Learned
-Follow the `lessons-learned` skill workflow:
-- Was anything hard, slow, or surprising in this session?
-- Did something go wrong that a future run should avoid?
-- If yes, follow the two-tier feedback loop: write process/model findings to `LessonsLearned.GLOBAL.md`, codebase findings to `LessonsLearned.md` alongside this SKILL.md.
-- If the session was routine with no surprises, skip the update entirely.
+**Tell the user**:
+> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
+
+When the user runs lessons learned, follow the two-tier feedback loop: write process/model findings to `LessonsLearned.GLOBAL.md`, codebase findings to `LessonsLearned.md` alongside this SKILL.md.
 
 ---
 

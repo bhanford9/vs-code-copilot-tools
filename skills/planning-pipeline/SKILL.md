@@ -26,6 +26,7 @@ All pipeline agents share a single pair of LessonsLearned files:
 - `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.GLOBAL.md` — process/model observations, tracked in git
 - `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.md` — codebase-specific discoveries, gitignored (may not exist in a fresh clone)
 
-Each agent reads both files at Step 0 (skip local file if absent) and writes to the correct file at the end of the session when something notable occurred.
+Each agent reads both files at Step 0 (skip local file if absent). When each agent's workflow is complete, it **tells the user**:
+> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-Follow `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` for the entry format, file routing, and escalation path.
+When the user runs lessons learned, follow `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` for the entry format, file routing, and escalation path.
