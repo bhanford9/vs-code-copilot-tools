@@ -1,9 +1,9 @@
 ---
-name: summarize-meeting-transcript
-description: Read, comprehend, and summarize a recorded workshop transcript. Handles multi-group noise, classifies low-quality segments, produces a structured lesson overview with key takeaways, and critiques the session on pacing, engagement, and learning growth. Use when summarizing a recorded workshop, lecture, or instructional session; when a transcript has crosstalk or quality gaps; or when an instructor wants reflective feedback on a session.
+name: summarize-workshop-recording
+description: Read, comprehend, and summarize a recorded in-person workshop or classroom session captured by a room microphone. Handles multi-group noise, classifies low-quality segments, produces a structured lesson overview with key takeaways, and critiques the session on pacing, engagement, and learning growth. Use when summarizing an in-person workshop, lecture, or instructional session recorded as a room; when a transcript has crosstalk or audio dropout quality gaps; or when an instructor wants reflective feedback on a session.
 ---
 
-# Summarize Meeting Transcript
+# Summarize Workshop Recording
 
 > This skill is for extracting signal from messy, human transcripts — not clean documents. Assume noise, crosstalk, and gaps. The goal is to reconstruct the clearest possible picture of what was taught, how it was received, and how the session could improve.
 
