@@ -285,6 +285,31 @@ All auditors analyze **changes since the latest master branch**, including:
 
 This supports trunk-based development workflows.
 
+## LessonsLearned Structure
+
+The code review pipeline uses a per-auditor LessonsLearned architecture to prevent cross-contamination of agent-specific findings:
+
+```
+skills/code-review-pipeline/
+  LessonsLearned.GLOBAL.md          ← Pipeline-level (Orchestrator, Coordinator,
+                                       RequirementsAuditor, CorrectnessAuditor)
+  lessons-learned/
+    REVIEW-MaintainabilityAuditor/
+      LessonsLearned.GLOBAL.md      ← Maintainability-specific findings
+    REVIEW-TestabilityAuditor/
+      LessonsLearned.GLOBAL.md
+    REVIEW-PerformanceAuditor/
+      LessonsLearned.GLOBAL.md
+    REVIEW-ExtensibilityAuditor/
+      LessonsLearned.GLOBAL.md
+    REVIEW-UnitTestCoverageAuditor/
+      LessonsLearned.GLOBAL.md
+    REVIEW-FinalSynthesizer/
+      LessonsLearned.GLOBAL.md      ← Synthesis-specific findings
+```
+
+Each parallel auditor reads and writes only its own directory. The FinalSynthesizer reads all 6 per-auditor files plus the pipeline-level file, and promotes broadly applicable findings to the pipeline level.
+
 ## Conventions
 
 All agents follow shared conventions at runtime via the auto-injected `REVIEW-CONVENTIONS.instructions.md` (applied to all files via `applyTo: "**"`). The source of truth for those conventions is documented in [code-review-conventions.md](code-review-conventions.md):

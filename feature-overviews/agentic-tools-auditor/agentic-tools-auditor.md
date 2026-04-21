@@ -41,7 +41,16 @@ The separation also enables a stronger synthesis phase. Because each sub-agent f
 | `AUDIT-TASK-{name}.md` | Per-item task context for each individual auditor |
 | `{item}/AUDIT.md` | Per-item audit findings written by individual auditors |
 | `AUDIT-SYNTHESIS.md` | Final cross-workspace synthesis and prioritized roadmap |
+> All output files are **temporary** and should be removed before committing. See Pre-Commit Cleanup below.
 
+## Pre-Commit Cleanup
+
+After implementing all roadmap items, all generated audit artifacts must be removed before committing. Everything worth preserving should have been moved into LessonsLearned files or promoted to SKILL.md bodies during implementation.
+
+The SKILL.md includes the exact cleanup commands. Key points:
+- Uses a name-contains search (not just `*.AUDIT.md`) to catch all three naming patterns: `AUDIT.md`, `*.AUDIT.md`, and `AUDIT-*.md`
+- Always shows the full file list and waits for explicit user confirmation before deleting
+- Never runs automatically
 ## Reference Files
 
 | File | Role |

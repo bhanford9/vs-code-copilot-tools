@@ -38,6 +38,8 @@ A multi-agent pipeline that runs a structured audit of code changes across seven
 
 **Agents involved:** `REVIEW-CodeReviewOrchestrator` → `REVIEW-RequirementsAuditor` → `REVIEW-CodeCorrectnessAuditor` → `REVIEW-ParallelAuditCoordinator` (spawns 5 parallel auditors) → final synthesis
 
+**LessonsLearned structure:** Each of the 5 parallel auditors and the FinalSynthesizer has its own independent `LessonsLearned.GLOBAL.md` under `skills/code-review-pipeline/lessons-learned/REVIEW-{AgentName}/`. Pipeline-level findings shared by the Orchestrator, Coordinator, RequirementsAuditor, and CorrectnessAuditor live in `skills/code-review-pipeline/LessonsLearned.GLOBAL.md`.
+
 **Detailed docs:** [feature-overviews/code-review-pipeline/code-review-pipeline.md](feature-overviews/code-review-pipeline/code-review-pipeline.md) · [Conventions](feature-overviews/code-review-pipeline/code-review-conventions.md)
 
 ---
@@ -96,6 +98,8 @@ An orchestrated audit of all VS Code Copilot agentic tool configurations in the 
 
 **Agent:** `individual-auditor` (sub-agent, spawned per config item)
 **Skill:** `agentic-tools-auditor`
+
+**Pre-commit cleanup:** After implementing roadmap items, all generated audit artifacts (`AUDIT.md`, `*.AUDIT.md`, `AUDIT-SYNTHESIS.md`, `AUDIT-CONTEXT.md`, `AUDIT-BEFORE-STATE.md`) must be removed before committing. The skill includes a cleanup procedure with the exact commands — always requires explicit user confirmation before deleting.
 
 **Overview:** [`feature-overviews/agentic-tools-auditor/agentic-tools-auditor.md`](feature-overviews/agentic-tools-auditor/agentic-tools-auditor.md)
 
@@ -187,16 +191,17 @@ Generates structured, high-quality prompts for [Paper Banana](https://paper-bana
 
 ---
 
-## Summarize Meeting Transcript
+## Summarize Meeting Transcripts
 
-A skill for reading, comprehending, and summarizing a recorded workshop transcript. Handles the specific challenges of open workshop sessions — multi-group splits, crosstalk, soft-spoken participants, and auto-transcription noise. Produces a structured lesson overview with key takeaways, a session critique covering pacing, engagement, and learning growth, and optional participant dynamics notes.
+Two skills for summarizing recorded meeting transcripts, each tuned to a different capture environment.
 
-| Invoke | How |
-|--------|-----|
-| Mention the skill | Provide the transcript (file path or pasted content) and any session metadata |
+| Invoke | Skill | For |
+|--------|-------|-----|
+| Mention the skill | `summarize-remote-meeting` | Remote meetings (Zoom, Teams, Meet) where each participant is on their own microphone |
+| Mention the skill | `summarize-workshop-recording` | In-person workshops or classroom sessions captured by a room microphone |
 
-**Skill:** `summarize-meeting-transcript` — nine-step workflow: intake metadata, assess quality, flag low-confidence segments, reconstruct gaps, comprehend the lesson arc, write lesson overview, critique the session, document participant dynamics, update LessonsLearned
+**`summarize-remote-meeting`** — Detects and filters off-topic segments, field-issue interruptions, and social tangents. Produces a clean structured summary seeded only with relevant content. Output: `meeting-summaries/{YYYY-MM-DD}-{topic-slug}.md`
 
-**Output:** `lesson-overviews/{YYYY-MM-DD}-{topic-slug}.md` — self-contained overview readable without the original transcript
+**`summarize-workshop-recording`** — Handles multi-group noise, classifies low-quality segments, produces a structured lesson overview with key takeaways, and critiques the session on pacing, engagement, and learning growth.
 
 
