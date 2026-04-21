@@ -293,3 +293,20 @@ What this flag does NOT prevent:
 **Audit implication:** Do not flag the presence of `disable-model-invocation: true` as an automatic defect. Evaluate intent: if the agent is a pipeline stage reached only via handoffs, the flag is correct. If the agent needs to be launched via agent tool, it must be removed. If both flags are present together, that is always a defect.
 
 The access-control flag `user-invocable: false` remains for agents hidden from the picker (parallel sub-agents invoked exclusively via the `agent` tool).
+
+---
+
+## copilot-configs Workspace Audit — Session E (2026-04-21)
+
+### FEATURES.md Skill Name Drift Is Not Caught by the Audit
+
+`FEATURES.md` referenced `summarize-meeting-transcript` — a skill name that does not exist. The actual skills are `summarize-remote-meeting` and `summarize-workshop-recording`. The per-item audits never flagged this because they audit individual config items, not the documentation index.
+
+**Rule:** After completing the implementation roadmap and before pre-commit cleanup, explicitly verify that every skill name referenced in `FEATURES.md` matches an actual directory under `skills/`. A quick check:
+
+```powershell
+# List all skill directory names
+Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\copilot-configs\skills" -Directory | Select-Object -ExpandProperty Name
+```
+
+Compare against every skill name mentioned in `FEATURES.md`. Any name that doesn't appear in the directory listing is stale or wrong.
