@@ -15,13 +15,6 @@ Before including any "dead code" or "unreferenced symbol" finding, verify zero u
 
 ---
 
-### Subagent prompts must explicitly instruct reading LessonsLearned files
-Category: Process/Model
-
-Parallel auditors launched via `runSubagent` do NOT inherit the orchestrator's context and do NOT automatically read `LessonsLearned.md` or `LessonsLearned.GLOBAL.md`. In a session where the local file already has 5+ prior entries on the same feature branch, subagents will re-discover patterns already documented. Fix: include a line in every subagent prompt: *"Before writing your report, read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and `LessonsLearned.md` (if it exists) for established codebase patterns and known false positives."* This is especially important for branches with multiple prior audit sessions (e.g., a feature toggle PR reviewed incrementally over multiple days).
-
----
-
 ### Base branch detection: always strip the full ref prefix in one atomic step
 Category: Process/Model
 

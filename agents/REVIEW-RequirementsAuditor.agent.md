@@ -48,6 +48,9 @@ Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.
 Use git commands via #tool:execute/runInTerminal to examine all changes since master branch:
 
 ```powershell
+# Load session config
+$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
+
 # Get all commits on branch
 git log "$($cfg.baseBranch)..HEAD" --oneline
 

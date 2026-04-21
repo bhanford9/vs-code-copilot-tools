@@ -93,7 +93,9 @@ Read `~/Repos/copilot-configs/skills/planning-pipeline/LessonsLearned.GLOBAL.md`
 
 ## Step 0: Verify Prerequisites
 
-Check that `gap-resolutions.md` exists in the workspace before proceeding. If it does not exist, stop and tell the user: "`gap-resolutions.md` was not found — this agent requires GapResolver to have run first. Please invoke the GapResolver agent and complete its output before continuing."
+Check whether `gap-resolutions.md` exists in the workspace.
+- **If it exists**: load it as context in Step 1.
+- **If it does not exist**: ask the user — "No gap resolutions file was found. Do you want to proceed directly to architecture design (skipping gap analysis), or run GapResolver first?" Proceed if they confirm; otherwise hand off to GapResolver.
 
 ## Step 1: Understand Requirements and Context
 

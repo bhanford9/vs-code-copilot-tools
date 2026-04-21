@@ -1,4 +1,6 @@
 ---
+name: General Agent Behavior
+description: Requires an Ambiguity Scan before acting on any non-trivial request. Applies to all files in all workspaces.
 applyTo: "**"
 ---
 

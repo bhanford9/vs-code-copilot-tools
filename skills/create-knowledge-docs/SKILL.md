@@ -397,7 +397,7 @@ The README is the entry point for both human readers and AI agents discovering t
 
 ### 4i. AI Retrieval Optimization — Summary of All Techniques
 
-The following table documents every technique this skill uses to make content fast to retrieve and easy to consume for an AI agent. A future reading skill will depend on these conventions.
+The following table documents every technique this skill uses to make content fast to retrieve and easy to consume for an AI agent. The companion `read-knowledge-docs` skill depends on these conventions — if you change output formats here, update that skill's Conventions Reference table accordingly.
 
 | Technique | Where Used | AI Benefit |
 |---|---|---|

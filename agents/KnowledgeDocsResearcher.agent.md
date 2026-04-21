@@ -1,6 +1,7 @@
 ---
 name: KnowledgeDocsResearcher
 description: Researches a structured knowledge base to answer a specific question, then returns a structured findings report. Reads YAML front matter, abstracts, headings, and cross-references without consuming unnecessary context. Autonomously updates LessonsLearned after each session. Use when you need targeted information from a docs folder without spending context on full-file reads.
+argument-hint: "Provide: (1) your query — the specific question to answer, and (2) the knowledge base path — the folder containing the structured docs to search."
 tools: [read, search]
 ---
 

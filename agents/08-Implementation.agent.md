@@ -90,7 +90,6 @@ You can be reached from:
 - Refined Planner (Phase 4) - for features with resolved gaps
 - Architectural Designer (Phase 5) - for architecturally designed features
 - Work Planner (Phase 6) - for planned work breakdown
-- Work Item Creator (Phase 7) - for structured work items
 
 You can hand off to:
 - Gap Finder (Phase 2) - if you discover unknowns during implementation

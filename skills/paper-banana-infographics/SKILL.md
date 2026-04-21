@@ -173,6 +173,45 @@ The output file format is defined in [TEMPLATE.md](TEMPLATE.md).
 
 ---
 
+## Critical Prompting Rules
+
+These patterns are known to produce failures or poor output when ignored. Apply them during Step 6 (Compose) and Step 7 (Review).
+
+### Always Specify Aspect Ratio
+Include an aspect ratio in every prompt — omitting it causes Paper Banana to pick a default that may not suit the layout:
+- Left-to-right or circular flow: `3:2` (landscape)
+- Top-down or vertical layered: `3:4` or `4:5` (portrait)
+- Wide comparison/timeline: `21:9`
+- 4+ side-by-side columns: `4:3` landscape (portrait is too narrow — nodes become cramped)
+
+Add an `Aspect Ratio` row to the Metadata table and a `**Aspect ratio:**` line in the prompt text.
+
+### Protect Verbatim Text
+Paper Banana paraphrases or misspells any text it isn't told to treat as literal. For titles, taglines, or any string that must appear exactly as written, add: "Use this exact text, spelled exactly as written."
+
+### Markdown Formatting Has No Visual Effect
+Bold, italic, and other markdown emphasis in the prompt does not produce visual styling. Describe desired visual emphasis explicitly — e.g., "render this phrase in a vivid accent color that differs visibly from surrounding text."
+
+### Enumerate Every Arrow Explicitly
+Without a complete arrow list, Paper Banana invents extra connections. Always provide: (1) a numbered list of every arrow with source → destination, (2) a total arrow count, and (3) a rule that no unlisted arrows may be added.
+
+### Use Nested Sub-Elements for Parallel Branches
+Representing parallel destinations as separate flow nodes with a merge point consistently produces mangled or extra arrows. When two items are attributes of the same concept, nest them as visual sub-elements inside a single parent node instead.
+
+### Separate Agent Instructions from Image Text
+Descriptive text guiding the agent (position hints, layout constraints, node descriptions) often leaks into the rendered image as literal text. Add an explicit rule: "Do not render layout instructions or node descriptions as image text."
+
+### Anchor Color Descriptions with Specifics
+Vague color terms ("dark," "light," "muted") produce unpredictable results. Use hex values or concrete comparisons — e.g., `#1e1e2e — rich dark gray, not pure black`.
+
+### Enforce One Location Per Element
+Paper Banana tends to restate the same concept in multiple places. A general "avoid repetition" instruction is insufficient. Add: "No element, label, or description may appear more than once in the entire image. Each piece of text exists in exactly one place."
+
+### Parallel Sub-Agents Require Inline Skill Instructions
+When generating multiple prompts via parallel sub-agents, each sub-agent must receive the full skill instructions and all critical lessons inline — not just a file path reference. A sub-agent given only a path will not reliably read it.
+
+---
+
 ## Feedback Loop
 
 Before starting, read [LessonsLearned.GLOBAL.md](LessonsLearned.GLOBAL.md) and, if it exists on disk, [LessonsLearned.md](LessonsLearned.md). Apply any recorded patterns from past sessions.

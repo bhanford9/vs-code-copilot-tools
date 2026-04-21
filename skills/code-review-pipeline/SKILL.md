@@ -39,8 +39,24 @@ All REVIEW-* agents must explicitly read `~/Repos/copilot-configs/skills/code-re
 
 ## Lessons Learned
 
-This skill uses the two-tier LessonsLearned system:
-- `LessonsLearned.GLOBAL.md` (tracked in git) — recurring false-positive types, workflow patterns applicable to any codebase
-- `LessonsLearned.md` (gitignored) — codebase-specific patterns: conventions that look wrong but are intentional, project-specific false positives to suppress
+This skill uses a per-auditor LessonsLearned structure. Each parallel auditor maintains its own independent LL directory:
 
-`REVIEW-FinalSynthesizer` reads both files before every synthesis. Append entries after any session that surfaces something a future agent should know. See the `lessons-learned` skill for guidance on which file to write to and when.
+```
+skills/code-review-pipeline/lessons-learned/
+  REVIEW-MaintainabilityAuditor/   LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-TestabilityAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-PerformanceAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-ExtensibilityAuditor/     LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-UnitTestCoverageAuditor/  LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-FinalSynthesizer/         LessonsLearned.GLOBAL.md + LessonsLearned.md
+```
+
+The pipeline-level `LessonsLearned.GLOBAL.md` / `LessonsLearned.md` (this directory) are shared by the Orchestrator, Coordinator, RequirementsAuditor, and CorrectnessAuditor.
+
+**Rules:**
+- Each parallel auditor reads and writes only its own directory — auditors do not read each other's LL files
+- `REVIEW-FinalSynthesizer` reads all 6 per-auditor LL files for cross-auditor context, writes findings to its own directory, and promotes to the pipeline-level LL only when a finding applies to the entire pipeline
+- Per-auditor LL entries may conflict — FinalSynthesizer is expected to reconcile them
+- `*.md` (gitignored) — codebase-specific patterns; `*.GLOBAL.md` (tracked) — cross-codebase process/model patterns
+
+See the `lessons-learned` skill for guidance on which tier to write to and when.

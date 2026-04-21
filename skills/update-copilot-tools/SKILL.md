@@ -68,8 +68,9 @@ For each changed `hooks/*.json`:
 $hook = Get-Content "C:\Users\$env:USERNAME\Repos\copilot-configs\hooks\<filename>.json" -Raw | ConvertFrom-Json
 $hooks = $hook.hooks
 $hooks.PSObject.Properties.Value | ForEach-Object { $_ } | ForEach-Object {
-    $_.windows -split '"' | Where-Object { $_ -like "*.ps1" } | ForEach-Object {
-        $resolved = $_ -replace '\$env:USERPROFILE', $env:USERPROFILE
+    $ps1Path = [regex]::Match($_.windows, '(?<=")[^"]+\.ps1(?=")').Value
+    if ($ps1Path) {
+        $resolved = $ps1Path -replace '\$env:USERPROFILE', $env:USERPROFILE
         $exists = Test-Path $resolved
         Write-Host "$resolved -> $exists"
     }

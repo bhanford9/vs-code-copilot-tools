@@ -6,7 +6,7 @@ description: Merge settings.base.json from ~/Repos/copilot-configs into the loca
 # Merge Copilot Settings — SKILL.md
 
 ## Purpose
-Merges `settings.base.json` from `C:\Repos\copilot-configs\` into the local VS Code `settings.json`, preserving all machine-specific settings (connections, paths, terminal approvals) while applying the latest shared copilot configuration.
+Merges `settings.base.json` from `C:\Users\<username>\Repos\copilot-configs\` into the local VS Code `settings.json`, preserving all machine-specific settings (connections, paths, terminal approvals) while applying the latest shared copilot configuration.
 
 Use when: syncing copilot settings after a `git pull`, setting up a new machine, "merge my copilot settings", "apply base settings", "sync settings".
 

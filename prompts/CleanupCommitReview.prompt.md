@@ -111,8 +111,8 @@ Choice (1-2):
 If user chooses to delete:
 
 ```powershell
-if (Test-Path "/code-review/") {
-    Remove-Item -Path "/code-review/*" -Force
+if (Test-Path "code-review/") {
+    Remove-Item -Path "code-review/*" -Force
     Write-Host "✓ Deleted all review reports"
 }
 ```

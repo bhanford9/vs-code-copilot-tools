@@ -118,13 +118,7 @@ After all 5 subagents complete and return their results, summarize for the user:
 
 Then offer the **"Generate Final Review"** handoff so the user can proceed to final synthesis by the REVIEW-CodeReviewOrchestrator.
 
-## Update LessonsLearned
-
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
-- **Codebase findings** (false positives specific to this codebase, project-specific patterns) → write to `LessonsLearned.md`
-- **Process/Model findings** (recurring false positive types, agent behavior gaps across any codebase) → write to `LessonsLearned.GLOBAL.md`
-
-Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/`.
+> **Note**: The Coordinator does not update LessonsLearned. Each parallel auditor independently updates its own LL directory at `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-{AgentName}/`. The `REVIEW-FinalSynthesizer` agent handles promotion to the pipeline-level LL as needed.
 
 </workflow>
 

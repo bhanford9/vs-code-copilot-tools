@@ -205,11 +205,38 @@ The following terms from audited skills are reliable signals of low-determinism 
 
 ---
 
-## When to Append an Entry
+## copilot-configs Workspace Audit — Session D (2026-04-21)
 
-Only append if the session revealed something surprising, an unexpected difficulty, or a conflict resolution decision that should inform future runs. If the audit ran smoothly using existing knowledge, skip the update.
+### Both disable-model-invocation AND user-invocable: false = completely unreachable agent
+`individual-auditor.agent.md` had BOTH `user-invocable: false` AND `disable-model-invocation: true`. Per VS Code docs, the combination makes the agent unreachable via any mechanism: not from the picker, not via handoff, not via agent tool. `AgenticToolsAuditor` had `agents: [individual-auditor]` and called it via agent tool — all those invocations fail silently. When auditing sub-agents, always check that parallel/programmatic sub-agent targets have `user-invocable: false` ONLY (no `disable-model-invocation`).
 
-Write a short descriptive heading (usually the workspace name), then free-form notes. Consider: new issue types or patterns discovered, documentation changes noticed, process improvements, conflict resolution decisions made.
+### Hook exit-code mismatch: script says blocking but exits 0
+`check-test-comments.ps1` had a code comment stating "exits 2 (blocking) if comments are found" but the actual exit code was 0 in the violation path. The hook ran and reported findings but never blocked anything. When auditing hook scripts, always verify the exit code in the actual violation branch — a comment claiming blocking behavior is not the same as actually blocking. Add exit code checks to the Dimension 6 structural checklist.
+
+### Prompts driving multi-step workflows silently fail without `mode: agent`
+`review-lessons.prompt.md` and `fork-and-improve.prompt.md` both contained instructions to read files and make edits, but had no `mode: agent` or `agent:` frontmatter. In default (ask/chat) mode, the agent reads the prompt but cannot execute file operations. No error is shown — it just doesn't work. When auditing prompts, always check: if the body contains "read", "edit", "write", or "run", it needs `mode: agent`.
+
+### grep_search may return stale results for deleted files
+`grep_search` returned a match for `skills/summarize-meeting-transcript/SKILL.md` which did not exist on disk (verified via `Test-Path`). This is a VS Code search cache artifact. Always verify existence with a terminal command when a grep hit seems unexpected. The discovery guide should note this caveat.
+
+### Process: Explore sub-agents cannot write files; use unnamed sub-agents for file creation
+`runSubagent` with `agentName: "Explore"` returns results but cannot create files — the Explore agent is read-only. Use `runSubagent` without `agentName` (or with a file-writing capable agent) when AUDIT.md files need to be written. Useful pattern: use Explore for analysis tasks that return summaries, use unnamed sub-agents for tasks that must create files.
+
+### 54-item audit with 6 parallel waves completed without context issues
+Full workspace audit of 54 items (23 agents, 18 skills, 8 prompts, 3 instructions, 2 hooks) completed in 6 parallel sub-agent waves. Waves were sized 5-13 items. No context management issues. Inline file contents in sub-agent prompts were effective for agent bodies; sub-agents instructed to read skill SKILL.md files themselves (too large to inline) was also effective.
+
+### SessionStart Path Injection Is Not Feasible for Multi-Workspace Configs
+
+A `SessionStart` hook to write the copilot-configs root path to a temp file was explored as an alternative to hard-coded install paths. It was rejected because:
+
+- copilot-configs is loaded as a **secondary** skills/agents/hooks source into other workspaces via VS Code settings — agents run in the context of the active project workspace, not the copilot-configs directory.
+- The hook fires in the active workspace context, making `$PSScriptRoot` and workspace-relative paths unreliable for identifying where copilot-configs itself lives.
+- A per-session temp file could be made workspace-specific to avoid multi-session collisions, but the workspace context problem remains unsolvable without VS Code exposing the secondary config root as a variable.
+
+**Rule:** Do not propose `SessionStart` hooks for path injection in multi-workspace configurations. The documented install location (`~/Repos/copilot-configs/`) is the correct and sufficient constraint. Hard-coded paths are intentional, not a defect.
+
+---
+
 
 ---
 
@@ -233,13 +260,36 @@ Rule: Agents intended as subagent targets must NOT have disable-model-invocation
 
 | Agent role | user-invocable | disable-model-invocation | Rationale |
 |---|---|---|---|
-| Entry point (Orchestrator, Coordinator) | default (true) | true | Visible in picker; should not be semantically invoked as a sub-agent |
-| Sequential handoff targets (RequirementsAuditor, CorrectnessAuditor, FinalSynthesizer) | default (true) | true | Must be reachable by user handoff; not needed as sub-agents |
-| Parallel auditors (5 agents) | false | absent | Hidden from picker; must be invocable via agent tool by Coordinator |
+| Entry point (Orchestrator, Coordinator) | default (true) | optional | Visible in picker; flag acceptable if semantic cold-start is undesirable |
+| Sequential handoff targets (RequirementsAuditor, CorrectnessAuditor, FinalSynthesizer) | default (true) | true (acceptable) | Reached via handoff buttons; flag prevents unintended semantic invocation |
+| Parallel auditors (5 agents) | false | **must be absent** | Hidden from picker; must be invocable via agent tool by Coordinator — flag would break all invocations |
 
-### Audit Implication
+### Blanket Policy: Never Use `tools:` Restrictions on Agents
 
-Previous audits recommended adding disable-model-invocation: true to all non-entry-point agents. This is wrong for any agent that a coordinator launches programmatically. When auditing pipeline agents, verify the invocation mechanism FIRST:
-- If reached by user handoff click: user-invocable must remain true (default)
-- If reached by agent tool call from another agent: disable-model-invocation must NOT be set
-- Only set disable-model-invocation: true on agents with no programmatic callers (entry points and sequential-only agents)
+User policy (2026-04-21): **Do not add or recommend `tools:` frontmatter lists on agents.** Tool names change frequently in VS Code, making these lists a constant maintenance burden. The performance difference between restricted and unrestricted tool access is negligible. Agents should run with all available tools.
+
+**Audit implication:** Never flag a missing `tools:` list as a defect. Never recommend adding one. If a `tools:` list already exists and is causing breakage (e.g., a renamed tool no longer resolves), recommend removing it rather than updating it.
+
+---
+
+### Policy: Use `disable-model-invocation: true` Only in Special Situations
+
+User policy (2026-04-21, revised): **Use `disable-model-invocation: true` only when intentionally preventing semantic/unintended invocation for agents that are reached exclusively via handoff buttons or direct user switching** — never add it reflexively.
+
+What this flag actually prevents:
+- VS Code from semantically matching and suggesting the agent out of context
+- Other agents from invoking it via the `agent` tool (subagent invocation)
+
+What this flag does NOT prevent:
+- Handoff button clicks (user-initiated transitions — these work fine)
+- A user manually switching to the agent in the picker
+
+**When it is appropriate:** Mid-pipeline stage agents (e.g., GapFinder, GapResolver, ArchitecturalDesigner, Implementation, review pipeline sequential stages) that should not be cold-started by semantic matching. These are reachable via handoff buttons and not invoked via agent tool — the flag is safe and intentional.
+
+**When it is NOT appropriate:**
+1. **Never** use it on agents that another agent must invoke via the `agent` tool (parallel sub-agents, individual auditors). It will silently block all agent-tool invocations.
+2. **Never** combine it with `user-invocable: false` — that combination makes the agent completely unreachable.
+
+**Audit implication:** Do not flag the presence of `disable-model-invocation: true` as an automatic defect. Evaluate intent: if the agent is a pipeline stage reached only via handoffs, the flag is correct. If the agent needs to be launched via agent tool, it must be removed. If both flags are present together, that is always a defect.
+
+The access-control flag `user-invocable: false` remains for agents hidden from the picker (parallel sub-agents invoked exclusively via the `agent` tool).

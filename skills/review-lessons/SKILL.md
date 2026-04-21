@@ -36,7 +36,7 @@ Record the complete list before proceeding. If zero files are found, report that
 
 Spawn a subagent for each discovered `LessonsLearned.GLOBAL.md` using the `runSubagent` tool. Spawn **all subagents simultaneously** — do not wait for one to finish before starting the next.
 
-Each subagent receives the prompt below, with `{path}` and `{skill_name}` substituted with actual values:
+Each subagent receives the prompt below, with `{path}`, `{skill_name}`, and `{skill_folder}` substituted with actual values. `{skill_folder}` is the directory name under `skills/` (e.g., `creating-azure-stories`):
 
 ---
 
@@ -106,6 +106,6 @@ Present the full report to the user. Then ask:
 
 **Do not make any file changes until the user responds.**
 
-## After Completing
+## Step 6: Lessons Learned
 
-Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content).
+Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content). **Tell the user: "Type 'lessons learned session' to close this out. Don't skip this."**

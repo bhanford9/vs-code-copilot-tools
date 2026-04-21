@@ -2,7 +2,6 @@
 name: individual-auditor
 description: Audits a single VS Code Copilot agentic configuration item (Skill, Custom Agent, Instructions file, Prompt File, or Hook) and produces an AUDIT.md findings file. Used exclusively as a sub-agent by AgenticToolsAuditor.
 user-invocable: false
-disable-model-invocation: true
 ---
 
 # Individual Auditor

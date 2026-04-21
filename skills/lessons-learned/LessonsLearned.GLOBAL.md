@@ -11,6 +11,23 @@ The LessonsLearned pattern originally lived as duplicated inline guidance inside
 
 Extracting to a shared skill eliminates the drift and gives a single place to refine the philosophy. When the philosophy changes, update SKILL.md here — not eight separate files.
 
-### Subjective Gate Is Critical
+### Promotion Must Be Atomic — Remove and Add in the Same Operation
 
-The most important design decision is the skip condition: if nothing was hard or surprising, **do not write an entry**. Without this gate, agents add boilerplate entries just to say they completed the step — which trains future agents to ignore the file. Short and signal-dense beats long and noisy.
+When promoting a LessonsLearned entry to a SKILL.md body, the removal from the LL file and the addition to the SKILL.md must happen in the same operation. Adding to the skill body first and leaving the LL file for a follow-up creates a window where the information exists in both places — and that second step is easily forgotten or requires user prompting to complete.
+
+**Rule:** When executing a promotion, treat it as one atomic change: write the content to SKILL.md and delete it from LessonsLearned in the same `multi_replace_string_in_file` call (or equivalent). Never stage the promotion as two separate passes.
+
+---
+
+## Stop Hook for LessonsLearned Enforcement Is Too Noisy — Do Not Revisit
+
+Category: Process/Model
+
+A `Stop` hook to enforce LessonsLearned updates at session end was proposed and attempted. It was too noisy: the hook fires on every session close regardless of whether the session involved meaningful work, producing a reminder prompt even for trivial single-question sessions. The signal-to-noise ratio was unacceptable.
+
+The in-agent "tell the user: type 'lessons learned session'" pattern is sufficient. It fires only when the agent completes its intended workflow, not on every session end.
+
+**Rule:** Do not propose a `Stop` hook for LessonsLearned enforcement. If better hook tooling arrives (e.g., hooks that can inspect session content before firing), revisit then — but never a blind time/event-triggered reminder.
+
+---
+

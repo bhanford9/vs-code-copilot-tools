@@ -19,7 +19,7 @@ Your mission: Evaluate how well the code can adapt to future requirements, asses
 
 ## 0. Read LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
+Read `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.md`. Apply any recorded patterns.
 
 ## 1. Read Prior Audit Context
 
@@ -139,7 +139,7 @@ Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the tw
 - **Codebase findings** (false positives specific to this codebase, project-specific patterns) → write to `LessonsLearned.md`
 - **Process/Model findings** (recurring false positive types, agent behavior gaps across any codebase) → write to `LessonsLearned.GLOBAL.md`
 
-Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/`.
+Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/`.
 
 </workflow>
 
@@ -342,4 +342,4 @@ For each issue found, always include:
 
 ## Lessons Learned
 
-Before completing, read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`. Follow the lessons-learned skill workflow at `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`. Reflect on whether anything was hard, surprising, or produced a false positive specific to this codebase. Write any notable findings before completing — do not skip this step or wait for user input.
+Before completing, read `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.md`. Follow the lessons-learned skill workflow at `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`. Reflect on whether anything was hard, surprising, or produced a false positive specific to this codebase. Write any notable findings before completing — do not skip this step or wait for user input.

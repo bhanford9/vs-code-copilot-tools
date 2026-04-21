@@ -129,7 +129,7 @@ High-level testable business requirements.
 
 ## Markdown Guidelines
 
-- Description section headers: `##` or `###`
+- Description section headers: `##` (H2 only — do not use `###`)
 - Acceptance criteria: checkbox format `- [ ]`
 - Code/file references: backticks only, no links
 - Work item references: "Story #[NUMBER]"

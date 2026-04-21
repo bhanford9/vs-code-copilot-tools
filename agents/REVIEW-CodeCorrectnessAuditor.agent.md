@@ -50,6 +50,9 @@ Load and thoroughly understand `/code-review/requirements-audit.md`:
 Review all changes since master branch using git commands via #tool:execute/runInTerminal:
 
 ```powershell
+# Load session config
+$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
+
 # Get all commits and changes
 git log "$($cfg.baseBranch)..HEAD" --oneline
 git diff "$($cfg.baseBranch)...HEAD" --stat

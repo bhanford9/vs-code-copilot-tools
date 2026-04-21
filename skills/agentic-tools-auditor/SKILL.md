@@ -378,6 +378,54 @@ After completing roadmap items, verify the changes work as intended:
 ## Per-Item Audit File Index
 | Item | Type | Audit File |
 ...
+
+---
+
+## Pre-Commit Cleanup
+
+After all roadmap items are implemented and the audit is complete, the generated audit artifacts must be removed before committing. Every audit starts fresh — anything worth preserving has been moved into LessonsLearned files or promoted to SKILL.md bodies during the implementation process.
+
+**Artifacts to remove** (three naming patterns — all must be caught):
+- `*.AUDIT.md` — agent/prompt/hook/instruction audit files (named `{item}.AUDIT.md`)
+- `AUDIT.md` — skill audit files (named exactly `AUDIT.md`, one per skill directory)
+- `AUDIT-SYNTHESIS.md`, `AUDIT-CONTEXT.md`, `AUDIT-BEFORE-STATE.md` — root-level audit state files
+
+**This cleanup must never happen automatically.** Always present the full file list to the user and wait for explicit confirmation before deleting anything.
+
+### Cleanup Procedure
+
+1. Discover all audit artifacts using a name-contains search (catches all three patterns):
+```powershell
+Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\copilot-configs" -Recurse |
+  Where-Object { $_.Name -like "*AUDIT*" -and $_.PSIsContainer -eq $false } |
+  Select-Object -ExpandProperty FullName
+```
+
+Review the output carefully — permanent files like `agentic-tools-auditor.agent.md` and `individual-auditor.agent.md` will appear in the results because "auditor" contains "audit". **Only delete files that are clearly generated audit output** — i.e., files named `AUDIT.md`, `*.AUDIT.md`, `AUDIT-SYNTHESIS.md`, `AUDIT-CONTEXT.md`, or `AUDIT-BEFORE-STATE.md`.
+
+2. Present the filtered list to the user and ask:
+> "These are all the audit artifacts. Ready to delete them all before committing? Type 'yes' to confirm."
+
+3. Only after explicit confirmation, run:
+```powershell
+$root = "C:\Users\$env:USERNAME\Repos\copilot-configs"
+# *.AUDIT.md pattern
+Get-ChildItem -Path $root -Recurse -Filter "*.AUDIT.md" | Remove-Item -Force
+# AUDIT.md pattern (skill directories)
+Get-ChildItem -Path $root -Recurse -Filter "AUDIT.md" | Remove-Item -Force
+# Root-level state files
+Remove-Item -Path "$root\AUDIT-SYNTHESIS.md" -ErrorAction SilentlyContinue
+Remove-Item -Path "$root\AUDIT-CONTEXT.md" -ErrorAction SilentlyContinue
+Remove-Item -Path "$root\AUDIT-BEFORE-STATE.md" -ErrorAction SilentlyContinue
+```
+
+4. Verify nothing remains:
+```powershell
+Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\copilot-configs" -Recurse |
+  Where-Object { $_.Name -like "AUDIT.md" -or $_.Name -like "*.AUDIT.md" -or $_.Name -like "AUDIT-*.md" }
+```
+
+If the result is empty, cleanup is complete.
 ```
 
 ---

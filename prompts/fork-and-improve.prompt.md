@@ -1,6 +1,7 @@
 ---
 name: fork-and-improve
 description: Capture a mid-session course correction — describe what went wrong, identify the config fix, apply it, and write a LessonsLearned entry while context is still fresh.
+mode: agent
 ---
 
 You are running the **Fork and Improve** workflow. Something in the current session went off the expected path. Your job is to capture that context right now — while the full failure mode is visible — apply the fix, and record a LessonsLearned entry so this doesn't repeat.

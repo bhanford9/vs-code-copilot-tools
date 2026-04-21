@@ -38,9 +38,9 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
 }
 
 if ($violations.Count -gt 0) {
-    $msg = "ADVISORY: Comments detected in test file '$([System.IO.Path]::GetFileName($filePath))'. Test code should be self-documenting through naming. If you wrote these comments, remove them and express intent through better naming instead. If these comments were pre-existing (not written by you in this edit), leave them unchanged. Violations:`n" + ($violations -join "`n")
+    $msg = "BLOCKED: Comments detected in test file '$([System.IO.Path]::GetFileName($filePath))'. Test code should be self-documenting through naming. If you wrote these comments, remove them and express intent through better naming instead. If these comments were pre-existing (not written by you in this edit), leave them unchanged. Violations:`n" + ($violations -join "`n")
     Write-Host $msg
-    exit 0
+    exit 2
 }
 
 exit 0

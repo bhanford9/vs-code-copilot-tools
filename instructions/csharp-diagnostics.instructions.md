@@ -6,7 +6,7 @@ applyTo: "**/*.cs"
 
 # C# Error Checking
 
-- ALWAYS use the **"Check Changed Files"** task for diagnostics — NEVER use the VS Code `get_errors` tool for C# files
+- ALWAYS use the **"Check Changed Files"** task for diagnostics — NEVER use the VS Code `get_errors` tool for C# files. If the "Check Changed Files" task does not exist in this workspace, alert the user and stop — do not fall back to `get_errors`
 - The task deletes `csharp-diagnostics-report.tmp` at start and creates it when complete — wait for it to exist before reading
 - In multi-root workspaces, the tmp file is written to the root of the **opened workspace folder**, not the `.sln` directory — check the workspace root first if the file is not found
 - Focus on **Error** and **Warning** severity items only; ignore **Info** severity suggestions
