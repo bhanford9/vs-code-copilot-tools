@@ -67,3 +67,16 @@ The migration procedure (flat file → section folder) was written into the know
   3. Add sub-section files
   4. Update cross-references
   5. Update the root README's Reading Order table
+
+---
+
+## Skill Was Skipped During Update Sessions Due to Creation-Only Language
+
+Category: Process/Model
+
+The SKILL.md description used creation-only language ("Build", "creating", "Produces a set of layered markdown documents"). Agents correctly skipped this skill when adding content to existing docs because the trigger language didn't match "editing an existing file."
+
+Fix applied: SKILL.md description updated to say "Build or extend", "Produces or updates", explicitly states "Use when CREATING OR UPDATING", and adds: "This skill defines the structural conventions that must be followed any time you write to a knowledge-base-format document — not just when building from scratch."
+
+- DO load this skill any time you write to a knowledge-base-format document — new file, new section, or a paragraph addition to an existing file.
+- DON'T treat this as a creation-only skill. The writing conventions (YAML front matter, heading style, TODO format, cross-reference syntax) apply equally to edits.

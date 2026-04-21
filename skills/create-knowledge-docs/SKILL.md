@@ -1,6 +1,6 @@
 ---
 name: create-knowledge-docs
-description: Build a structured, AI-indexable knowledge base from any source material — transcripts, wikis, code, interviews, or existing docs. Produces a set of layered markdown documents with YAML front matter, Mermaid diagrams, a glossary, and cross-references designed for both human readers and AI retrieval agents. Use when creating technical documentation, onboarding guides, architecture references, domain knowledge bases, or any situation where information needs to be captured in a durable, retrievable form.
+description: Build or extend a structured, AI-indexable knowledge base from any source material — transcripts, wikis, code, interviews, or existing docs. Produces or updates layered markdown documents with YAML front matter, Mermaid diagrams, a glossary, and cross-references designed for both human readers and AI retrieval agents. Use when CREATING OR UPDATING technical documentation, onboarding guides, architecture references, domain knowledge bases, or any situation where information needs to be captured in a durable, retrievable form. This skill defines the structural conventions that must be followed any time you write to a knowledge-base-format document — not just when building from scratch.
 ---
 
 # Create Knowledge Docs
