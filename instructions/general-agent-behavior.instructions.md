@@ -33,7 +33,21 @@ Before doing any work, write this block verbatim, filled in:
 
 ## Session Knowledge Harvest — NON-NEGOTIABLE RULE
 
-At the end of any session where architectural, behavioral, or domain knowledge was discovered — including debugging sessions, code reviews, investigation spikes, and refactoring work — you MUST invoke the `session-knowledge-harvest` skill to integrate the findings into the formal knowledge base.
+### Why This Matters
+
+Completing a task is a win. But every task also contains something more valuable than the output itself: **knowledge** — about the codebase, the domain, the edge cases, and the decisions made along the way.
+
+When that knowledge is captured and indexed, it doesn't disappear at the end of the session. It becomes a permanent asset. Future agentic tasks start with more context than they had before. That means better plans, fewer wrong turns, and less time re-discovering what was already learned.
+
+This is **compounding interest on engineering effort**. Each session's harvest makes the next session faster. The next session's harvest makes the one after that faster still. Over time, the cumulative effect dwarfs the individual wins.
+
+And this isn't just individual — it scales across the entire team. Every person working on an independent task contributes to the same shared knowledge base. Five people harvesting independently creates a corpus that no single person could build alone, and every new task benefits from all of it.
+
+> **The harvest step is not overhead. It is the investment that makes all future work cheaper.**
+
+---
+
+At the end of any session where architectural, behavioral, or domain knowledge was discovered — whether the task was a feature, a bug fix, a code review, a refactor, an investigation, or anything else — you MUST invoke the `session-knowledge-harvest` skill to integrate the findings into the formal knowledge base.
 
 - Do not skip this step because the session was "quick" — use the skill's scope gate to decide what qualifies
 - If nothing documentable was discovered, state that explicitly rather than silently skipping
