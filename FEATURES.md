@@ -131,6 +131,8 @@ Instruction files that auto-apply to matching sessions without any invocation.
 | `csharp-diagnostics.instructions.md` | `**/*.cs` | Enforces the "Check Changed Files" VS Code task for error checking — never `dotnet build` or `get_errors` |
 | `csharp-tests.instructions.md` | `**/*Tests.cs` | Injects baseline NUnit test conventions: naming pattern, no comments, Moq Verifiable, `[TestCase]` |
 
+**Note:** The `session-knowledge-harvest` requirement is enforced by policy here but invoked via `/harvest` — see [Knowledge Management](#knowledge-management).
+
 **Overview:** [`feature-overviews/always-on-instructions/always-on-instructions.md`](feature-overviews/always-on-instructions/always-on-instructions.md)
 
 ---
@@ -154,6 +156,8 @@ Small pre/post-turn scripts that run automatically during agent sessions.
 
 A feedback loop built into every skill and agent workflow. After completing a session, the agent reflects on what was hard or surprising and appends findings to a `LessonsLearned.md` file alongside the relevant skill. Future sessions read it first to avoid repeating mistakes.
 
+> **Scope:** Per-skill and per-agent feedback loops that keep individual workflows from repeating mistakes. For building a formal, AI-indexed architecture knowledge base per workspace, see [Knowledge Management](#knowledge-management).
+
 | Invoke | How |
 |--------|-----|
 | `/fork-and-improve` | Capture a mid-session course correction — apply the config fix and write a LessonsLearned entry while context is fresh |
@@ -169,10 +173,13 @@ A feedback loop built into every skill and agent workflow. After completing a se
 
 A suite of skills and prompts for building, reading, and maintaining a formal architecture knowledge base per workspace. Designed to be self-bootstrapping — a new cloner gets prompted to configure their docs directory on first use.
 
+> **Scope:** Formal, AI-indexed architecture documentation per workspace. For per-skill feedback loops that keep agent workflows from repeating mistakes, see [Lessons Learned System](#lessons-learned-system).
+
 | Invoke | How |
 |--------|-----|
 | `/harvest` | Run the session knowledge harvest at the end of a session |
 | `/configure-docs` | Set or change the documentation directory for the current workspace, or opt out |
+| `@KnowledgeDocsResearcher` | Answer a specific question from the knowledge base without reading entire files |
 
 **Skills:**
 - `session-knowledge-harvest` — mines a session for documentable knowledge (business rules, behavioral contracts, coding agent traps) and integrates findings into the formal knowledge base
@@ -209,6 +216,18 @@ Generates structured, high-quality prompts for [Paper Banana](https://paper-bana
 | Mention the skill | Provide a path to your source markdown file |
 
 **Skill:** `paper-banana-infographics` — eight-step workflow: read source, auto-suggest all categories, confirm with user, distill key elements, identify exclusions, compose prompt, review, save
+
+---
+
+## LinkedIn Posts
+
+Guides through creating a high-impact LinkedIn post from a concept, piece of content, or goal. Auto-suggests format and structure options so the user reviews choices rather than answering open-ended questions. Goal: posts that earn engagement (reactions, comments, DMs) — not just impressions.
+
+| Invoke | How |
+|--------|-----|
+| Mention the skill | Describe the goal or provide source content |
+
+**Skill:** `creating-linkedin-posts` — eight-step workflow: understand goal, understand content, ideate post types, select format, plan structure, write draft, review, save
 
 ---
 
