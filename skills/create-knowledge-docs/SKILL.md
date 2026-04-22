@@ -31,7 +31,7 @@ Before planning or writing anything, establish the full context. Ask the user fo
 | Field | Question to Ask |
 |---|---|
 | **Source material** | What is the source of knowledge? (transcript, wiki, codebase, interviews, existing docs, combination?) |
-| **Output location** | Where should the docs live? (path relative to workspace root) |
+| **Output location** | Use the `configure-docs` skill to resolve the target directory. If a path is configured, use it and do not ask the user. If unconfigured or `DOCS_DISABLED`, follow the skill's branch rules before continuing. |
 | **Subject / domain** | What is this documentation about? |
 | **Primary audience** | Who will read this? (new developers, senior engineers, external users, AI agents?) |
 

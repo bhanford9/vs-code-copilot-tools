@@ -33,3 +33,10 @@ When reviewing toggle-gated fixes where the fix mechanism is `DefaultIfEmpty(0)`
 Category: Process/Model
 
 When the developer provides a same-day validation or characterization test run, scan its output (e.g., Differences.xlsx files, test logs) **before** writing any Critical finding into a report. Empirical evidence resolves ambiguities faster than code tracing and can demote a Critical to a Non-Issue before it is published. Requirements and Correctness auditors are prone to flagging a missing code change as Critical when the behavior is already delivered via an emergent side-effect of a different fix. Rule: if validation data is available, analyze it first; rate a finding Critical only when the data confirms the gap, or when no validation data is available.
+
+---
+
+### Toggle-ON test branch dead code: check ToggleBuilder state before trusting if/else test assertions
+Category: Process/Model
+
+When a test file declares `_toggles = ToggleBuilder.AllDisabled().Build()` and then branches with `if (_toggles.IsEnabled(SomeToggle)) { ... } else { ... }`, the `if` branch is permanently dead code. The assertions inside will never execute. This pattern appears when a developer updates existing tests for toggle-aware behavior but forgets that the toggle instance is hardcoded to AllDisabled. Before writing Requirements or Correctness findings about toggle-ON test coverage, always verify whether the toggle instance used in the test fixture is AllDisabled vs. explicitly enabled. If AllDisabled, every toggle-ON assertion in the file is dead and should be flagged as a Medium coverage gap.

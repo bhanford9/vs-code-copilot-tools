@@ -12,6 +12,8 @@
 - **Section headers are H2 (`##`), not H3 (`###`).** `## Blocked By`, `## Backing Content`, `## Goal`, `## Details`, `## Acceptance Criteria` — all standalone H2. There is no `## Description` wrapper. (TEMPLATE.md previously had this wrong and was corrected 2026-04-11.)
 - **Do not use `-` for acceptance criteria bullets.** Use `- [ ]` checkbox syntax for acceptance criteria items.
 - **The `Details` section should mention specific file paths and module names** but never contain code snippets, algorithm descriptions, or step-by-step implementation procedures.
+  - ⚠️ **Escalation candidate**: This rule was violated despite being present as seeded knowledge (session April 2026). The agent described which fields to compare, what not to change, and implementation order — all HOW content. A future hook or FORMAT_RULES enforcement note may be warranted.
+  - **Test**: Before finalizing Details, ask: "Does any sentence tell the developer how to implement this?" If yes, remove it.
 
 ### Format vs. WorkItemCreator Agent
 
@@ -37,6 +39,13 @@
 ### Codebase-Specific Story Patterns
 
 _(Populated from session learnings — add entries after each AzureStoryCreation session)_
+
+### Output Must Be a Markdown File, Not Inline Chat
+
+- **Category: Process/Model**
+- SKILL.md Phase 4 explicitly states: "Present to user in new markdown file." On first attempt in April 2026, the story was output inline in the chat response. The user had to ask for correction.
+- DO: Always `create_file` to a `.md` path (e.g., `work-items/<slug>.md`) before presenting the story. Never paste the full story body in a chat message as the primary deliverable.
+- DON'T: Treat the inline chat output as the output artifact.
 
 ---
 

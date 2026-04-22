@@ -28,3 +28,12 @@ Before doing any work, write this block verbatim, filled in:
 - **The block must appear before any file edits, commands, or substantive output**
 
 > Writing "None identified" when ambiguities exist is a violation of this rule. Enumerate honestly.
+
+---
+
+## Session Knowledge Harvest — NON-NEGOTIABLE RULE
+
+At the end of any session where architectural, behavioral, or domain knowledge was discovered — including debugging sessions, code reviews, investigation spikes, and refactoring work — you MUST invoke the `session-knowledge-harvest` skill to integrate the findings into the formal knowledge base.
+
+- Do not skip this step because the session was "quick" — use the skill's scope gate to decide what qualifies
+- If nothing documentable was discovered, state that explicitly rather than silently skipping

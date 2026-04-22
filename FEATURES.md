@@ -127,7 +127,7 @@ Instruction files that auto-apply to matching sessions without any invocation.
 
 | File | Applies To | What It Does |
 |------|------------|--------------|
-| `general-agent-behavior.instructions.md` | `**` (all files) | Requires an Ambiguity Scan before acting on any non-trivial request |
+| `general-agent-behavior.instructions.md` | `**` (all files) | Requires an Ambiguity Scan before acting on any non-trivial request; requires invoking `session-knowledge-harvest` at the end of any session where architectural or domain knowledge was gained |
 | `csharp-diagnostics.instructions.md` | `**/*.cs` | Enforces the "Check Changed Files" VS Code task for error checking — never `dotnet build` or `get_errors` |
 | `csharp-tests.instructions.md` | `**/*Tests.cs` | Injects baseline NUnit test conventions: naming pattern, no comments, Moq Verifiable, `[TestCase]` |
 
@@ -162,6 +162,27 @@ A feedback loop built into every skill and agent workflow. After completing a se
 **Skills:** `lessons-learned`, `review-lessons`
 
 **Overview:** [`feature-overviews/lessons-learned-system/lessons-learned-system.md`](feature-overviews/lessons-learned-system/lessons-learned-system.md)
+
+---
+
+## Knowledge Management
+
+A suite of skills and prompts for building, reading, and maintaining a formal architecture knowledge base per workspace. Designed to be self-bootstrapping — a new cloner gets prompted to configure their docs directory on first use.
+
+| Invoke | How |
+|--------|-----|
+| `/harvest` | Run the session knowledge harvest at the end of a session |
+| `/configure-docs` | Set or change the documentation directory for the current workspace, or opt out |
+
+**Skills:**
+- `session-knowledge-harvest` — mines a session for documentable knowledge (business rules, behavioral contracts, coding agent traps) and integrates findings into the formal knowledge base
+- `configure-docs` — resolves the documentation directory for the current workspace from machine-local config (`workspace-docs.json`); handles first-time setup, opt-out (`DOCS_DISABLED`), and path changes; semantically discoverable by agents that need a docs path
+- `create-knowledge-docs` — builds or extends a structured, AI-indexable knowledge base from any source material
+- `read-knowledge-docs` — retrieves targeted information from a structured knowledge base without reading entire files
+
+**Config:** `workspace-docs.json` (machine-local, gitignored) — maps workspace root paths to their documentation directories. Managed exclusively by the `configure-docs` skill.
+
+**Always-on enforcement:** `general-agent-behavior.instructions.md` requires invoking `session-knowledge-harvest` at the end of any session where knowledge was gained.
 
 ---
 

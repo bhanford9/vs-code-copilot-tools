@@ -310,3 +310,37 @@ Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools\skills" 
 ```
 
 Compare against every skill name mentioned in `FEATURES.md`. Any name that doesn't appear in the directory listing is stale or wrong.
+
+---
+
+## Session-Knowledge-Harvest Hook Pattern (2026-04-22)
+
+### Stop Hook Is the Least-Noisy Lifecycle Event for Session-End Reminders
+
+When evaluating hooks to reinforce the `session-knowledge-harvest` workflow, `Stop` is the correct lifecycle event:
+- Fires exactly once per session (not per prompt or per tool use)
+- Supports `systemMessage` output to post a non-blocking reminder in the chat panel at session end — the moment when the user would actually run the harvest
+- The `stop_hook_active` guard prevents loops; since the hook does not use `decision: "block"`, a loop is not actually possible, but the guard is still good practice
+
+`SessionStart` was considered but rejected: injecting context at session start adds pressure from turn one, which risks the agent over-documenting routine utility sessions. `UserPromptSubmit` was rejected as too noisy (fires every turn).
+
+**Tried and removed (2026-04-22):** The `Stop` hook was implemented and tested. It fired unconditionally on every session end — including trivial sessions — and posted a noisy `systemMessage` in chat every time. The `Stop` input only carries `stop_hook_active`; there is no transcript, tool-use count, or any other signal to filter on. The hook was removed. The always-on instruction in `general-agent-behavior.instructions.md` and the `harvest.prompt.md` prompt file are the chosen approach instead.
+
+### Future Audit Check: Is There a Better Hook for Knowledge Reminders?
+
+As of April 2026, VS Code has eight lifecycle events. None allows conditional "did meaningful work happen?" filtering from within the hook script — `Stop` input only carries `stop_hook_active`. Do **not** re-recommend a `Stop` hook for harvest reminders unless VS Code ships one of the following:
+
+- A `Stop` input field that includes a tool-use count or file-edit count for the session
+- A `transcript_path` field whose content is readable by the script before it exits
+- A new lifecycle event that only fires when the session contained substantive agent tool use
+
+Check for these in the VS Code hooks documentation on every audit run before considering any hook-based harvest reminder.
+
+### `general-agent-behavior.instructions.md` Is the Strongest Always-In-Context Channel
+
+When auditing where to place cross-cutting behavioral rules (rules that should apply in every session, in every repo), `general-agent-behavior.instructions.md` (`applyTo: "**"`) is more reliable than a workspace-specific `copilot-instructions.md` because:
+- It is loaded via VS Code user-level settings and applies across all workspaces automatically
+- It is co-located with the Ambiguity Scan rule, which has proven high compliance — the agent consistently reads and follows both rules together
+- A `copilot-instructions.md` only applies to the workspace it lives in
+
+**Audit implication:** When a cross-cutting behavioral rule (e.g., "always run the harvest skill at session end") needs to be enforced everywhere, recommend adding it to `general-agent-behavior.instructions.md` rather than creating a new workspace `copilot-instructions.md`.

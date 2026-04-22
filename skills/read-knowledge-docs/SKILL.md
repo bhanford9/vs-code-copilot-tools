@@ -45,7 +45,7 @@ Before doing any work, establish the two required inputs.
 | Input | Question to Ask |
 |---|---|
 | **Query** | What do you need to find or understand? Be as specific as possible. |
-| **Knowledge base path** | Where does the documentation live? (path relative to workspace root, e.g., `docs/architecture/`) |
+| **Knowledge base path** | Use the `configure-docs` skill to resolve the path. If a path is configured, use it and do not ask the user. If unconfigured or `DOCS_DISABLED`, follow the skill's branch rules before continuing. |
 
 **If invoked directly by a user:** If either input is missing, STOP and ask the user before touching any files. Keep it to one focused question if only one input is missing.
 
