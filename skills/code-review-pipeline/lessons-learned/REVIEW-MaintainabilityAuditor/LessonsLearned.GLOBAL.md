@@ -26,3 +26,21 @@ When reviewing toggle-gated `if/else` blocks in flow methods where both branches
 **Category**: Process/Model
 
 C# default interface members implemented as `=> new Foo()` factories create a new instance on every property access. This is identity-unstable: callers reading the same property twice get different references. In flow frameworks that cache steps by name, this is currently correctness-safe — but it violates the standard property contract and creates fragile coupling to the framework's caching. When you encounter DIM properties that `new` objects, flag this as Medium and recommend moving instantiation to the concrete class as initialized auto-properties (`{ get; } = new Foo()`). This removes the factory semantics and makes the contract explicit.
+
+---
+
+## Prior Audit Chain Informs Severity Scoring
+
+**Category: Process/Model**
+**Date**: 2026-04-22
+
+The correctness audit's "known gaps" (e.g., a missing `Math.Max` floor) directly elevate the maintainability severity of a DRY violation in the same area: if the same logic exists in two places and a known fix must be applied there, the DRY violation becomes High (not Medium) because it doubles the chance the fix is applied in only one location. Always read both prior audits (requirements + correctness) before assigning severity scores — they provide evidence that changes what counts as a maintainability risk.
+
+---
+
+## Commutative Method Argument Swaps Are a KISS Finding, Not a Correctness Finding
+
+**Category: Process/Model**
+**Date**: 2026-04-22
+
+When a method is confirmed commutative (e.g., `DistanceAlong(a, b) == DistanceAlong(b, a)`) and the code uses an inline ternary to swap arguments by side, flag it as a **Medium KISS violation** (unnecessary complexity) rather than a correctness risk. The finding should recommend simplifying the call site, not re-examining the method's commutativity.

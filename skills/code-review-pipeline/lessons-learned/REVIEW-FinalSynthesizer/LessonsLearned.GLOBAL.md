@@ -23,3 +23,19 @@ When the Unit Test Coverage auditor rates a gap Critical (toggle-ON paths comple
 Category: Process/Model
 
 When Maintainability rates the DIM factory pattern Medium (identity instability, principle of least surprise) and Extensibility rates the same pattern Low (discoverability concern), these are different quality dimensions on the same code element, not contradictory findings. Include both angles in the final report under the single Medium issue — the Extensibility angle is a supporting observation, not a competing rating. Merging them into one finding avoids repeating the same code location twice at different severities.
+
+---
+
+## Entry 1 — 2026-04-22
+
+**Session**: AB#37571 — Reinforcement length calculation for sloped joists
+
+**Pattern: Severity discrepancies between auditors are usually a pre-existing vs. introduced distinction, not a factual conflict.**
+- Correctness rated `.First()` throw as High; Testability rated it Low. Root cause: the two auditors assessed different risks (correctness risk vs. test coverage risk). Resolution: carry at Medium in final, noting it's pre-existing.
+- General rule: when two auditors give the same finding different severities, check whether one auditor is judging the code as introduced-by-this-PR and the other is judging absolute severity. Downgrade to the lower rating when the issue is pre-existing.
+
+**Pattern: The "three auditors flagged this independently" signal is the most reliable escalation indicator.**
+- `Is.GreaterThan(43)` weak assertion was flagged independently by Correctness, Unit Test Coverage, and Testability. Zero-length regression was flagged by Requirements, Correctness, Unit Test Coverage, and Maintainability. When 3+ auditors independently identify the same issue without cross-pollination, it belongs in the final report regardless of individual severity.
+
+**Pattern: `Math.Max`-type floor omissions are hard to detect from the diff alone — they require knowing the original design intent.**
+- The missing floor was only discoverable because the developer provided the acceptance criteria. Without that, the code looks superficially correct. For future reviews, when a developer says "use `Math.Max(a, b)`" and the code uses only `b`, flag it even if the rationale for the max is not immediately obvious.
