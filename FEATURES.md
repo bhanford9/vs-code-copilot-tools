@@ -191,6 +191,8 @@ A suite of skills and prompts for building, reading, and maintaining a formal ar
 
 **Always-on enforcement:** `general-agent-behavior.instructions.md` requires invoking `session-knowledge-harvest` at the end of any session where knowledge was gained.
 
+**Overview:** [`feature-overviews/knowledge-management/knowledge-management.md`](feature-overviews/knowledge-management/knowledge-management.md)
+
 ---
 
 ## Temporary Debug Logging
@@ -217,6 +219,8 @@ Generates structured, high-quality prompts for [Paper Banana](https://paper-bana
 
 **Skill:** `paper-banana-infographics` — eight-step workflow: read source, auto-suggest all categories, confirm with user, distill key elements, identify exclusions, compose prompt, review, save
 
+**Overview:** [`feature-overviews/paper-banana/paper-banana.md`](feature-overviews/paper-banana/paper-banana.md)
+
 ---
 
 ## LinkedIn Posts
@@ -228,6 +232,8 @@ Guides through creating a high-impact LinkedIn post from a concept, piece of con
 | Mention the skill | Describe the goal or provide source content |
 
 **Skill:** `creating-linkedin-posts` — eight-step workflow: understand goal, understand content, ideate post types, select format, plan structure, write draft, review, save
+
+**Overview:** [`feature-overviews/linkedin-posts/linkedin-posts.md`](feature-overviews/linkedin-posts/linkedin-posts.md)
 
 ---
 
@@ -243,5 +249,7 @@ Two skills for summarizing recorded meeting transcripts, each tuned to a differe
 **`summarize-remote-meeting`** — Detects and filters off-topic segments, field-issue interruptions, and social tangents. Produces a clean structured summary seeded only with relevant content. Output: `meeting-summaries/{YYYY-MM-DD}-{topic-slug}.md`
 
 **`summarize-workshop-recording`** — Handles multi-group noise, classifies low-quality segments, produces a structured lesson overview with key takeaways, and critiques the session on pacing, engagement, and learning growth.
+
+**Overview:** [`feature-overviews/summarize-meeting-transcripts/summarize-meeting-transcripts.md`](feature-overviews/summarize-meeting-transcripts/summarize-meeting-transcripts.md)
 
 
