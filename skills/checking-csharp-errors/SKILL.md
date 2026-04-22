@@ -5,7 +5,7 @@ description: Check C# files for errors, warnings, and diagnostics using VS Code 
 
 # Checking C# Errors
 
-> The core rules (use Check Changed Files, never get_errors, don't run dotnet build) are enforced automatically via [`csharp-diagnostics.instructions.md`](~/Repos/copilot-configs/instructions/csharp-diagnostics.instructions.md) on all `*.cs` files. This skill provides the detailed workflow and step-by-step checklist.
+> The core rules (use Check Changed Files, never get_errors, don't run dotnet build) are enforced automatically via [`csharp-diagnostics.instructions.md`](~/Repos/vs-code-copilot-tools/instructions/csharp-diagnostics.instructions.md) on all `*.cs` files. This skill provides the detailed workflow and step-by-step checklist.
 
 ## Workflow
 
@@ -63,13 +63,13 @@ In multi-root workspaces, `csharp-diagnostics-report.tmp` is written to the **ro
 
 ## Feedback Loop
 
-Before starting, read `~/Repos/copilot-configs/skills/checking-csharp-errors/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/checking-csharp-errors/LessonsLearned.md`. Apply any recorded error patterns.
+Before starting, read `~/Repos/vs-code-copilot-tools/skills/checking-csharp-errors/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/checking-csharp-errors/LessonsLearned.md`. Apply any recorded error patterns.
 
 When this workflow is complete, **tell the user**:
 > "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`:
+When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (error patterns specific to this codebase, task paths, project-specific CS errors) → write to `LessonsLearned.md`
 - **Process findings** (general C# diagnostic workflow improvements) → write to `LessonsLearned.GLOBAL.md`
 
-Both files are at `~/Repos/copilot-configs/skills/checking-csharp-errors/`.
+Both files are at `~/Repos/vs-code-copilot-tools/skills/checking-csharp-errors/`.

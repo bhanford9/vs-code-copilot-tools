@@ -23,7 +23,7 @@ VS Code loads each file type from a directory registered in `settings.json`. Thi
 
 ```mermaid
 flowchart LR
-    Repo["~/Repos/copilot-configs"]
+    Repo["~/Repos/vs-code-copilot-tools"]
     Repo --> A["agents/\n@AgentName"]
     Repo --> P["prompts/\n/slash-commands"]
     Repo --> I["instructions/\nauto-attached rules"]
@@ -40,12 +40,12 @@ flowchart LR
 ## First-Time Setup
 
 ```powershell
-git clone https://github.com/bhanford9/vs-code-copilot-tools "$env:USERPROFILE\Repos\copilot-configs"
+git clone https://github.com/bhanford9/vs-code-copilot-tools "$env:USERPROFILE\Repos\vs-code-copilot-tools"
 ```
 
 Then use the `merge-copilot-settings` skill (or `/merge-copilot-settings` prompt) to apply `settings.base.json` on top of your local `settings.json`. Reload VS Code when done.
 
-> The repo must live at `~/Repos/copilot-configs`. VS Code location settings use `~/` paths, which resolve relative to your home directory.
+> The repo must live at `~/Repos/vs-code-copilot-tools`. VS Code location settings use `~/` paths, which resolve relative to your home directory.
 
 ---
 

@@ -34,7 +34,7 @@ Make the targeted change to the identified file. Keep it minimal — fix only wh
 
 ## Step 4: Write the LessonsLearned Entry
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process to write an entry capturing:
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process to write an entry capturing:
 - What the failure was
 - What was changed to fix it
 - Category tag: `Codebase` (project-specific fact) or `Process/Model` (agent behavior/workflow gap)

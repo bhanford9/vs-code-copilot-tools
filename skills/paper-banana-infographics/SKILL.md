@@ -219,6 +219,6 @@ Before starting, read [LessonsLearned.GLOBAL.md](LessonsLearned.GLOBAL.md) and, 
 When this workflow is complete, **tell the user**:
 > "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`:
+When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
 - **Source-specific patterns** (infographic domain conventions, content patterns you discovered) → `LessonsLearned.md`
 - **Process/workflow improvements** (prompt structure changes, step gaps, agent behavior observations) → `LessonsLearned.GLOBAL.md`

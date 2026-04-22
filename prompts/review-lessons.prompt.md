@@ -4,4 +4,4 @@ description: Scan all LessonsLearned.md files for escalation candidates (promote
 mode: agent
 ---
 
-Read and follow `~/Repos/copilot-configs/skills/review-lessons/SKILL.md` to run the LessonsLearned escalation review.
+Read and follow `~/Repos/vs-code-copilot-tools/skills/review-lessons/SKILL.md` to run the LessonsLearned escalation review.

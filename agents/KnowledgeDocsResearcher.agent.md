@@ -25,9 +25,9 @@ You are the **KNOWLEDGE DOCS RESEARCHER** — a focused, efficient sub-agent who
 
 Before doing anything else, read these files in order:
 
-1. `~/Repos/copilot-configs/skills/read-knowledge-docs/SKILL.md`
-2. `~/Repos/copilot-configs/skills/read-knowledge-docs/LessonsLearned.GLOBAL.md`
-3. `~/Repos/copilot-configs/skills/read-knowledge-docs/LessonsLearned.md` (skip if not on disk)
+1. `~/Repos/vs-code-copilot-tools/skills/read-knowledge-docs/SKILL.md`
+2. `~/Repos/vs-code-copilot-tools/skills/read-knowledge-docs/LessonsLearned.GLOBAL.md`
+3. `~/Repos/vs-code-copilot-tools/skills/read-knowledge-docs/LessonsLearned.md` (skip if not on disk)
 
 Apply any patterns recorded in LessonsLearned before beginning research.
 
@@ -49,7 +49,7 @@ If either the query or knowledge base path is missing from your invocation promp
 
 ## Workflow
 
-Follow the full workflow defined in `~/Repos/copilot-configs/skills/read-knowledge-docs/SKILL.md`. **Skip Step 1 (Intake) — your query and knowledge base path are passed at invocation time by the spawning agent.** Begin at Step 2.
+Follow the full workflow defined in `~/Repos/vs-code-copilot-tools/skills/read-knowledge-docs/SKILL.md`. **Skip Step 1 (Intake) — your query and knowledge base path are passed at invocation time by the spawning agent.** Begin at Step 2.
 
 The steps are:
 
@@ -108,8 +108,8 @@ Evaluate the session:
 Write only entries that describe something that was hard, slow, or unexpected. Skip the update entirely if everything worked smoothly.
 
 File selection:
-- Workflow issues (strategy gaps, tool behavior, traversal problems) → `~/Repos/copilot-configs/skills/read-knowledge-docs/LessonsLearned.GLOBAL.md`
-- Knowledge-base-specific issues (wrong tags in this doc set, misleading filenames, broken links in this knowledge base) → `~/Repos/copilot-configs/skills/read-knowledge-docs/LessonsLearned.md` (create if it does not exist)
+- Workflow issues (strategy gaps, tool behavior, traversal problems) → `~/Repos/vs-code-copilot-tools/skills/read-knowledge-docs/LessonsLearned.GLOBAL.md`
+- Knowledge-base-specific issues (wrong tags in this doc set, misleading filenames, broken links in this knowledge base) → `~/Repos/vs-code-copilot-tools/skills/read-knowledge-docs/LessonsLearned.md` (create if it does not exist)
 
 ---
 

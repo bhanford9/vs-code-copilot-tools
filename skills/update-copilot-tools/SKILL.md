@@ -6,7 +6,7 @@ description: Pull the latest copilot-tools repo, analyze every changed file, ide
 # Update Copilot Tools — SKILL.md
 
 ## Purpose
-Pulls `~/Repos/copilot-configs` from the remote, analyzes exactly what changed, flags any manual actions required to keep the local VS Code setup in sync, and ends with a Lessons Learned reflection.
+Pulls `~/Repos/vs-code-copilot-tools` from the remote, analyzes exactly what changed, flags any manual actions required to keep the local VS Code setup in sync, and ends with a Lessons Learned reflection.
 
 ---
 
@@ -17,14 +17,14 @@ Read `LessonsLearned.GLOBAL.md` alongside this SKILL.md, and if it exists on dis
 
 ### Step 1 — Check for uncommitted local changes
 ```powershell
-cd "$env:USERPROFILE\Repos\copilot-configs"
+cd "$env:USERPROFILE\Repos\vs-code-copilot-tools"
 git status --short
 ```
 If any files are modified or staged, **stop and tell the user** — they may have unsaved edits that could be lost or conflict during the rebase. Ask whether to stash, commit, or abort before continuing.
 
 ### Step 2 — Record current HEAD and pull
 ```powershell
-cd "$env:USERPROFILE\Repos\copilot-configs"
+cd "$env:USERPROFILE\Repos\vs-code-copilot-tools"
 $beforeHead = git rev-parse HEAD
 git pull --rebase
 $afterHead = git rev-parse HEAD
@@ -65,7 +65,7 @@ Display the raw diff so the user can see exactly which keys changed before decid
 **Validating hook script paths:**
 For each changed `hooks/*.json`:
 ```powershell
-$hook = Get-Content "C:\Users\$env:USERNAME\Repos\copilot-configs\hooks\<filename>.json" -Raw | ConvertFrom-Json
+$hook = Get-Content "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools\hooks\<filename>.json" -Raw | ConvertFrom-Json
 $hooks = $hook.hooks
 $hooks.PSObject.Properties.Value | ForEach-Object { $_ } | ForEach-Object {
     $ps1Path = [regex]::Match($_.windows, '(?<=")[^"]+\.ps1(?=")').Value
@@ -99,7 +99,7 @@ When the user runs lessons learned, follow the two-tier feedback loop: write pro
 ---
 
 ## Notes
-- The repo path is always `C:\Users\$env:USERNAME\Repos\copilot-configs` on Windows.
+- The repo path is always `C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools` on Windows.
 - VS Code auto-reloads agents, prompts, instructions, and skills from the filesystem — no VS Code reload needed for those. A reload **is** recommended after a settings merge or hook JSON change.
 - If `settings.base.json` changed, always run `merge-copilot-settings` **before** reloading VS Code — otherwise the reload picks up stale location settings.
 - `ORIG_HEAD` is unreliable when rebasing local commits on top of remote changes. Always capture `$beforeHead` before the pull instead.

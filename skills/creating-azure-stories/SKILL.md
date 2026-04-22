@@ -75,8 +75,8 @@ Before writing a story, read [LessonsLearned.GLOBAL.md](LessonsLearned.GLOBAL.md
 When this workflow is complete, **tell the user**:
 > "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`:
+When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (story patterns specific to this codebase, work item formats, team conventions) → write to `LessonsLearned.md`
 - **Process/format improvements** (story structure guidance applicable to any codebase) → write to `LessonsLearned.GLOBAL.md`
 
-Both files are at `~/Repos/copilot-configs/skills/creating-azure-stories/`.
+Both files are at `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/`.

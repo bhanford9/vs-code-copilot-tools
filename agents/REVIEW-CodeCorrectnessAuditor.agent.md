@@ -35,7 +35,7 @@ Your mission: Verify that the code implementation correctly achieves the goals a
 
 ## 0. Read LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
+Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
 
 ## 1. Read Requirements Audit
 
@@ -153,11 +153,11 @@ If code is functionally correct (or only has minor issues), tell the user they c
 
 ## Update LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
 - **Codebase findings** (false positives specific to this codebase, project-specific patterns) → write to `LessonsLearned.md`
 - **Process/Model findings** (recurring false positive types, agent behavior gaps across any codebase) → write to `LessonsLearned.GLOBAL.md`
 
-Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/`.
+Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`.
 
 </workflow>
 
@@ -327,7 +327,7 @@ Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/`.
 </audit_report_template>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md`:
+Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
 - Output directory: `/code-review/`
 - File name: `code-correctness-audit.md`
 - Severity levels: Critical, High, Medium, Low

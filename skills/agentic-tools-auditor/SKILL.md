@@ -46,7 +46,7 @@ Each skill directory uses a **two-tier** system:
 - `LessonsLearned.GLOBAL.md` — tracked in git; process/model notes applicable across any workspace
 - `LessonsLearned.md` — gitignored, per-user; codebase-specific facts (type locations, naming conventions, team patterns)
 
-Place both files next to any `SKILL.md`. The skill's workflow instructions and any companion agent's final phase should direct the agent to read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process. This pattern should be recommended for every skill-level workflow that involves complex multi-step procedures.
+Place both files next to any `SKILL.md`. The skill's workflow instructions and any companion agent's final phase should direct the agent to read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process. This pattern should be recommended for every skill-level workflow that involves complex multi-step procedures.
 
 ---
 
@@ -160,7 +160,7 @@ Where could a LessonsLearned.md feedback loop create continuous improvement?
 - **Category routing**: Are entries tagged `Codebase` vs. `Process/Model`? `Codebase` entries must be in `LessonsLearned.md` (gitignored). `Process/Model` entries must be in `LessonsLearned.GLOBAL.md`. If any `Codebase` entries are found in `LessonsLearned.GLOBAL.md`, flag as a content leak.
 - **Cross-skill duplicates**: Does a pattern in a LessonsLearned file also appear in another skill's file? It may belong in a shared instruction instead.
 
-**Seeding new LessonsLearned files**: Use the failure modes identified in Dimensions 2 and 3. The `lessons-learned` skill (`~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`) defines how the two-tier system works, including the escalation path from guidance to enforcement. Seed `LessonsLearned.GLOBAL.md` with process/model observations; `LessonsLearned.md` should be seeded only by the user locally (it is gitignored).
+**Seeding new LessonsLearned files**: Use the failure modes identified in Dimensions 2 and 3. The `lessons-learned` skill (`~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`) defines how the two-tier system works, including the escalation path from guidance to enforcement. Seed `LessonsLearned.GLOBAL.md` with process/model observations; `LessonsLearned.md` should be seeded only by the user locally (it is gitignored).
 
 ### 5. Automation Opportunities (Hooks)
 
@@ -396,7 +396,7 @@ After all roadmap items are implemented and the audit is complete, the generated
 
 1. Discover all audit artifacts using a name-contains search (catches all three patterns):
 ```powershell
-Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\copilot-configs" -Recurse |
+Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools" -Recurse |
   Where-Object { $_.Name -like "*AUDIT*" -and $_.PSIsContainer -eq $false } |
   Select-Object -ExpandProperty FullName
 ```
@@ -408,7 +408,7 @@ Review the output carefully — permanent files like `agentic-tools-auditor.agen
 
 3. Only after explicit confirmation, run:
 ```powershell
-$root = "C:\Users\$env:USERNAME\Repos\copilot-configs"
+$root = "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools"
 # *.AUDIT.md pattern
 Get-ChildItem -Path $root -Recurse -Filter "*.AUDIT.md" | Remove-Item -Force
 # AUDIT.md pattern (skill directories)
@@ -421,7 +421,7 @@ Remove-Item -Path "$root\AUDIT-BEFORE-STATE.md" -ErrorAction SilentlyContinue
 
 4. Verify nothing remains:
 ```powershell
-Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\copilot-configs" -Recurse |
+Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools" -Recurse |
   Where-Object { $_.Name -like "AUDIT.md" -or $_.Name -like "*.AUDIT.md" -or $_.Name -like "AUDIT-*.md" }
 ```
 

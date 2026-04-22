@@ -5,7 +5,7 @@ description: Guidelines for writing NUnit tests in CSharp codebase including nam
 
 # Writing C# Unit Tests
 
-> Basic conventions (naming, no comments, TestCase usage) are enforced automatically via [`csharp-tests.instructions.md`](~/Repos/copilot-configs/instructions/csharp-tests.instructions.md) on all `*Tests.cs` files. This skill provides the detailed workflow, examples, and codebase-specific references.
+> Basic conventions (naming, no comments, TestCase usage) are enforced automatically via [`csharp-tests.instructions.md`](~/Repos/vs-code-copilot-tools/instructions/csharp-tests.instructions.md) on all `*Tests.cs` files. This skill provides the detailed workflow, examples, and codebase-specific references.
 >
 > For full test-writing sessions, use the `@UnitTestWriter` agent — it enforces this skill's complete workflow including all pre-read steps.
 
@@ -76,11 +76,11 @@ Assert.That(sut.Result, Is.EqualTo(expectedResult));
 
 ## Feedback Loop
 
-Before starting, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`. Apply any recorded patterns to this session.
+Before starting, read `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.md`. Apply any recorded patterns to this session.
 
 When this workflow is complete, **tell the user**:
 > "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`:
+When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (type locations, enum namespaces, non-mockable types, support helpers) → write to `LessonsLearned.md`
 - **Process/Model findings** (agent behavior, workflow gaps) → write to `LessonsLearned.GLOBAL.md`

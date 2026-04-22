@@ -205,7 +205,7 @@ The following terms from audited skills are reliable signals of low-determinism 
 
 ---
 
-## copilot-configs Workspace Audit — Session D (2026-04-21)
+## vs-code-copilot-tools Workspace Audit — Session D (2026-04-21)
 
 ### Both disable-model-invocation AND user-invocable: false = completely unreachable agent
 `individual-auditor.agent.md` had BOTH `user-invocable: false` AND `disable-model-invocation: true`. Per VS Code docs, the combination makes the agent unreachable via any mechanism: not from the picker, not via handoff, not via agent tool. `AgenticToolsAuditor` had `agents: [individual-auditor]` and called it via agent tool — all those invocations fail silently. When auditing sub-agents, always check that parallel/programmatic sub-agent targets have `user-invocable: false` ONLY (no `disable-model-invocation`).
@@ -227,13 +227,13 @@ Full workspace audit of 54 items (23 agents, 18 skills, 8 prompts, 3 instruction
 
 ### SessionStart Path Injection Is Not Feasible for Multi-Workspace Configs
 
-A `SessionStart` hook to write the copilot-configs root path to a temp file was explored as an alternative to hard-coded install paths. It was rejected because:
+A `SessionStart` hook to write the vs-code-copilot-tools root path to a temp file was explored as an alternative to hard-coded install paths. It was rejected because:
 
-- copilot-configs is loaded as a **secondary** skills/agents/hooks source into other workspaces via VS Code settings — agents run in the context of the active project workspace, not the copilot-configs directory.
-- The hook fires in the active workspace context, making `$PSScriptRoot` and workspace-relative paths unreliable for identifying where copilot-configs itself lives.
+- vs-code-copilot-tools is loaded as a **secondary** skills/agents/hooks source into other workspaces via VS Code settings — agents run in the context of the active project workspace, not the vs-code-copilot-tools directory.
+- The hook fires in the active workspace context, making `$PSScriptRoot` and workspace-relative paths unreliable for identifying where vs-code-copilot-tools itself lives.
 - A per-session temp file could be made workspace-specific to avoid multi-session collisions, but the workspace context problem remains unsolvable without VS Code exposing the secondary config root as a variable.
 
-**Rule:** Do not propose `SessionStart` hooks for path injection in multi-workspace configurations. The documented install location (`~/Repos/copilot-configs/`) is the correct and sufficient constraint. Hard-coded paths are intentional, not a defect.
+**Rule:** Do not propose `SessionStart` hooks for path injection in multi-workspace configurations. The documented install location (`~/Repos/vs-code-copilot-tools/`) is the correct and sufficient constraint. Hard-coded paths are intentional, not a defect.
 
 ---
 
@@ -296,7 +296,7 @@ The access-control flag `user-invocable: false` remains for agents hidden from t
 
 ---
 
-## copilot-configs Workspace Audit — Session E (2026-04-21)
+## vs-code-copilot-tools Workspace Audit — Session E (2026-04-21)
 
 ### FEATURES.md Skill Name Drift Is Not Caught by the Audit
 
@@ -306,7 +306,7 @@ The access-control flag `user-invocable: false` remains for agents hidden from t
 
 ```powershell
 # List all skill directory names
-Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\copilot-configs\skills" -Directory | Select-Object -ExpandProperty Name
+Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools\skills" -Directory | Select-Object -ExpandProperty Name
 ```
 
 Compare against every skill name mentioned in `FEATURES.md`. Any name that doesn't appear in the directory listing is stale or wrong.

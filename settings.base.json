@@ -13,20 +13,20 @@
     "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
     "chat.viewSessions.orientation": "stacked",
     "chat.promptFilesLocations": {
-        "~/Repos/copilot-configs/prompts": true,
-        "~/Repos/copilot-configs/agents": true
+        "~/Repos/vs-code-copilot-tools/prompts": true,
+        "~/Repos/vs-code-copilot-tools/agents": true
     },
     "chat.instructionsFilesLocations": {
-        "~/Repos/copilot-configs/instructions": true
+        "~/Repos/vs-code-copilot-tools/instructions": true
     },
     "chat.agentFilesLocations": {
-        "~/Repos/copilot-configs/agents": true
+        "~/Repos/vs-code-copilot-tools/agents": true
     },
     "chat.agentSkillsLocations": {
-        "~/Repos/copilot-configs/skills": true
+        "~/Repos/vs-code-copilot-tools/skills": true
     },
     "chat.hookFilesLocations": {
-        "~/Repos/copilot-configs/hooks": true
+        "~/Repos/vs-code-copilot-tools/hooks": true
     },
     "chat.tools.urls.autoApprove": {
         "https://code.visualstudio.com": true,

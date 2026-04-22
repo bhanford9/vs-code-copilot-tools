@@ -5,8 +5,8 @@ disable-model-invocation: true
 hooks:
   PreToolUse:
     - type: command
-      windows: 'powershell -File "$env:USERPROFILE/Repos/copilot-configs/hooks/scripts/block-devops-fetch.ps1"'
-      command: 'powershell -File "~/Repos/copilot-configs/hooks/scripts/block-devops-fetch.ps1"'
+      windows: 'powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/hooks/scripts/block-devops-fetch.ps1"'
+      command: 'powershell -File "~/Repos/vs-code-copilot-tools/hooks/scripts/block-devops-fetch.ps1"'
       timeout: 10
 tools:
     - search
@@ -41,7 +41,7 @@ Your mission: Understand what the code changes are trying to accomplish at a hig
 
 ## 0. Read LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
+Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
 
 ## 1. Analyze Code Changes
 
@@ -132,11 +132,11 @@ Then tell the user they can click the **"Continue to Code Correctness Audit"** h
 
 ## Update LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
 - **Codebase findings** (false positives specific to this codebase, project-specific patterns) → write to `LessonsLearned.md`
 - **Process/Model findings** (recurring false positive types, agent behavior gaps across any codebase) → write to `LessonsLearned.GLOBAL.md`
 
-Both files are at `~/Repos/copilot-configs/skills/code-review-pipeline/`.
+Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`.
 
 </workflow>
 
@@ -258,7 +258,7 @@ After discussion with the developer, the final agreed requirements are:
 </audit_report_template>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md`:
+Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
 - Output directory: `/code-review/`
 - File name: `requirements-audit.md`
 - Severity levels: Critical, High, Medium, Low

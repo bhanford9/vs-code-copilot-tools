@@ -11,11 +11,11 @@ A periodic maintenance workflow that reads every `LessonsLearned.GLOBAL.md` file
 
 ## Before Starting
 
-Read `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.GLOBAL.md` per the `lessons-learned` skill. Apply any recorded patterns to improve this session.
+Read `~/Repos/vs-code-copilot-tools/skills/review-lessons/LessonsLearned.GLOBAL.md` per the `lessons-learned` skill. Apply any recorded patterns to improve this session.
 
 ## Step 1: Load Escalation Criteria
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` in full. Extract and keep in working memory:
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` in full. Extract and keep in working memory:
 
 - The **Escalation Path** (LessonsLearned → SKILL.md → hook)
 - **Escalation Indicators** (duplicate entries on same topic, `CRITICAL`-tagged rule violations, binary file-detectable rules)
@@ -24,10 +24,10 @@ Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` in full. Extract 
 
 ## Step 2: Discover All LessonsLearned Files
 
-Use a glob or recursive search to find **all** `LessonsLearned.GLOBAL.md` files under `~/Repos/copilot-configs/skills/`. Do not rely on a hardcoded list — the set of skills grows and shrinks over time.
+Use a glob or recursive search to find **all** `LessonsLearned.GLOBAL.md` files under `~/Repos/vs-code-copilot-tools/skills/`. Do not rely on a hardcoded list — the set of skills grows and shrinks over time.
 
 ```powershell
-Get-ChildItem -Path "~/Repos/copilot-configs/skills" -Recurse -Filter "LessonsLearned.GLOBAL.md" | Select-Object -ExpandProperty FullName
+Get-ChildItem -Path "~/Repos/vs-code-copilot-tools/skills" -Recurse -Filter "LessonsLearned.GLOBAL.md" | Select-Object -ExpandProperty FullName
 ```
 
 Record the complete list before proceeding. If zero files are found, report that and stop.
@@ -47,7 +47,7 @@ You are evaluating a single LessonsLearned.GLOBAL.md file for escalation candida
 
 Read this file in full: {path}
 
-Read the escalation criteria from: ~/Repos/copilot-configs/skills/lessons-learned/SKILL.md
+Read the escalation criteria from: ~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md
 Focus on these sections: "Escalation Path", "Escalation Indicators", "User-Specific vs. Globally Applicable", "Model-Upgrade Review".
 
 For every entry in the file, evaluate it against the criteria and assign exactly one flag:
@@ -108,4 +108,4 @@ Present the full report to the user. Then ask:
 
 ## Step 6: Lessons Learned
 
-Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/copilot-configs/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content). **Tell the user: "Type 'lessons learned session' to close this out. Don't skip this."**
+Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/vs-code-copilot-tools/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content). **Tell the user: "Type 'lessons learned session' to close this out. Don't skip this."**

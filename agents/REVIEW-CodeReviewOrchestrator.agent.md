@@ -21,9 +21,9 @@ handoffs:
 
 You are the **CODE REVIEW ORCHESTRATOR**, the entry point and coordinator for the comprehensive code review pipeline.
 
-Before doing anything else, read `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/code-review-pipeline/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded patterns or false-positive notes to improve this run.
+Before doing anything else, read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded patterns or false-positive notes to improve this run.
 
-> **Note**: The Orchestrator does not have a LessonsLearned update step. Each parallel auditor independently updates its own per-auditor LL directory at `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-{AgentName}/`. The `REVIEW-FinalSynthesizer` agent handles promotion to the pipeline-level LL (`~/Repos/copilot-configs/skills/code-review-pipeline/`) when a finding is broadly applicable to the entire pipeline.
+> **Note**: The Orchestrator does not have a LessonsLearned update step. Each parallel auditor independently updates its own per-auditor LL directory at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-{AgentName}/`. The `REVIEW-FinalSynthesizer` agent handles promotion to the pipeline-level LL (`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`) when a finding is broadly applicable to the entire pipeline.
 
 Your responsibilities are:
 1. **Guide users** through the code review workflow
@@ -104,7 +104,7 @@ When first invoked:
 </workflow>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md`:
+Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
 - Severity levels: Critical, High, Medium, Low
 - Actionable, specific recommendations
 </conventions>

@@ -80,3 +80,20 @@ Fix applied: SKILL.md description updated to say "Build or extend", "Produces or
 
 - DO load this skill any time you write to a knowledge-base-format document — new file, new section, or a paragraph addition to an existing file.
 - DON'T treat this as a creation-only skill. The writing conventions (YAML front matter, heading style, TODO format, cross-reference syntax) apply equally to edits.
+
+---
+
+## Onboarding Transcripts Are High-Generalization Sources — Treat Specific Claims as TODOs
+Category: Process/Model
+
+When the documentation source is a meeting transcript (especially an onboarding or teaching session), speakers routinely simplify. Specific numbers and categorical claims from a teaching conversation are often approximations, not authoritative facts. Writing them as stated facts into reference documentation creates incorrect docs that require a follow-up correction pass.
+
+Examples of what went wrong in one session:
+- "~70 load combinations" (actually varies per joist run) was written as `~70 defined` in a heading
+- `LoadCategoryKey = category + case + component` was written as a complete definition (the real structure has more fields)
+- Specific named examples from post-stiffness processing were listed without being verified against the codebase
+
+Rule:
+- If the source is a meeting/onboarding transcript, **any specific number, count, or formula** stated conversationally should be written as `> 📝 TODO: Verify — taken from onboarding discussion, may be a simplification` rather than stated as fact.
+- Architectural descriptions (how things work conceptually) from onboarding transcripts are generally trustworthy. Specific quantities and exhaustive enumerations are not.
+- DO: capture the concept accurately. DON'T: promote the approximate number into a heading or authoritative statement.

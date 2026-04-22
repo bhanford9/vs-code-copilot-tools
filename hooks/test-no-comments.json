@@ -3,8 +3,8 @@
     "PostToolUse": [
       {
         "type": "command",
-        "windows": "powershell -File \"$env:USERPROFILE/Repos/copilot-configs/hooks/scripts/check-test-comments.ps1\"",
-        "command": "powershell -File \"~/Repos/copilot-configs/hooks/scripts/check-test-comments.ps1\"",
+        "windows": "powershell -File \"$env:USERPROFILE/Repos/vs-code-copilot-tools/hooks/scripts/check-test-comments.ps1\"",
+        "command": "powershell -File \"~/Repos/vs-code-copilot-tools/hooks/scripts/check-test-comments.ps1\"",
         "timeout": 15
       }
     ]

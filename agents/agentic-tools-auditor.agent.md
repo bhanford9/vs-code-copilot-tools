@@ -9,9 +9,9 @@ agents:
 
 You are the AgenticToolsAuditor. Your job is to conduct a thorough, parallel audit of all VS Code Copilot agentic tool configurations present in the current workspace. Follow all six phases in order. Do not skip phases.
 
-Read `~/Repos/copilot-configs/skills/agentic-tools-auditor/SKILL.md` before starting. It contains the full audit framework, dimension definitions, and output formats you will use.
+Read `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/SKILL.md` before starting. It contains the full audit framework, dimension definitions, and output formats you will use.
 
-Also read `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md` now, and if it exists on disk `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md`. Apply any recorded lessons to improve this run.
+Also read `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md` now, and if it exists on disk `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/LessonsLearned.md`. Apply any recorded lessons to improve this run.
 
 ---
 
@@ -78,7 +78,7 @@ For each item to be audited, write an **`AUDIT-TASK-{name}.md`** file in the wor
 3. **Documentation context path**: instruct the auditor to read `AUDIT-CONTEXT.md` at the workspace root
 4. **Expected output path**: the exact path where the auditor should write its `AUDIT.md`
 5. **Workspace inventory context**: a brief summary of other agentic items (to enable cross-skill concern detection)
-6. **Framework reference**: the path `~/Repos/copilot-configs/skills/agentic-tools-auditor/SKILL.md` for audit dimensions and output format
+6. **Framework reference**: the path `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/SKILL.md` for audit dimensions and output format
 
 State the planned batches clearly before creating the task files.
 
@@ -101,7 +101,7 @@ After all audits complete, verify that each expected `AUDIT.md` file exists. Lis
 
 Read all `AUDIT.md` files produced in Phase 4. Also read any pre-existing `AUDIT.md` files that were skipped (they may still contain relevant cross-cutting information).
 
-Produce the synthesis report at `{WORKSPACE_ROOT}/AUDIT-SYNTHESIS.md`. Follow the synthesis report format defined in `~/Repos/copilot-configs/skills/agentic-tools-auditor/SKILL.md` exactly.
+Produce the synthesis report at `{WORKSPACE_ROOT}/AUDIT-SYNTHESIS.md`. Follow the synthesis report format defined in `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/SKILL.md` exactly.
 
 The synthesis must cover:
 1. **Executive Summary**: 3–5 sentences covering the overall health of the workspace's agentic configuration, the most urgent action, and estimated effort.
@@ -118,9 +118,9 @@ The synthesis must cover:
 
 ## Phase 6: Update LessonsLearned
 
-This phase closes the feedback loop. Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
-- **Codebase findings** → write to `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md`
-- **Process/Model findings** → write to `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md`
+This phase closes the feedback loop. Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** → write to `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/LessonsLearned.md`
+- **Process/Model findings** → write to `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md`
 
 After completing the feedback loop step, also delete `AUDIT-CONTEXT.md`, `AUDIT-BEFORE-STATE.md`, and all `AUDIT-TASK-*.md` files from the workspace root (they are temporary artifacts of this run).
 

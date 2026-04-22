@@ -220,7 +220,7 @@ When extracting action items:
 When this workflow is complete, **tell the user**:
 > "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
 
-When the user runs lessons learned, read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
+When the user runs lessons learned, read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
 
 - Were there segment classification calls that were genuinely ambiguous? Note the pattern.
 - Was the meeting intent hard to identify (no clear agenda, several competing topics)? Note what resolved it.

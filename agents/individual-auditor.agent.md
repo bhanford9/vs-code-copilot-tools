@@ -78,4 +78,4 @@ This summary is what the orchestrator uses to construct the synthesis report.
 
 ## Step 5: Update LessonsLearned
 
-Before completing, read `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/agentic-tools-auditor/LessonsLearned.md`. Follow the lessons-learned skill workflow at `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md`. Reflect on whether anything was hard, surprising, or worth avoiding next time. Write any notable findings before completing — do not skip this step or wait for user input.
+Before completing, read `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/agentic-tools-auditor/LessonsLearned.md`. Follow the lessons-learned skill workflow at `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`. Reflect on whether anything was hard, surprising, or worth avoiding next time. Write any notable findings before completing — do not skip this step or wait for user input.

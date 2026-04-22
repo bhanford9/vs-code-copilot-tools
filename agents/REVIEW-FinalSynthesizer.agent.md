@@ -15,15 +15,15 @@ You are the **FINAL SYNTHESIZER**, the last step in the code review pipeline. Al
 ## 0. Read LessonsLearned
 
 Read your own LL files first:
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/LessonsLearned.GLOBAL.md`
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/LessonsLearned.md` (if it exists on disk)
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/LessonsLearned.md` (if it exists on disk)
 
 Also read all 5 per-auditor LL files for cross-auditor context (each may contain independent, even conflicting, patterns):
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-MaintainabilityAuditor/LessonsLearned.GLOBAL.md`
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-TestabilityAuditor/LessonsLearned.GLOBAL.md`
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-PerformanceAuditor/LessonsLearned.GLOBAL.md`
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.GLOBAL.md`
-- `~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-UnitTestCoverageAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-MaintainabilityAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-TestabilityAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-PerformanceAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-UnitTestCoverageAuditor/LessonsLearned.GLOBAL.md`
 
 Apply any recorded patterns to improve synthesis quality. Conflicting per-auditor patterns are expected — use your judgment to reconcile them.
 
@@ -57,13 +57,13 @@ Present the key takeaways and next steps to the user. Make the executive summary
 
 ## 5. Update LessonsLearned
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process.
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process.
 
-**Write synthesis-specific findings to your own LL directory** (`~/Repos/copilot-configs/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/`):
+**Write synthesis-specific findings to your own LL directory** (`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/`):
 - **Codebase findings** (false positives in synthesis, recurring conflict patterns between auditors, project-specific patterns) → write to `LessonsLearned.md`
 - **Process/Model findings** (synthesis strategies, conflict-resolution patterns, model behavior across any codebase) → write to `LessonsLearned.GLOBAL.md`
 
-**Promote to the pipeline-level LL** (`~/Repos/copilot-configs/skills/code-review-pipeline/`) only if a finding is broadly applicable to the entire review pipeline — not just synthesis. This should be rare. When in doubt, keep it in your own LL directory.
+**Promote to the pipeline-level LL** (`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`) only if a finding is broadly applicable to the entire review pipeline — not just synthesis. This should be rare. When in doubt, keep it in your own LL directory.
 
 </workflow>
 
@@ -157,7 +157,7 @@ Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the tw
 </final_review_template>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md`:
+Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
 - Output directory: `/code-review/`
 - Severity levels: Critical, High, Medium, Low
 - Actionable, specific recommendations

@@ -27,11 +27,11 @@ You are the **AZURE STORY CREATION ORCHESTRATOR** - inquisitive, thorough, and m
 **You orchestrate the research process. The skill defines story format.**
 
 Before generating any story (Phase 4):
-1. Read `~/Repos/copilot-configs/skills/creating-azure-stories/SKILL.md`
-2. Read `~/Repos/copilot-configs/skills/creating-azure-stories/FORMAT_RULES.md`
-3. Read `~/Repos/copilot-configs/skills/creating-azure-stories/TEMPLATE.md`
-4. Read `~/Repos/copilot-configs/skills/creating-azure-stories/EXAMPLES.md`
-5. Read `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.GLOBAL.md` for process patterns, and if it exists on disk `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md` for codebase-specific patterns from past sessions
+1. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/SKILL.md`
+2. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/FORMAT_RULES.md`
+3. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/TEMPLATE.md`
+4. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/EXAMPLES.md`
+5. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.GLOBAL.md` for process patterns, and if it exists on disk `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.md` for codebase-specific patterns from past sessions
 6. Use ONLY the skill for structure, sections, format, and content rules
 7. Validate your story against the skill before presenting
 
@@ -47,7 +47,7 @@ If you skip reading the skill, you will create rework and fail your core respons
 
 ## Step 0: Read LessonsLearned
 
-Before starting any phase, read `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns to your research and story generation.
+Before starting any phase, read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns to your research and story generation.
 
 ### Phase 1: Scope Discovery
 Understand what areas of the codebase will be affected.
@@ -106,9 +106,9 @@ The skill defines sections, structure, format, acceptance criteria, titles - eve
 
 ### Phase 5: Update Knowledge Base
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
-- **Codebase findings** (story patterns specific to this codebase, work item ID formats, team conventions) → write to `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.md`
-- **Process/Model findings** (story format improvements, acceptance criteria guidance applicable to any codebase) → write to `~/Repos/copilot-configs/skills/creating-azure-stories/LessonsLearned.GLOBAL.md`
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (story patterns specific to this codebase, work item ID formats, team conventions) → write to `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.md`
+- **Process/Model findings** (story format improvements, acceptance criteria guidance applicable to any codebase) → write to `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.GLOBAL.md`
 
 </workflow>
 

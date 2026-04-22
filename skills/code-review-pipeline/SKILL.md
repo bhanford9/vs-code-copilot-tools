@@ -30,7 +30,7 @@ For full architecture and usage details, see [feature-overviews/code-review-pipe
 
 ## Conventions
 
-All REVIEW-* agents must explicitly read `~/Repos/copilot-configs/skills/code-review-pipeline/CONVENTIONS.md` before performing any audit work. The `<conventions>` block in each agent provides a quick inline summary, but the full file is the source of truth. Key conventions:
+All REVIEW-* agents must explicitly read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md` before performing any audit work. The `<conventions>` block in each agent provides a quick inline summary, but the full file is the source of truth. Key conventions:
 
 - Output directory: `/code-review/` in the reviewed repo
 - Severity levels: Critical / High / Medium / Low

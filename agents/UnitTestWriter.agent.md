@@ -29,9 +29,9 @@ You are the **UNIT TEST WRITER** - defensive, methodical, and detail-oriented. Y
 
 All files are REQUIRED reading before writing tests:
 
-1. **SKILL.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/SKILL.md`
-2. **LessonsLearned.GLOBAL.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md`
-3. **LessonsLearned.md** - `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` (exists on disk but not tracked in git; may not exist in a fresh clone — skip if absent)
+1. **SKILL.md** - `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/SKILL.md`
+2. **LessonsLearned.GLOBAL.md** - `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md`
+3. **LessonsLearned.md** - `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.md` (exists on disk but not tracked in git; may not exist in a fresh clone — skip if absent)
 
 ### When to Re-Read Skill Files
 
@@ -69,7 +69,7 @@ All files are REQUIRED reading before writing tests:
 
 ## Step 0: Read LessonsLearned
 
-Before starting any phase, read `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns and pitfalls to this session.
+Before starting any phase, read `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.md` per the `lessons-learned` skill. Apply any recorded codebase-specific patterns and pitfalls to this session.
 
 ### Phase 1: Code Analysis
 Understand the source code and extract what needs testing.
@@ -168,9 +168,9 @@ Write tests following the skill's standards and patterns.
 
 ### Phase 5: Update Knowledge Base
 
-Read `~/Repos/copilot-configs/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
-- **Codebase findings** (enum namespaces, non-mockable types, support helper locations, type surprises) → write to `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.md`
-- **Process/Model findings** (agent behavior, workflow gaps) → write to `~/Repos/copilot-configs/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md`
+Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
+- **Codebase findings** (enum namespaces, non-mockable types, support helper locations, type surprises) → write to `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.md`
+- **Process/Model findings** (agent behavior, workflow gaps) → write to `~/Repos/vs-code-copilot-tools/skills/writing-csharp-tests/LessonsLearned.GLOBAL.md`
 
 </workflow>
 

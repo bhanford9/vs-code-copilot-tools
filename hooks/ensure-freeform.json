@@ -3,8 +3,8 @@
     "PreToolUse": [
       {
         "type": "command",
-        "windows": "powershell -NoProfile -File \"$env:USERPROFILE/Repos/copilot-configs/hooks/scripts/ensure-freeform.ps1\"",
-        "command": "powershell -NoProfile -File \"~/Repos/copilot-configs/hooks/scripts/ensure-freeform.ps1\"",
+        "windows": "powershell -NoProfile -File \"$env:USERPROFILE/Repos/vs-code-copilot-tools/hooks/scripts/ensure-freeform.ps1\"",
+        "command": "powershell -NoProfile -File \"~/Repos/vs-code-copilot-tools/hooks/scripts/ensure-freeform.ps1\"",
         "timeout": 10
       }
     ]
