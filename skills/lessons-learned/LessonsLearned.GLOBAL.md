@@ -31,3 +31,13 @@ The in-agent "tell the user: type 'lessons learned session'" pattern is sufficie
 
 ---
 
+## GLOBAL File Written With Codebase-Specific Content Despite Documented Rule
+
+Category: Process/Model
+
+During a code review session, the closing lessons learned step wrote entries containing project names, class names, and method names into `LessonsLearned.GLOBAL.md` — a file tracked in a shared git repo. The SKILL.md for both the `lessons-learned` skill and the `code-review-pipeline` skill already stated the rule ("Never put workspace-specific or codebase-specific content in GLOBAL"). The agent followed the rule's intent for the lesson's *conclusion* (abstract process rule) but violated it for the *context* section (named JEDI classes and methods).
+
+**Root cause**: The agent was reasoning "a concrete example makes the lesson more useful" — which is true for the local file but false for a shared file where no other reader has context for that codebase.
+
+**Rule**: When writing to any `*.GLOBAL.md` file, apply this filter to every sentence before writing: *"Would this sentence make sense to a developer who has never seen this codebase?"* If not, delete it or move it to the local `*.md` file. Context/example sections are the primary failure point — not conclusion/rule sections.
+

@@ -11,13 +11,19 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
-## 2026-04-22 — MathNet.Spatial `struct` types: verify before flagging as allocation concerns
+## 2026-04-22 — Verify struct vs class before flagging as allocation concern
 
-**Context**: Auditing a structural engineering design engine (JEDI v2) that uses MathNet.Spatial.
+**Observation**: When a method creates a `new SomeType(...)` inside a loop or hot path, it looks like a heap allocation — but if the type is a struct it is a stack allocation with no GC cost. False positives are common for auditors unfamiliar with geometry and math libraries whose core types are value types.
 
-**Observation**: `Line2D`, `Point2D`, and `Vector2D` in MathNet.Spatial are **value types (structs)**. A `new Line2D(p1, p2)` call is a stack allocation, not a heap allocation. Do not flag these as GC pressure sources without first confirming the type is a class.
+**Rule**: Always confirm `struct` vs `class` — look at the type definition or docs — before writing any allocation/GC finding. One lookup prevents a false positive that may look convincing in a report.
 
-**Rule**: When reviewing geometry-heavy C# code using MathNet.Spatial, check whether the type is a struct before raising a memory/allocation finding. False positives here are common for auditors unfamiliar with the library.
+---
+
+## 2026-04-22 — Read the implementation before claiming computational cost
+
+**Observation**: A method called inside a retry/bump loop was flagged as Medium based on its name and loop position alone. Reading the actual implementation showed it received pre-computed results as a parameter and only recomputed check ratios — the expensive estimation step was not re-run. The name implied far more work than the code performed.
+
+**Rule**: For any Medium+ performance finding about a method call inside a loop, open the implementation and trace the actual execution path before writing the finding. "Sounds expensive" is not sufficient. Verify: (a) what inputs does the method receive — already-computed results or raw inputs? (b) is there a cache layer (`??=`, dictionary, factory) that short-circuits work? A wrong cost claim corrected by a developer during code review damages report credibility.
 
 ---
 

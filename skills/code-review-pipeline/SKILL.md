@@ -58,5 +58,6 @@ The pipeline-level `LessonsLearned.GLOBAL.md` / `LessonsLearned.md` (this direct
 - `REVIEW-FinalSynthesizer` reads all 6 per-auditor LL files for cross-auditor context, writes findings to its own directory, and promotes to the pipeline-level LL only when a finding applies to the entire pipeline
 - Per-auditor LL entries may conflict — FinalSynthesizer is expected to reconcile them
 - `*.md` (gitignored) — codebase-specific patterns; `*.GLOBAL.md` (tracked) — cross-codebase process/model patterns
+- **`*.GLOBAL.md` files are committed to a shared repo used by all users. NEVER write class names, method names, type names, project names, or any codebase-specific content to them.** Strip all workspace context before writing. If uncertain which file to use, write to `*.md` (local) instead.
 
 See the `lessons-learned` skill for guidance on which tier to write to and when.
