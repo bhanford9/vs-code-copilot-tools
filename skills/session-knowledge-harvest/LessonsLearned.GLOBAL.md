@@ -45,3 +45,16 @@ A `Stop` lifecycle hook was implemented to post a `systemMessage` reminder at se
 - The result was noisy and may have interfered with normal session termination
 
 Do not re-recommend a hook-based approach unless VS Code ships a `Stop` input field that includes session activity metadata.
+
+---
+
+## Instructions File Loading Does Not Guarantee Compliance (2026-04-23)
+
+Category: Process/Model
+
+Confirmed via session debug log: `general-agent-behavior.instructions.md` loaded successfully as "General Agent Behavior" (`Resolved 3 instructions in 76.6ms | loaded: [CSharp Diagnostics, CSharp Test Conventions, General Agent Behavior]`). The rule "MUST invoke session-knowledge-harvest at the end of any session where architectural knowledge was discovered" was in-context throughout the session. The agent still did not proactively trigger the harvest — the user had to ask for it.
+
+- Loading ≠ compliance. The instruction was present; the model deprioritized it at session end.
+- The two-layer pattern (instructions + prompt file) remains the best available mitigation — but it is not a guarantee.
+- The current enforcement gap: the harvest instruction fires at "session end," but the model does not have a reliable internal signal for when a session is ending vs. merely pausing.
+- **Watch for this pattern**: if the user completes the primary task (e.g., a code review), ends their request with something conclusory ("well done"), and no explicit harvest has occurred — proactively offer it. Don't wait for the user to ask "were there any documentation-related things?"
