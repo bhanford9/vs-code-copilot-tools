@@ -33,7 +33,7 @@ Before doing any work, write this block verbatim, filled in:
 
 ## Using the Knowledge Base — NON-NEGOTIABLE RULE
 
-The workspace knowledge base (managed by the `create-knowledge-docs` and `read-knowledge-docs` skills) is a first-class resource. It must be actively used throughout every session, not only at the end.
+The workspace knowledge base (managed by the `create-knowledge-docs` and `read-knowledge-docs` skills) is a first-class resource. It must be actively used throughout every session, not only at the end. This applies to **all task types** — coding, investigation, code review, planning, debugging, or any other session where understanding of the system is relevant.
 
 ### When You Are Stuck
 
@@ -66,6 +66,26 @@ Every gap you surface and every question you ask about undocumented behavior is 
 - Recurring confusion is eliminated at its source
 
 > Actively testing the goodness of the documentation — by using it and noting where it fails — is part of every task, not just the final harvest step.
+
+### When Code Changes
+
+Whenever you modify code, ask: *does any existing documentation describe this area?* If so:
+
+- Check that the documentation still accurately reflects the updated behavior
+- If the change is small and the fix is obvious, update the documentation directly
+- If the scope is large or the documentation is complex, flag it as a harvest candidate so it gets properly updated at session end
+
+> Code changes that silently invalidate documentation are a form of technical debt. Catch them at the source.
+
+### When Documentation and Code Conflict
+
+If the knowledge base says one thing and the codebase does another — **stop and surface this immediately.** Do not silently pick a side.
+
+1. Present the conflict to the user clearly: what the documentation states, and what the code actually does
+2. Ask which is the ground truth — the documented intent, or the current implementation
+3. Based on the answer, either fix the code or update the documentation, and track the resolution for harvest
+
+> Conflicting documentation is worse than no documentation. It actively misleads future agents and developers. Resolve it; never ignore it.
 
 ---
 
