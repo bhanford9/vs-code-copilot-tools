@@ -36,6 +36,20 @@ When the developer provides a same-day validation or characterization test run, 
 
 ---
 
+### Worktree-as-master: "all changes since master" requires fallback to explicit commit list
+Category: Process/Model
+
+When a repo uses git worktrees and the current worktree branch IS `master` (i.e., `HEAD -> master`), `git log master..HEAD` and `git diff master...HEAD` both return nothing — there is no divergence from master because the branch is master. The request "review all changes since master" has no answer as a branch comparison.
+
+Correct fallback:
+1. Detect the empty diff during setup (`git log master..HEAD --oneline` returns nothing)
+2. Fall back to the explicit commit(s) identified in the session config or user request
+3. Write `reviewMode = 'single-commit'` (or equivalent) to the session config so downstream auditors know the scope
+
+Do NOT silently use the empty diff as the review scope — that produces a review of nothing. Always surface the scope explicitly at the start of the review so the user can confirm.
+
+---
+
 ### Toggle-ON test branch dead code: check ToggleBuilder state before trusting if/else test assertions
 Category: Process/Model
 

@@ -77,6 +77,16 @@ Whenever you modify code, ask: *does any existing documentation describe this ar
 
 > Code changes that silently invalidate documentation are a form of technical debt. Catch them at the source.
 
+### When Working in Undocumented Areas
+
+If you are reviewing or modifying a file or system area that has no corresponding knowledge base coverage, treat it as an opportunity for incremental improvement:
+
+- You do not need to write a complete document — add what you understand right now
+- A single paragraph, a clarified intent, or a description of one behavior is a valid and valuable contribution
+- Small, consistent additions compound over time into comprehensive coverage
+
+> Prefer small, accurate documentation additions made in the moment over large batch efforts that never happen. Every sentence added reduces the gap.
+
 ### When Documentation and Code Conflict
 
 If the knowledge base says one thing and the codebase does another — **stop and surface this immediately.** Do not silently pick a side.
@@ -109,3 +119,43 @@ At the end of any session where architectural, behavioral, or domain knowledge w
 
 - Do not skip this step because the session was "quick" — use the skill's scope gate to decide what qualifies
 - If nothing documentable was discovered, state that explicitly rather than silently skipping
+
+### Triggering Harvest and Lessons Learned Automatically
+
+When a task is fully complete, the strong preference is to invoke both the `session-knowledge-harvest` skill and the `lessons-learned` skill **automatically, without asking for permission first.** Defaulting to action is better than defaulting to asking.
+
+If you are confident the task is done, proceed. If you are genuinely unsure whether the task is complete, **ask the user** rather than doing nothing — a clear, targeted question is always better than stalling or silently abandoning the step.
+
+**The one exception:** if you are checking in mid-task — for example, you have completed 5 of 7 planned items and are pausing for feedback — do NOT run harvest or Lessons Learned yet. Only trigger them when you are confident the task as a whole is done. Use your judgment: if there is clearly more work remaining, hold off; if the task is complete by every reasonable measure, proceed automatically.
+
+#### The Final Deliverable Trigger — Concrete Behavioral Rule
+
+The most common failure mode is: the agent delivers the final output of a named workflow (a finished review report, a completed investigation summary, a finalized design doc), the user sends a follow-up message, and the agent responds to the follow-up **without running harvest first**. The harvest never happens because the model keeps treating each user message as "more task" rather than recognizing that the primary work is done.
+
+**Before writing your response to any user message that arrives after a clearly final deliverable, ask yourself:**
+
+> "Has harvest happened in this session? Did I just finish a named workflow — a code review, an investigation spike, a refactor, a planning session — and produce its terminal output?"
+
+If yes to both, and harvest has not run: **run it before responding to the follow-up.**
+
+The signals that a workflow is at its terminal output:
+- A "final report," "synthesis," or "summary" was the last thing delivered
+- The user's next message is a follow-up question, a "thanks," or a topic shift — not "keep going"
+- The todo list (if maintained) shows all items completed
+
+**Do not wait for the user to mention harvest, documentation, or lessons learned.** If those words appear in the user's message, it is already too late — the agent should have run it one turn earlier.
+
+---
+
+## When in Doubt, Ask — NON-NEGOTIABLE RULE
+
+If you are uncertain about intent, scope, approach, or next steps — **ask the user.** Do not guess, stall silently, or abandon the task.
+
+Asking is always the right fallback. It is better to prompt the user with a clear, targeted question than to:
+- Make an assumption that turns out to be wrong
+- Do nothing and leave the task incomplete
+- Proceed in a direction the user did not intend
+
+When asking, be specific: explain what you're uncertain about and why. Give the user enough context to answer efficiently. One well-framed question is worth far more than a paragraph of hedging.
+
+> Silence or inaction is never the correct response to uncertainty. When in doubt, ask.

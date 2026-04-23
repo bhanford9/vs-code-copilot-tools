@@ -44,3 +44,25 @@ When a requirements audit or correctness audit identifies a known implementation
 **Category: Process/Model**
 
 When a test uses `Is.GreaterThan(x)` or `Is.LessThan(x)` for the single test case that exercises the feature's core correctness (e.g., "sloped joist produces longer distance"), flag it as a weak assertion. The test proves the direction of change but not the magnitude. Any implementation that produces a result in the right direction (but wrong magnitude) passes. Recommend replacing with an exact expected value derived from the test geometry.
+
+---
+
+## `Assert.DoesNotThrow` With a Non-Throwing Mock Is a Hollow Assertion
+
+**Category: Process/Model**
+
+When auditing a test that uses `Assert.DoesNotThrow(() => sut.Method(...))` alongside a mock, always check whether the mock is configured to throw. If the mock returns a value (`.Returns(x)`) rather than throws, `DoesNotThrow` will pass regardless of whether the short-circuit or guard being tested is working. The real load-bearing assertion is elsewhere (typically `Times.Never` for the would-have-thrown method). Flag this as Medium:
+- The assertion appears to verify crash prevention but does not.
+- The recommendation is to change the mock to `.Throws(new SpecificException(...))` so that `DoesNotThrow` gains real teeth. This also makes the test simulate the actual production failure scenario more faithfully.
+- `Times.Never` on the dangerous method should be retained as belt-and-suspenders documentation even after fixing the mock.
+
+---
+
+## `Times.AtLeastOnce` in Short-Circuit Tests Is Often Imprecise
+
+**Category: Process/Model**
+
+When a test verifies that a guard/short-circuit fires — and the geometry of the test means the guarded method should be called exactly once — flag `Times.AtLeastOnce` as imprecise and recommend `Times.Once`. The distinction matters because:
+- A broken short-circuit that re-enters the guarded path N > 1 times would still pass `Times.AtLeastOnce`.
+- `Times.Once` would catch that regression.
+Only downgrade to `Times.AtLeastOnce` (or leave it) when the loop/iteration count is genuinely variable and unknown from the test setup. In short-circuit tests with fixed geometry, the call count is deterministic.

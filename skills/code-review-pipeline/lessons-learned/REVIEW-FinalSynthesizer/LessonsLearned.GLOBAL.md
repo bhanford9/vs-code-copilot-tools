@@ -12,6 +12,17 @@ Only append if the session revealed something surprising about synthesis, a recu
 
 ---
 
+### Guard-pattern commits have a characteristic finding signature across auditors
+Category: Process/Model
+
+Commits that add a "guard" to prevent an existing throw from being reached have a predictable finding profile:
+- **Maintainability**: stale "impossible condition" comment in the guarded method (the one with the throw) — the comment was written when the condition was believed impossible, but the guard was added *because* it was observed. Always Medium.
+- **Unit Test Coverage**: `Assert.DoesNotThrow` with a non-throwing mock (hollow assertion); `Times.AtLeastOnce` where `Times.Once` is verifiable. Always Medium.
+- **Extensibility**: if the guard uses a type-check (`is ISomeSubtype`) rather than a polymorphic dispatch, OCP concern. Medium.
+These three appear together on guard-pattern commits. Expect them and verify each one — do not synthesize them away even if they are "obvious."
+
+---
+
 ### Severity disagreement on "dead toggle-ON test branches": Coverage says Critical, others say Medium — resolve to High
 Category: Process/Model
 

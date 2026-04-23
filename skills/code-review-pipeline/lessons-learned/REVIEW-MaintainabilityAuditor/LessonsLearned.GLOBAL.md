@@ -44,3 +44,12 @@ The correctness audit's "known gaps" (e.g., a missing `Math.Max` floor) directly
 **Date**: 2026-04-22
 
 When a method is confirmed commutative (e.g., `DistanceAlong(a, b) == DistanceAlong(b, a)`) and the code uses an inline ternary to swap arguments by side, flag it as a **Medium KISS violation** (unnecessary complexity) rather than a correctness risk. The finding should recommend simplifying the call site, not re-examining the method's commutativity.
+
+---
+
+## Guard-added Commits Leave Throw-Path Comments Stale — Check "Unchanged" Methods
+
+**Category: Process/Model**
+**Date**: 2026-04-23
+
+When a commit adds a guard (e.g., `CanReach`) to prevent a throw from being reached, the guarded method (e.g., `DistanceToClear`) is typically left "unchanged." But unchanged methods may carry comments like "impossible condition" that are now demonstrably false — the guard was added *because* the condition was observed. Always check throw-path comments in guarded methods for staleness, even when the guarded method is listed as unmodified. This is a reliable source of Medium maintainability findings on guard-adding commits.
