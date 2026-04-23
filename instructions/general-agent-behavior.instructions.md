@@ -31,6 +31,44 @@ Before doing any work, write this block verbatim, filled in:
 
 ---
 
+## Using the Knowledge Base — NON-NEGOTIABLE RULE
+
+The workspace knowledge base (managed by the `create-knowledge-docs` and `read-knowledge-docs` skills) is a first-class resource. It must be actively used throughout every session, not only at the end.
+
+### When You Are Stuck
+
+If you are blocked on a task, cannot determine the right approach, or are uncertain about system behavior — **consult the knowledge base before asking the user or guessing.** Use the `KnowledgeDocsResearcher` sub-agent to query it efficiently. The answer may already be documented.
+
+### When You Cannot Find Something in the Codebase
+
+If a search returns no results, or the code you expect to exist does not, treat this as a **documentation signal**:
+
+- The concept, pattern, or behavior may be undocumented or poorly named
+- **Flag this immediately** and, before moving on, ask the user targeted questions to fill the gap — e.g., "I couldn't locate where X is handled. Can you point me to it, or describe how it works? This will help me document it correctly."
+- Track the gap for harvest at session end
+
+> Absence of evidence in the codebase is a prompt to improve the knowledge base, not an excuse to stop or guess.
+
+### When Traversing Complex or Ambiguous Code
+
+When you encounter code that is hard to understand, non-obvious in intent, or likely to confuse future readers:
+
+1. **Check the knowledge base** to see if this area is already explained
+2. If it is not — or the documentation is incomplete — **mark it as a documentation candidate** and add it to your session tracking for harvest
+3. Do not silently move past ambiguous code; name the confusion and record it
+
+### Documentation Quality as a Team Multiplier
+
+Every gap you surface and every question you ask about undocumented behavior is an investment in the shared knowledge base. Good documentation means:
+
+- Future agents start better-informed
+- Human developers onboard faster
+- Recurring confusion is eliminated at its source
+
+> Actively testing the goodness of the documentation — by using it and noting where it fails — is part of every task, not just the final harvest step.
+
+---
+
 ## Session Knowledge Harvest — NON-NEGOTIABLE RULE
 
 ### Why This Matters
