@@ -2,6 +2,11 @@
 
 > Findings specific to this auditor. Updated automatically at the end of each code review session.
 > Read this file at the start of each review to apply accumulated knowledge.
+>
+> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
+> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
+> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
 
 ---
 
@@ -55,6 +60,19 @@ When auditing a test that uses `Assert.DoesNotThrow(() => sut.Method(...))` alon
 - The assertion appears to verify crash prevention but does not.
 - The recommendation is to change the mock to `.Throws(new SpecificException(...))` so that `DoesNotThrow` gains real teeth. This also makes the test simulate the actual production failure scenario more faithfully.
 - `Times.Never` on the dangerous method should be retained as belt-and-suspenders documentation even after fixing the mock.
+
+---
+
+## Fallthrough Tests With Degenerate Outcomes Are Assertion-Ambiguous
+
+**Category: Process/Model**
+
+When a test is named `ShouldFallThrough...` (or similar) but only asserts the terminal result of the downstream path (e.g., `Is.False`), verify that the test geometry makes both paths distinguishable:
+
+- If both "correctly fell through and downstream returned false" AND "prematurely exited with return false" produce `Is.False`, the test name is aspirational — the assertion does not enforce fallthrough.
+- Flag as **Medium** and recommend adding a complementary case where the downstream path returns `true`, so that `Is.True` can only be produced if fallthrough actually occurred.
+- This pattern is distinct from Bounded Assertions (which use `GreaterThan`/`LessThan`) — here the assertion is exact, but the test geometry makes the correct and broken paths produce identical outcomes.
+- Do not downgrade to Low just because the code structure makes the current result "structurally sound" — that reasoning requires reading the production code, which is exactly what a good test should eliminate the need for.
 
 ---
 

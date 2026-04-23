@@ -62,6 +62,8 @@ Before writing, classify the lesson using the category tag:
 
 **When in doubt, use `Category: Codebase` and write to the local `LessonsLearned.md`.** If you believe a lesson is globally applicable but are not 90% confident, write it locally and flag it for the user to decide whether to promote.
 
+**CRITICAL — GLOBAL file content test**: Before writing any sentence to a `LessonsLearned.GLOBAL.md` file, ask: "Could this sentence appear unchanged in a review of a completely different codebase?" If it contains a work item ID, class name, method name, test name, file name, or any other artifact from the current repo, the answer is no — it belongs in `LessonsLearned.md` instead. The pattern or heuristic itself may be global; the example that illustrates it is almost always codebase-specific. Strip examples entirely, or rephrase them in the abstract before writing to GLOBAL.
+
 ### 5. Check for Duplicates First
 
 Before writing to either file, scan it for existing entries on the same topic:

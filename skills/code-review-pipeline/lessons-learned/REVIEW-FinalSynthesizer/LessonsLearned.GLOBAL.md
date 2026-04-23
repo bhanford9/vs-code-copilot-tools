@@ -3,6 +3,11 @@
 > Findings specific to synthesis — conflict resolution patterns, cross-auditor themes, false positives in the synthesis step.
 > Updated automatically at the end of each code review session.
 > Read this file at the start of each review to apply accumulated knowledge.
+>
+> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
+> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
+> Write ONLY: abstract synthesis patterns, conflict-resolution heuristics, and model-behavior observations that apply to any codebase.
+> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
 
 ---
 
@@ -37,16 +42,35 @@ When Maintainability rates the DIM factory pattern Medium (identity instability,
 
 ---
 
-## Entry 1 — 2026-04-22
+### All-Medium/Low landscape: synthesis job shifts to de-duplication, not conflict resolution
+Category: Process/Model
 
-**Session**: AB#37571 — Reinforcement length calculation for sloped joists
+When no auditor returns Critical or High findings, the synthesizer's primary task shifts from resolving factual conflicts to collapsing redundant entries. The same code element will often be flagged by 2–4 auditors at different severities. Merge all flags on the same element into a single entry at the highest reported severity. De-duplicate first, then sort. Do not list the same code location multiple times at different severities.
 
-**Pattern: Severity discrepancies between auditors are usually a pre-existing vs. introduced distinction, not a factual conflict.**
-- Correctness rated `.First()` throw as High; Testability rated it Low. Root cause: the two auditors assessed different risks (correctness risk vs. test coverage risk). Resolution: carry at Medium in final, noting it's pre-existing.
-- General rule: when two auditors give the same finding different severities, check whether one auditor is judging the code as introduced-by-this-PR and the other is judging absolute severity. Downgrade to the lower rating when the issue is pre-existing.
+---
 
-**Pattern: The "three auditors flagged this independently" signal is the most reliable escalation indicator.**
-- `Is.GreaterThan(43)` weak assertion was flagged independently by Correctness, Unit Test Coverage, and Testability. Zero-length regression was flagged by Requirements, Correctness, Unit Test Coverage, and Maintainability. When 3+ auditors independently identify the same issue without cross-pollination, it belongs in the final report regardless of individual severity.
+### Same-element multi-severity spread on newly-introduced code resolves to the highest rating
+Category: Process/Model
 
-**Pattern: `Math.Max`-type floor omissions are hard to detect from the diff alone — they require knowing the original design intent.**
-- The missing floor was only discoverable because the developer provided the acceptance criteria. Without that, the code looks superficially correct. For future reviews, when a developer says "use `Math.Max(a, b)`" and the code uses only `b`, flag it even if the rationale for the max is not immediately obvious.
+The pre-existing downgrade rule ("downgrade severity when the issue is pre-existing") does not apply to code introduced in the commit itself. When two auditors independently rate a gap in newly-written code as Medium, carry it as Medium — do not downgrade because a third auditor rated the same element Low. The pre-existing distinction only applies when the code existed before the PR.
+
+---
+
+### Severity discrepancies between auditors are usually a pre-existing vs. introduced distinction, not a factual conflict
+Category: Process/Model
+
+When two auditors give the same finding different severities, check whether one is judging it as code introduced by the PR and the other is judging absolute severity. Downgrade to the lower rating when the issue is pre-existing. Factual conflicts (two auditors assert opposite facts) require verification; severity disagreements require the pre-existing/introduced distinction check.
+
+---
+
+### The "three or more auditors flagged this independently" signal is the most reliable escalation indicator
+Category: Process/Model
+
+When 3+ auditors independently identify the same issue without cross-pollination, include it in the final report regardless of each individual severity rating. Independent convergence is stronger evidence than any single auditor's rating. This applies even when the per-auditor severity is Low — if all of them see it, it belongs in the report.
+
+---
+
+### Floor/ceiling omissions in arithmetic fixes are hard to detect from the diff alone
+Category: Process/Model
+
+When a fix involves replacing one calculation with another (e.g., different distance formula, different denominator), check whether the corrected formula requires a floor or ceiling that the old one did not. These omissions are only discoverable from the acceptance criteria, not from reading the diff. The code looks superficially correct without knowing the original design intent. Flag when the AC describes a minimum/maximum constraint and the code uses a raw expression that could underflow it.

@@ -2,6 +2,11 @@
 
 > Findings specific to this auditor. Updated automatically at the end of each code review session.
 > Read this file at the start of each review to apply accumulated knowledge.
+>
+> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
+> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
+> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
 
 ---
 

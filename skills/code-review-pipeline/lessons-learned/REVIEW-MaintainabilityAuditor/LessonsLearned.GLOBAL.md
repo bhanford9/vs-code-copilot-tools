@@ -2,6 +2,11 @@
 
 > Findings specific to this auditor. Updated automatically at the end of each code review session.
 > Read this file at the start of each review to apply accumulated knowledge.
+>
+> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
+> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
+> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
 
 ---
 
@@ -53,3 +58,12 @@ When a method is confirmed commutative (e.g., `DistanceAlong(a, b) == DistanceAl
 **Date**: 2026-04-23
 
 When a commit adds a guard (e.g., `CanReach`) to prevent a throw from being reached, the guarded method (e.g., `DistanceToClear`) is typically left "unchanged." But unchanged methods may carry comments like "impossible condition" that are now demonstrably false — the guard was added *because* the condition was observed. Always check throw-path comments in guarded methods for staleness, even when the guarded method is listed as unmodified. This is a reliable source of Medium maintainability findings on guard-adding commits.
+
+---
+
+## Paired Complementary Tests Parameterized on Side Predictably Produce Setup Duplication
+
+**Date**: 2026-04-23
+**Category**: Process/Model
+
+When a toggle-addition commit adds two complementary test methods — one asserting the "data present" path and one the "data absent" path — and both are parameterized on `[Values] bool isLeftSide`, their setup code is structurally forced to be near-identical: same section factory call, same joist description, same seat environment, differing only in the `designInputs`. This is a reliable Medium-finding pattern on toggle-feature commits. Look for this specifically: two new tests in the same fixture, both `[Values] bool isLeftSide`, same toggle setup, diverging only at the thing under test. Extract-to-helper is the correct recommendation; not `[SetUp]` (only two of N tests in the fixture use it).
