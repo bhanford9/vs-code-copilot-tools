@@ -252,4 +252,17 @@ Two skills for summarizing recorded meeting transcripts, each tuned to a differe
 
 **Overview:** [`feature-overviews/summarize-meeting-transcripts/summarize-meeting-transcripts.md`](feature-overviews/summarize-meeting-transcripts/summarize-meeting-transcripts.md)
 
+---
+
+## VS Code Terminal Auto-Approve
+
+A skill for adding or fixing VS Code auto-approval patterns for Copilot agent terminal commands. Eliminates repeated manual approval prompts by writing the correct `chat.tools.terminal.autoApprove` entries in `settings.json` — with the right matching mode for each command type.
+
+| Invoke | How |
+|--------|-----|
+| Mention the skill | Describe the command that prompted for approval, or say "add to auto approve" / "it kept asking for approval" |
+
+**Skill:** `vscode-terminal-auto-approve` — five-step workflow: read lessons, fetch official docs, understand the two matching modes, write a correctly scoped pattern, verify without side effects
+
+**Overview:** [`feature-overviews/vscode-terminal-auto-approve/vscode-terminal-auto-approve.md`](feature-overviews/vscode-terminal-auto-approve/vscode-terminal-auto-approve.md)
 
