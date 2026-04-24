@@ -66,10 +66,7 @@ Confirm in VS Code Settings UI or by checking `settings.json` that:
 
 Before starting, read `~/Repos/vs-code-copilot-tools/skills/merge-copilot-settings/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/merge-copilot-settings/LessonsLearned.md`. Apply any recorded watch-outs.
 
-When this workflow is complete, **tell the user**:
-> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
-
-When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
+When this workflow is complete, **proceed directly into the lessons learned reflection** — do not ask for permission first. Follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (machine-specific paths, local settings quirks) → write to `LessonsLearned.md`
 - **Process findings** (merge workflow improvements) → write to `LessonsLearned.GLOBAL.md`
 

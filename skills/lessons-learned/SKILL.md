@@ -43,7 +43,7 @@ After completing the reflection and writing any entries, close with a brief conf
 
 ### 3. After Completing: Reflect Before Writing
 
-When the user starts a lessons learned session, reflect before writing anything:
+Before writing anything, reflect:
 
 - Was anything hard, slow, or surprising in this session?
 - Did something go wrong that a future agent should avoid?

@@ -300,10 +300,7 @@ This is optional — skip it if speaker labels are absent or too unreliable.
 
 ## Step 9: Reflect and Update LessonsLearned
 
-When this workflow is complete, **tell the user**:
-> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
-
-When the user runs lessons learned, read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
+When this workflow is complete, **proceed directly into the lessons learned reflection** — do not ask for permission first. Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
 - Was any phase of this process harder than expected due to transcript characteristics?
 - Were there domain terminology problems that recurred and should be noted for next time?
 - Did the output structure feel wrong for this session type? (e.g., a session with no group split needs different framing)

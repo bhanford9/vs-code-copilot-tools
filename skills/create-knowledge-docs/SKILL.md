@@ -436,10 +436,7 @@ Before calling the work complete, check:
 
 ## Step 6: Reflect and Update LessonsLearned
 
-When this workflow is complete, **tell the user**:
-> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
-
-When the user runs lessons learned, read `skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
+When this workflow is complete, **proceed directly into the lessons learned reflection** — do not ask for permission first. Read `skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop. Consider:
 
 - Were there source types (transcript, codebase, wiki) that required special handling not covered in this skill?
 - Did the plan structure not fit the content well? (e.g., no clean "high-level story" separation, or too many glossary terms to handle)

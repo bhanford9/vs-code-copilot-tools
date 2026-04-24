@@ -108,4 +108,4 @@ Present the full report to the user. Then ask:
 
 ## Step 6: Lessons Learned
 
-Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Update `~/Repos/vs-code-copilot-tools/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content). **Tell the user: "Type 'lessons learned session' to close this out. Don't skip this."**
+Follow the `lessons-learned` skill to reflect on whether anything was hard or surprising in this session. Proceed directly into the reflection — do not ask for permission. Update `~/Repos/vs-code-copilot-tools/skills/review-lessons/LessonsLearned.GLOBAL.md` if warranted (process/model findings only — no codebase content).

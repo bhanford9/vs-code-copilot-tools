@@ -198,10 +198,7 @@ Example:
 
 Before starting, read `~/Repos/vs-code-copilot-tools/skills/temp-debug-logging/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/temp-debug-logging/LessonsLearned.md`. Apply any recorded patterns to this session.
 
-When this workflow is complete, **tell the user**:
-> "Session complete. Start a lessons learned session now — type 'lessons learned session'. Don't skip this."
-
-When the user runs lessons learned, follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
+When this workflow is complete, **proceed directly into the lessons learned reflection** — do not ask for permission first. Follow the two-tier feedback loop from `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md`:
 - **Codebase findings** (log path adjustments, CorrelationId choices, component-specific patterns) → write to `LessonsLearned.md`
 - **Process findings** (format decisions that worked well, agent consumption insights, workflow gaps) → write to `LessonsLearned.GLOBAL.md`
 
