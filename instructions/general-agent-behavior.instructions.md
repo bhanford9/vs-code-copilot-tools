@@ -35,6 +35,20 @@ Before doing any work, write this block verbatim, filled in:
 
 The workspace knowledge base (managed by the `create-knowledge-docs` and `read-knowledge-docs` skills) is a first-class resource. It must be actively used throughout every session, not only at the end. This applies to **all task types** — coding, investigation, code review, planning, debugging, or any other session where understanding of the system is relevant.
 
+### Before Searching the Codebase — ALWAYS DO THIS FIRST
+
+When asked about where something lives, how something works, or what a concept means — **check the knowledge base before running any grep, semantic search, or file search.** This is not optional and is not limited to when you are stuck.
+
+The failure mode to avoid: skipping directly to `grep_search` or `semantic_search` because it feels faster. It is not faster — it produces results without context, misses documented intent, and accumulates knowledge debt.
+
+The required sequence for any unfamiliar concept or codebase area:
+
+1. **Check the knowledge base first** — use the `KnowledgeDocsResearcher` sub-agent with the specific question
+2. If the KB answers the question, use that answer and note any gaps or inaccuracies found
+3. If the KB does not answer it, proceed with codebase search — and **flag the gap for documentation**
+
+> Jumping to codebase search without checking the knowledge base first is a procedural violation, even if the search succeeds. The docs must be tested, not bypassed.
+
 ### When You Are Stuck
 
 If you are blocked on a task, cannot determine the right approach, or are uncertain about system behavior — **consult the knowledge base before asking the user or guessing.** Use the `KnowledgeDocsResearcher` sub-agent to query it efficiently. The answer may already be documented.
@@ -86,6 +100,21 @@ If you are reviewing or modifying a file or system area that has no correspondin
 - Small, consistent additions compound over time into comprehensive coverage
 
 > Prefer small, accurate documentation additions made in the moment over large batch efforts that never happen. Every sentence added reduces the gap.
+
+### Mid-Session Documentation Updates — NON-NEGOTIABLE
+
+Documentation is not only a session-end activity. When you discover something new and meaningful during a session — a behavioral contract, a non-obvious flow, a domain concept, a naming disambiguation — **you are expected to update or create documentation at that moment**, not defer it to harvest.
+
+Concrete triggers that require an immediate documentation update:
+
+- You answered a "where does X happen?" question through search and the answer was not in the KB
+- You resolved a terminology ambiguity (e.g., an acronym that had multiple meanings)
+- You traced a data flow that was not previously documented
+- You discovered that the KB was silent on an area that is clearly important to the system
+
+For each of these, the immediate action is: use the `create-knowledge-docs` skill to add what was learned — even a single section or paragraph — before moving on to the next task. Do not accumulate "I'll get it at harvest" debt.
+
+> Every session should leave the knowledge base measurably better than it was at the start. If the session ends and the KB is identical to how you found it, that is a failure — even if the user's task was completed successfully.
 
 ### When Documentation and Code Conflict
 

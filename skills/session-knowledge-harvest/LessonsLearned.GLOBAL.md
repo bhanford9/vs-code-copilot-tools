@@ -58,3 +58,11 @@ Confirmed via session debug log: `general-agent-behavior.instructions.md` loaded
 - The two-layer pattern (instructions + prompt file) remains the best available mitigation — but it is not a guarantee.
 - The current enforcement gap: the harvest instruction fires at "session end," but the model does not have a reliable internal signal for when a session is ending vs. merely pausing.
 - **Watch for this pattern**: if the user completes the primary task (e.g., a code review), ends their request with something conclusory ("well done"), and no explicit harvest has occurred — proactively offer it. Don't wait for the user to ask "were there any documentation-related things?"
+
+## Lessons Learned Files Must Live Next to the Skill (2026-04-25)
+
+Category: Process/Model
+
+An agent wrote harvest session findings to `/memories/repo/session-knowledge-harvest-lessons.md` (a repo memory file) instead of the skill's own `LessonsLearned.md`. This defeats the feedback loop entirely — the file is invisible to the skill's "read before starting" step and doesn't benefit future sessions.
+
+**Rule**: All lessons for this skill go to `c:\Users\bmhanford\Repos\copilot-configs\skills\session-knowledge-harvest\LessonsLearned.md` (codebase-specific) or `LessonsLearned.GLOBAL.md` (process/model). Never use a memory file as a substitute. The lessons-learned SKILL.md already defines this — the agent must not improvise an alternative location.
