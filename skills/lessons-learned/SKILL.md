@@ -31,15 +31,17 @@ Read both files for the relevant skill before beginning the workflow:
 
 Apply any recorded patterns, false positives, or "watch out for" notes from both files to improve this session.
 
-### 2. At Session Close: Run Automatically
+### 2. At Session Close: Auto-Start (Preferred) or Prompt
 
-When the skill workflow is complete, **proceed directly into the lessons learned reflection** — do not ask for permission first. Defaulting to action is better than defaulting to asking.
+The `general-agent-behavior` instructions take precedence: when a named workflow delivers its terminal output, **auto-start lessons learned immediately** without asking for permission. Do not wait for the user to type a trigger phrase.
 
 The strong preference is to run this step automatically. If the task is clearly done, proceed. If you are genuinely unsure whether the task is complete, ask the user rather than skipping.
 
 **The one exception:** if you are pausing mid-task for feedback (e.g., 5 of 7 steps done), do NOT run lessons learned yet. Only trigger it when you are confident the workflow as a whole is finished.
 
 After completing the reflection and writing any entries, close with a brief confirmation to the user noting what (if anything) was recorded.
+
+Do not silently skip lessons learned entirely. The choice is between auto-starting (preferred) and prompting (fallback) — never skipping.
 
 ### 3. After Completing: Reflect Before Writing
 

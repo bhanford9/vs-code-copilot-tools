@@ -54,3 +54,15 @@ Do NOT silently use the empty diff as the review scope — that produces a revie
 Category: Process/Model
 
 When a test file declares `_toggles = ToggleBuilder.AllDisabled().Build()` and then branches with `if (_toggles.IsEnabled(SomeToggle)) { ... } else { ... }`, the `if` branch is permanently dead code. The assertions inside will never execute. This pattern appears when a developer updates existing tests for toggle-aware behavior but forgets that the toggle instance is hardcoded to AllDisabled. Before writing Requirements or Correctness findings about toggle-ON test coverage, always verify whether the toggle instance used in the test fixture is AllDisabled vs. explicitly enabled. If AllDisabled, every toggle-ON assertion in the file is dead and should be flagged as a Medium coverage gap.
+
+---
+
+### Auto-start lessons learned after the final review report — do not prompt
+Category: Process/Model
+
+The `lessons-learned` SKILL.md previously said to "always output a prompt to the user." The `general-agent-behavior` instructions override this: after a named workflow delivers its terminal output, proceed with lessons learned automatically without asking permission. For the code-review pipeline specifically: once `final-review.md` is written and presented, start lessons learned immediately in the same turn rather than prompting the user to type a trigger phrase.
+
+DO: Start the lessons learned session automatically after the final report is presented.
+DON'T: Print "type 'lessons learned session'" and wait — the user must not have to ask for this step.
+
+

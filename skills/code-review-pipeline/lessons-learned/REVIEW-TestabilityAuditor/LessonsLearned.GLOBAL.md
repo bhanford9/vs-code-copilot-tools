@@ -36,6 +36,24 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-04-28 — Passthrough constructor parameters in DI-heavy logic-provider trees are Low, not Medium
+
+**Pattern**: In codebases that use layered "logic provider" objects (classes that hold injected services and propagate them to nested providers), a new injectable service added at a leaf class will thread its way up through several provider constructors that never directly use the parameter. This is a structural smell but not a testability blocker.
+
+**False positive risk**: Flagging this as Medium or High overstates the testability impact. The parameter is still interface-typed and mockable; the only cost is extra mock setup in tests of the intermediate providers. Since those providers are typically exercised via integration tests (not unit tests), the practical friction is minimal.
+
+**Recommendation**: Flag as Low. Note the pattern as a future architecture discussion point if constructor parameter lists grow further, but do not require a fix before merge.
+
+---
+
+## 2026-04-28 — Private static helper methods are a testability signal of GOOD design, not a gap
+
+**Pattern**: When a class extracts complex logic into `private static` helper methods (no captured state, all inputs as parameters), those methods are tested through the public API. This is correct — private methods are implementation details and should not be directly accessible. They have no hidden dependencies, so test setup for the public API exercises them fully.
+
+**False positive risk**: Do NOT flag `private static` helpers as an "untestable" concern. The correct observation is: "tested through public API, which is the intended design." Only flag if the private method is so complex it warrants extraction into a separate testable class — cyclomatic > 10 or multiple external calls.
+
+---
+
 ## 2026-04-22 — Default interface members (DIMs) that `new` concrete types are NOT a testability blocker when mocked
 
 **Pattern**: An interface may declare default members whose bodies `new` real concrete types (e.g., `IFlowDecision EstimateX => new EstimateX()`). When Moq mocks the interface and explicitly `.Setup()` these members, Moq intercepts the property getter and the `new` is never invoked in tests.

@@ -2,6 +2,9 @@
 *.zip
 *.log
 
+# Azure DevOps credential config — contains PAT, never commit
+.azure-devops
+
 # Per-user lessons learned — workspace/codebase-specific, never shared
 # Each user's LessonsLearned.md grows independently per workspace.
 # Globally-applicable process notes live in LessonsLearned.GLOBAL.md (tracked).

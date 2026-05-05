@@ -13,12 +13,16 @@ The code review pipeline is an 8-agent system that audits code changes across se
 
 For full architecture and usage details, see [feature-overviews/code-review-pipeline/code-review-pipeline.md](../../feature-overviews/code-review-pipeline/code-review-pipeline.md).
 
+## Related Skills
+
+The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor to automatically retrieve work item details from Azure DevOps via REST API. It lives in the reviewed repo at `.claude/skills/fetch-azure-devops-work-item/`. The `REVIEW-RequirementsAuditor` gracefully falls back to asking the user if the skill is not configured.
+
 ## Agent Roles
 
 | Agent | Role | When Invoked |
 |---|---|---|
 | `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
-| `REVIEW-RequirementsAuditor` | Extracts requirements, compares with work item | Sequential phase, first |
+| `REVIEW-RequirementsAuditor` | Extracts requirements; auto-fetches work item via API or prompts user | Sequential phase, first |
 | `REVIEW-CodeCorrectnessAuditor` | Verifies functional correctness against requirements | Sequential phase, second |
 | `REVIEW-ParallelAuditCoordinator` | Spawns the 5 parallel auditors as subagents | After user approves parallel phase |
 | `REVIEW-UnitTestCoverageAuditor` | Test completeness and quality | Parallel phase |

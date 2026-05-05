@@ -84,3 +84,47 @@ When a test verifies that a guard/short-circuit fires — and the geometry of th
 - A broken short-circuit that re-enters the guarded path N > 1 times would still pass `Times.AtLeastOnce`.
 - `Times.Once` would catch that regression.
 Only downgrade to `Times.AtLeastOnce` (or leave it) when the loop/iteration count is genuinely variable and unknown from the test setup. In short-circuit tests with fixed geometry, the call count is deterministic.
+
+---
+
+## Test Names Referencing Toggle States That Don't Match the Fixture
+
+**Category: Process/Model**
+
+When a test is named `...WhenToggleEnabled` (or `...WhenFeatureOn`, `...IfFlagSet`, etc.) but the fixture uses `AllDisabled()` or a negated toggle builder, flag the name as misleading regardless of whether the assertion itself is correct. This happens when tests survive a refactor that moved the toggle check from one class to another, or when a developer renamed a test without updating the fixture state.
+
+- The medium-severity finding is the **naming confusion**, not the correctness of the assertion.
+- The recommendation is a rename (remove the toggle qualifier) PLUS a note that the toggle-ON scenario for that behavior may be untested in the new code path.
+- Do not mark this High — the assertion is not wrong, only the name. But do explicitly surface it so the developer knows to add the toggle-ON test for the new path.
+- Combine this observation with a check of whether the new code path's equivalent guard (e.g., same `EffectiveDepth` check in a different method) has any test at all with the toggle enabled.
+
+---
+
+## Test Case Name States a Return Value That Contradicts `.Returns()`
+
+**Category: Process/Model**
+
+When a `[TestCaseSource]` test has a `.SetName("... returns true")` but `.Returns(false)` (or vice versa), flag it as a **Medium** misleading test name. This pattern occurs when the test name describes the filtering intent ("these checks are ignored, and therefore something else returns true") but is then shorthand-corrupted to describe the overall expected result incorrectly.
+
+- The assertion is correct; only the name is wrong.
+- The severity is Medium (not Low) because test names are documentation. A future reader inferring the filter's behavior from test names will draw the wrong conclusion.
+- The recommendation is a rename that describes what the input contains and what the actual return value is: `"[CheckType] is excluded by filter, returns false"` rather than `"[CheckType] returns true"`.
+- Do not conflate this with the toggle-state mismatch lesson — here the fixture state is fine; only the name property on the test case data is wrong.
+
+---
+
+## Collection-Add Tests That Assert Only Count Are Insufficient for Identity-Critical Logic
+
+**Category: Process/Model**
+
+When auditing a test for a method whose purpose is to add a *specific item* to a collection (e.g., adding a minimum-constraint to a constraint list, adding a key to a set), check whether the assertion verifies only the count:
+
+```csharp
+Assert.That(constraints.Count(), Is.EqualTo(1));  // ← count-only
+```
+
+A count-only assertion cannot catch a bug that adds the *wrong* item. If the item identity is load-bearing (e.g., "the constraint locks to `Next.Item`, not `Current.Item`"), a regression that uses the wrong source value still produces a collection with exactly one element.
+
+- Flag as **Medium** when the item identity is the correctness-critical invariant (not a cosmetic property).
+- The recommended fix is to either (a) assert a meaningful property of the added item (e.g., its minimum material, its key value), or (b) add a complementary negative test using inputs that would produce a different item, proving the assertion would fail with the wrong item.
+- When the item type is opaque (no public property to assert on), recommend an `Apply()` / `Filter()` round-trip test: build a list, apply the constraint, and verify the filtered list matches the expected post-constraint state.

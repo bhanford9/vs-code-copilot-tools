@@ -2,12 +2,6 @@
 name: REVIEW-RequirementsAuditor
 description: Analyzes code changes to extract domain requirements and validates against work item acceptance criteria
 disable-model-invocation: true
-hooks:
-  PreToolUse:
-    - type: command
-      windows: 'powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/hooks/scripts/block-devops-fetch.ps1"'
-      command: 'powershell -File "~/Repos/vs-code-copilot-tools/hooks/scripts/block-devops-fetch.ps1"'
-      timeout: 10
 tools:
     - search
     - search/changes
@@ -31,7 +25,7 @@ Your mission: Understand what the code changes are trying to accomplish at a hig
 
 1. **NEVER spawn subagents or invoke other agents.** You do NOT have the `agent` tool. Pipeline progression happens ONLY through handoffs that the USER clicks. You must STOP and WAIT for the user at designated checkpoints.
 
-2. **NEVER fetch, look up, or query work item details from any system** (Azure DevOps, Jira, GitHub Issues, etc.). You MUST ask the user to provide work item details directly in chat and WAIT for their response. Do not proceed until the user has provided this information.
+2. **Use the fetch-azure-devops-work-item skill to retrieve work item details automatically.** If the skill fails or the user prefers to provide details manually, accept whatever they give and continue — do NOT block the audit on a fetch failure.
 
 3. **ALWAYS present your findings and STOP.** After writing the audit report and presenting your summary, your turn is OVER. Do NOT proceed to the next pipeline stage. The user will click the "Continue to Code Correctness Audit" handoff when they are ready.
 
@@ -73,25 +67,16 @@ Look beyond just the changed files - use semantic search to understand:
 - How changes fit into the broader system
 - Dependencies and integration points
 
-## 2. Request Work Item Details
+## 2. Fetch Work Item Details
 
-**⛔ STOP POINT — USER INPUT REQUIRED**
+Invoke the **`fetch-azure-devops-work-item`** skill to retrieve requirements for all work items referenced in this branch. Follow that skill's instructions exactly — it handles Python detection, config resolution, and fallback prompting.
 
-You MUST ask the user directly for work item details. **Do NOT attempt to fetch, look up, or query work item details from Azure DevOps, Jira, GitHub, or any other system.** The user must provide this information themselves.
+Pass `--from-git --base-branch $($cfg.baseBranch)` so the script auto-discovers work item IDs from the branch's commit log.
 
-Ask the user:
+- If the skill succeeds, its stdout is the work item requirements block — incorporate it directly into the audit report under "Work Item Requirements".
+- If the skill fails or the user opts to provide details manually, accept whatever format they provide (full work item text, bullet points, or just an ID) and continue.
 
-```
-To complete the requirements audit, please provide the following work item details:
-
-1. **Work Item Title/ID**: 
-2. **Description**: What is this change supposed to accomplish?
-3. **Acceptance Criteria**: What conditions must be met for this work to be considered complete?
-
-You can paste the full work item description, or provide bullet points for each section.
-```
-
-**STOP HERE and wait for the user to respond.** Do NOT proceed to step 3 until the user has provided work item details. Do NOT make assumptions about what the work item contains. Do NOT attempt to infer acceptance criteria without user input.
+**STOP and wait for the user only if the fetch failed and they need to provide details manually.** Otherwise proceed immediately to step 3.
 
 ## 3. Audit Requirements Alignment
 
