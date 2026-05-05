@@ -116,6 +116,25 @@ For each of these, the immediate action is: use the `create-knowledge-docs` skil
 
 > Every session should leave the knowledge base measurably better than it was at the start. If the session ends and the KB is identical to how you found it, that is a failure — even if the user's task was completed successfully.
 
+### Todo Completion Documentation Gate — NON-NEGOTIABLE
+
+**Before marking any non-trivial todo as `completed`, you MUST explicitly evaluate:**
+
+> "Does completing this work constitute a documentable discovery?"
+
+A discovery qualifies if any of the following are true:
+- You read code to understand behavior that wasn't previously in the KB
+- You fixed a bug whose root cause reveals a non-obvious behavioral contract
+- You resolved a user correction that exposed a misunderstanding in the existing docs
+- You answered a "how does X work?" question by searching the codebase
+- You encountered and worked around a counterintuitive pattern
+
+**If yes:** write the documentation update or append a note to session memory **before** marking the todo complete. The todo is not done until the knowledge is captured.
+
+**If no:** mark complete immediately — this gate does not apply to mechanical todos (e.g., "revert file," "run tests," "check build").
+
+> This gate exists because todo completion is the single highest-context moment in a task. The agent knows exactly what was done and why. Deferring documentation past this point degrades the quality of what gets written — or means it never gets written at all.
+
 ### When Documentation and Code Conflict
 
 If the knowledge base says one thing and the codebase does another — **stop and surface this immediately.** Do not silently pick a side.

@@ -53,11 +53,11 @@ After reading the source, generate suggestions for every category below **before
 
 | Style | Best For |
 |---|---|
-| Educational Infographic | Concept explanation, multi-part overviews, biology/science |
-| Methodology Diagram | Process flows, step-by-step procedures |
-| System Architecture | Component relationships, layered systems |
-| Flowchart | Decision trees, branching logic |
-| Concept Map | Loosely connected ideas, vocabulary networks |
+| Educational Infographic | Concept explanation, multi-part overviews, comparisons, concept maps, loosely connected ideas |
+| Methodology Diagram | Process flows, step-by-step procedures, decision trees, component relationships, layered systems, staircases |
+| Statistical Plot | Data visualizations, charts, graphs with quantitative values |
+
+> **Note:** Only these three styles are valid in the current tool. "System Architecture," "Flowchart," and "Concept Map" are not accepted — map them to the options above.
 
 ### Layout Options for Structure
 
