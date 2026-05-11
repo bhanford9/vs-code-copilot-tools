@@ -135,6 +135,58 @@ Rate this as **Medium** and recommend one of:
 1. A documentation comment on the parameter explaining that production paths must pass it explicitly.
 2. Removing the null default once all callers are confirmed wired (makes the contract compiler-enforced).
 
+---
+
+## In Single-Commit Mode, Current HEAD May Have Already Resolved Commit-Era Findings
+
+**Date**: 2026-05-07
+**Category**: Process/Model
+
+When reviewing a specific commit (`single-commit` mode) in a repo that has continued to evolve, the current HEAD may differ from the commit under review. Expression-body property factories, stored field names, or parameter lists visible in the `git diff` may no longer appear in the current file — because a subsequent commit cleaned them up.
+
+Concretely: if a grep search for a symbol added by the commit under review returns no matches in the current file, do NOT assume a false negative or search error. First confirm whether the symbol appears in the diff output. If it does appear in the diff but not in the current file, the most likely explanation is a subsequent commit removed or renamed it.
+
+Handling:
+- Report the finding against the commit's diff (the commit DID introduce it)
+- Add a parenthetical note: "already resolved in current HEAD"
+- Do not escalate severity based on a problem the team has already fixed
+
+This avoids both false negatives (missing real issues) and false alarms (reporting issues already resolved).
+
+---
+
+## Mapster-Removal Commits May Add "Spec-Completeness" Methods That Are Dead Code
+
+**Date**: 2026-05-06
+**Category**: Process/Model
+
+When a commit removes Mapster and replaces it with explicit switch expressions, the author may also add new switch-based extension methods for enum types that were never in the file before — to "complete the picture" of the mapping class. These additions are likely dead code: the enum type already has mapping extensions elsewhere (e.g., in its own file in a sub-namespace), and no production callers in the target layer actually use the new version.
+
+Identify these by:
+1. Searching the enclosing layer for production call sites of the new method
+2. Checking whether a method with the same name and parameter type already exists in a sibling or sub-namespace
+
+When this pattern is found:
+- The new methods are a YAGNI violation
+- If the existing methods are in the same namespace hierarchy, the duplicate creates a **potential extension method ambiguity** for any caller that imports both namespaces
+- When implementations diverge (switch throws vs Mapster maps silently), the conflict is a behavioral correctness risk on future enum additions
+
+Rate as **High** and recommend removing the dead methods. Do NOT let "it's tested" shield them from removal — a test for a dead code path is not the same as a production caller.
+
+---
+
+## Graceful-Skip Replaced by Throw — Always Look for a Removal Comment
+
+**Date**: 2026-05-06
+**Category**: Process/Model
+
+When a refactor converts a `switch { _ => null }` + `if (x is null) continue;` graceful-skip pattern to a method call that throws on unknown enum values, the old code was communicating something: "unknown cases should be silently ignored here." The new code is asserting: "unknown cases should never reach here." These are different behavioral contracts, both of which can be correct in context. But the intent of the change is rarely documented.
+
+When you see this pattern in a diff:
+- Rate it as **Medium** (readability/documentation gap)
+- Recommend an inline comment explaining WHY the throw is acceptable where the skip used to be
+- The recommendation is NOT to restore the null check — only to document the deliberate change in contract
+
 Do not conflate this with dependency injection wiring (DI is fine). The concern is specifically about optional parameters on non-injected call sites (extension methods, static helpers) where callers can silently omit the toggle. The toggle's promotion cleanup is also the right time to remove the optional parameter entirely.
 
 ---

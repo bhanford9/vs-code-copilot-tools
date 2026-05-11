@@ -106,8 +106,26 @@ if ($originalRef -eq "HEAD") {
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $reviewBranch = "code-review-temp-$timestamp"
 
+# Snapshot .claude directory before checkout — the baseline may predate it
+# and git will remove or alter its contents when we switch commits.
+$claudeBackupPath = $null
+if (Test-Path ".claude") {
+    $claudeBackupPath = [System.IO.Path]::Combine(
+        [System.IO.Path]::GetTempPath(),
+        "code-review-claude-backup-$timestamp"
+    )
+    Copy-Item -Path ".claude" -Destination $claudeBackupPath -Recurse -Force
+    Write-Host "✓ Saved .claude directory to: $claudeBackupPath"
+}
+
 # Create branch from baseline
 git checkout -b $reviewBranch $baseline
+
+# Restore .claude so skills/agents are available on the review branch
+if ($claudeBackupPath -and (Test-Path $claudeBackupPath)) {
+    Copy-Item -Path "$claudeBackupPath\*" -Destination ".claude" -Recurse -Force
+    Write-Host "✓ Restored .claude directory from backup"
+}
 
 Write-Host "✓ Created review branch: $reviewBranch from $baseline"
 ```
@@ -190,6 +208,7 @@ $config = @{
     originalRef = $originalRef
     conflictStrategy = $conflictStrategy
     timestamp = $timestamp
+    claudeBackupPath = $claudeBackupPath
 } | ConvertTo-Json -Depth 10
 
 $config | Out-File -FilePath ".code-review-config.json" -Encoding UTF8
@@ -223,6 +242,7 @@ To cleanup after review:
 - **Already on a review branch**: Warn user and ask if they want to delete it first
 - **Existing .code-review-config.json**: Ask if they want to overwrite
 - **Empty commit list after skips**: Abort with clear message
+- **`.claude` directory lost after branch switch**: The baseline commit may predate the `.claude` directory. Always snapshot and restore it so skills and agents remain available on the review branch (handled in Step 3)
 
 ## Important Notes
 
@@ -230,6 +250,7 @@ To cleanup after review:
 - **Baseline is automatic** - Uses parent of earliest commit (no user input needed)
 - **All commits are cherry-picked** - Including the earliest commit
 - **Commits are preserved** - Each commit is cherry-picked individually in chronological order
+- **`.claude` directory is always preserved** - The baseline may predate skills/agents that live in `.claude/`. Always snapshot before branch creation and restore after, so the review environment has full access to all tools
 - Keep the temp branch until user explicitly cleans up
 - Make all status messages clear and actionable
 - If anything fails, ensure proper cleanup (return to original ref, delete temp branch)

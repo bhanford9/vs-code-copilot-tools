@@ -90,6 +90,13 @@ When 3+ auditors independently identify the same issue without cross-pollination
 
 ---
 
+### Dead-code-with-active-duplicate requires caller-layer verification before rating High
+Category: Process/Model
+
+When Maintainability flags "dead code that duplicates an existing active implementation," verify the claim across the full solution (not just the changed layer) before accepting the High severity. The active callers may exist in sibling layers (DomainModel, DevTools, ServiceLayer) using the existing implementation — not the new one. The finding is still valid (dead code + latent ambiguity), but the verification step surfaces whether the "ambiguity" is theoretical (no current import overlap) vs. immediate (same file already imports both). This matters for severity: theoretical latent ambiguity = Medium; immediate compile error = High. Do not accept the Maintainability auditor's severity without the cross-layer caller check.
+
+---
+
 ### Predicate duplication and double-evaluation are distinct findings — do not merge them
 Category: Process/Model
 

@@ -85,6 +85,13 @@ Rule: any agent that is meant to be called programmatically by a parent Orchestr
 
 ---
 
+### Special-case load path guard: verify non-numeric load cases before calling MapToJedi2
+Category: Process/Model
+
+When reviewing a toggle-gated fix that calls a load-case mapper (e.g., `MapToJedi2`) inside a helper that receives an `AnalysisLoadCase` parameter, always trace which load cases can reach that helper from the outermost callers. In JEDI V2, `AvailableLoadCases` includes `AnalysisLoadCase.Kcs` for KCS-series joists, and those load cases are fed to `ToFactoredResults` via `GetMemberResultsPerLoadCase` — even though the KCS path branches away before consuming the result. Any helper called before that branch that invokes `MapToJedi2()` without guarding for `Kcs`/`Sw`/`TestHarness` will throw `ArgumentOutOfRangeException` when those special load cases arrive. The fix is a guard: `if (loadCase is Kcs or Sw or TestHarness) return false;` placed before the `MapToJedi2()` call. Flag this pattern whenever a new toggle-gated helper performs load-case mapping.
+
+---
+
 ### Auto-start lessons learned after the final review report — do not prompt
 Category: Process/Model
 

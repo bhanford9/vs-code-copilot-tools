@@ -105,6 +105,46 @@ If (3) is missing, flag High. If (2) is present with no retirement comment, reco
 **When NOT to flag**: Internal methods (not on a public interface) with exclusion-list names are Low severity — renaming is contained within the assembly. Only escalate to Medium when the exclusion-accumulation pattern is on a `public` interface member.
 
 ---
+## Toggle Embedded in Utility Method Body Hides Conditionality at Every Call Site
+
+**Date**: 2026-05-07
+**Category**: Process/Model
+
+When a utility or service method reads a feature toggle internally and uses it to vary its filtering or predicate behavior, the method name typically implies a fixed, unconditional result. Call sites give no indication that a toggle influences the outcome. At toggle retirement time, a developer must search for toggle usage inside method bodies rather than at call sites — a non-obvious search that is easy to miss. The method name also becomes incorrect after toggle promotion: a name like `HasAnyOutputIgnoringX` will still say "ignoring X" even after the toggle is removed and X is no longer ignored.
+
+**Heuristic**: When reviewing utility classes that inject `IToggles`, check each method for internal toggle reads. If a toggle is read inside a method whose name describes a fixed filtering behavior (e.g., `GetItemsIgnoringX`, `HasAnyMatchExcludingY`), flag it as a Medium extensibility/retirement finding. The fix is to surface the toggle check at the caller and pass a resolved `bool` or predicate parameter into the utility method, so the method is free of toggle awareness. Also recommend adding a `// RETIREMENT NOTE` comment at the toggle branch inside the method body.
+
+**When NOT to flag**: If the method name does not imply a fixed behavior (e.g., `GetFilteredOutputs(Func<T, bool> include)`) and the toggle is resolved externally before calling it, no flag is needed.
+
+---
+
+## Public Extension Methods as Partial Enum Mappings Create a Hidden-Throw Contract
+
+**Date**: 2026-05-06
+**Category**: Process/Model
+
+When an enum-to-enum mapping method is `public` and covers only a *subset* of the source enum's values (throwing `ArgumentOutOfRangeException` for the rest), the method name typically sounds complete ("MapToX", "ToY") — it gives no hint that certain enum members will throw. Future callers who iterate all enum values, or who receive an unfiltered value at runtime, will encounter an unexplained exception.
+
+**Pattern**: Flag this as Medium severity when: (a) the method is `public`; (b) it throws for ≥1 enum value that a caller could plausibly pass; and (c) there is no XML doc comment or `Try...` companion method advertising the partial contract. The recommended fix is either (1) restrict visibility to `internal`, (2) add an XML doc comment listing the throwing values, or (3) add a `TryMapToX` companion that returns `bool` instead of throwing. Option (3) also solves the caller's problem by giving them a safe code path.
+
+**When NOT to flag**: If the throwing values are clearly system-internal sentinels (e.g., `TestHarness = 0` with a `RestrictUsage` attribute) and the source enum itself documents the restriction, the throw is expected and discoverable. Only flag when the throwing values are ordinary domain members with no such marker.
+
+---
+
+## `_ => throw` in Switch Expressions Is a Runtime-Only Exhaustiveness Check
+
+**Date**: 2026-05-06
+**Category**: Process/Model
+
+In C#, using a catch-all `_ => throw new ArgumentOutOfRangeException(...)` as the final arm of a switch expression SUPPRESSES compiler warning CS8509 (non-exhaustive switch). This means: adding a new enum value to the source type will compile cleanly and only fail at runtime when the new value is first encountered. If the default arm were *removed* instead, the compiler would emit CS8509, providing a build-time signal that the switch needs updating.
+
+**Heuristic**: When auditing switch-based enum mappings that use `_ => throw`:
+- Do NOT flag `_ => throw` as a defect — it is the correct fail-loud strategy, far better than `_ => default`.
+- DO flag it as Medium if the enum is in active development (new values are plausible soon) AND there is no exhaustive unit test that iterates all enum values through the mapping. The test compensates for the suppressed compiler warning.
+- A switch with `_ => throw` and an exhaustive test is at parity with a no-default-arm switch for practical purposes; a switch with `_ => throw` and no exhaustive test is a hidden runtime trap.
+
+---
+
 ## 2026-04-24 — Optional `IToggles? toggles = null` Accumulates as a Silent Opt-Out Pattern
 
 **Finding**: An optional toggle parameter with a null default (`IToggles? toggles = null`) is a backward-compatibility shim that becomes a liability as more toggle-gated features use the same method. Any caller that omits the parameter silently opts out of all toggle-gated behavior — not just the original one. The failure mode is incorrect results (not exceptions), making it hard to diagnose.

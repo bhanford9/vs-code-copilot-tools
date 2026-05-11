@@ -103,3 +103,27 @@ Only append if the session revealed something surprising, a false positive patte
 **Observation**: In a stepped pipeline, two adjacent steps called the same O(members × load_cases) operation on identical inputs — one step used a filtered subset of the result, the next step used the complementary subset. Neither step stored the full result for the other to consume. The correct Medium finding is "redundant computation on shared inputs" with the recommendation to cache the result on the shared environment/context object between steps.
 
 **Rule**: When a bump/retry loop contains two consecutive steps that call the same expensive method with the same parameters, flag as Medium. The fix pattern is: (a) identify the shared environment/context object, (b) add a nullable result field for the intermediate value, (c) first step populates it, second step reads it. Only apply if the work is genuinely meaningful (O(N) with non-trivial N) — not for O(1) lookups.
+
+---
+
+## 2026-05-07 — Captive dependency investigation: verify lifetime first, then verify implementation cost before rating
+
+**Observation**: A Singleton service captured another service (IToggles) in its constructor. The question "is this a captive dependency?" was raised as the primary concern. The correct process is two sequential checks:
+1. **Verify registration lifetime**: Look for `AddSingleton/AddTransient/AddScoped` across all DI container files. If both sides are Singleton, it is definitionally safe — stop and record "no defect."
+2. **If safe, verify per-call cost**: If the captured service is called inside a hot-path LINQ predicate, open the concrete implementation and trace the call chain to the leaf. In this case: Singleton → dictionary TryGetValue — O(1), no I/O, no locks — also safe.
+
+**Rule**: Do not guess the lifetime from the class name or from convention. Grep for the actual registration. For any captured service called in a hot-path predicate, read the implementation before opining on cost. A service can be Singleton-safe but still have hidden per-call overhead (e.g., a lock, a file read) that makes it unsuitable for tight LINQ loops.
+
+---
+
+## 2026-05-06 — `static` property returning `new(...)` is a factory, not a singleton — inspect constructor for hidden overhead before rating
+
+**Observation**: A codebase used a static `get`-only property (`public static T Foo => new(...)`) as a convenient shorthand for a well-known key value. The pattern looked like a constant/singleton at the call site but was a factory allocating a new class instance on every access. Worse, the class constructor called into a global lock-based registry (`KeyIndexer.NextKey`), making each access incur a heap allocation PLUS a lock acquisition. The property appeared inside a hot inner loop, resulting in hundreds of thousands of lock acquisitions per unit of work that could have been reduced to one with a simple hoist.
+
+**Rule**: When reviewing a `static` property (not field) of the form `=> new(...)` accessed inside a loop:
+1. Confirm it is a property (arrow getter) not a field — a field would be set once at class initialization
+2. Open the type's constructor and check for global registries, locks, or caches
+3. If the constructor has side effects (dictionary write, lock, counter), rate the finding at least Medium if accessed in an inner loop
+4. The fix is always a local hoist: `var cached = SomeClass.TheProperty;` before the loop
+
+This is distinct from the "struct vs class" lesson — even if allocation cost alone is small, a hidden lock in the constructor escalates severity. Read the constructor, not just the allocation type.
