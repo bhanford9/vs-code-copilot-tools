@@ -19,6 +19,8 @@ Each auditor creates a single markdown file named according to its role:
 - `testability-audit.md` - Testability Auditor output
 - `performance-audit.md` - Performance Auditor output
 - `extensibility-audit.md` - Extensibility Auditor output
+- `security-audit.md` - Security Auditor output
+- `ripple-effect-audit.md` - Ripple Effect Auditor output
 - `final-review.md` - Code Review Orchestrator final synthesis
 
 ## Git Changes Scope

@@ -108,6 +108,37 @@ When a `[TestCaseSource]` test has a `.SetName("... returns true")` but `.Return
 
 - The assertion is correct; only the name is wrong.
 - The severity is Medium (not Low) because test names are documentation. A future reader inferring the filter's behavior from test names will draw the wrong conclusion.
+
+---
+
+## Cross-Auditor Regression Test Mining: When Correctness Audit + Zero Tests Coincide
+
+**Category: Process/Model**
+
+When a code correctness audit has already run AND the unit test coverage audit finds zero test coverage, the confirmed bugs from the correctness audit should be **directly translated into regression test cases** with exact inputs and expected outputs in the coverage audit report. Do not merely recommend "add tests for the inference engine" — provide concrete `[TestCase]` inputs that reproduce the specific confirmed bugs.
+
+This serves three purposes:
+1. The developer can write the regression test immediately, before fixing the bug, to confirm the bug is reproducible
+2. The regression test documents the pre-fix behavior (even if wrong) so the fix can be verified
+3. The test prevents the bug from being silently re-introduced in future keyword/formula edits
+
+For keyword-array bugs specifically: compute the exact keyword that matches, why it double-counts, and what score the engine produces vs what score is correct. Show both the buggy and correct expected values so the test can be written for the fixed behavior.
+
+---
+
+## Zero-Coverage Codebases: Prioritize by Architecture, Not Just Risk
+
+**Category: Process/Model**
+
+When auditing a codebase with zero test coverage, the instinct is to rank test targets purely by business criticality. However, **testability architecture should co-rank** the priority list. A pure stateless class (no mocks, no DI, no I/O) with confirmed bugs should be ranked HIGHER than a similarly important class that requires database setup — even if the database class has a higher overall risk score.
+
+This is because the pure-function tests:
+- Can be written in minutes (not hours)
+- Run in <1ms per test
+- Have no flakiness risk
+- Produce a multiplicative coverage gain per line of code
+
+Practically: mark pure-function engine tests as Critical regardless of the application tier they belong to, if they contain confirmed algorithmic bugs. Mark infrastructure-dependent tests (EF Core, DbContext) as High even for equally important behavior, because the setup cost delays developer adoption.
 - The recommendation is a rename that describes what the input contains and what the actual return value is: `"[CheckType] is excluded by filter, returns false"` rather than `"[CheckType] returns true"`.
 - Do not conflate this with the toggle-state mismatch lesson — here the fixture state is fine; only the name property on the test case data is wrong.
 
@@ -128,3 +159,58 @@ A count-only assertion cannot catch a bug that adds the *wrong* item. If the ite
 - Flag as **Medium** when the item identity is the correctness-critical invariant (not a cosmetic property).
 - The recommended fix is to either (a) assert a meaningful property of the added item (e.g., its minimum material, its key value), or (b) add a complementary negative test using inputs that would produce a different item, proving the assertion would fail with the wrong item.
 - When the item type is opaque (no public property to assert on), recommend an `Apply()` / `Filter()` round-trip test: build a list, apply the constraint, and verify the filtered list matches the expected post-constraint state.
+
+---
+
+## Cross-Check Prior Audit Recommendations Against Actual Test Files
+
+**Category: Process/Model**
+
+When requirements-audit or code-correctness-audit reports have already been written, extract their "missing test" and "recommended test" entries explicitly before writing the coverage report. Do not assume those recommendations were implemented — check each one against the actual test files. Prior audits naming untested paths are high-confidence pointers to real gaps.
+
+---
+
+## State Reset Methods Need Tests for Every New Field Added
+
+**Category: Process/Model**
+
+When a class with a `Reset()`, `Clear()`, or `Initialize()` method gains new mutable fields, the test for those methods must be updated. The absence of a test file for the class in the changed test set is the diagnostic signal — if the production class is in the diff but no corresponding test file is, check explicitly whether the reset behavior is covered anywhere. This matters most when the feature's correctness contract depends on the fields being properly cleared (e.g., a null-guard in a downstream step relies on these being null after reset).
+
+---
+
+## Moq Void-Method Defaults Silently Pass `Times.Never` Gaps
+
+**Category: Process/Model**
+
+In tests that verify "method A was called once" (via `Verifiable(Times.Once)`), the absence of a `Times.Never` assertion for a related "method B" is not caught by Moq — void methods default to no-op when called without setup. When two independently guarded code blocks each call a different method (e.g., restore top chord vs. restore bottom chord), both the positive assertion (called once) and the negative assertion (other method never called) are needed for the test to be complete. Flag the missing `Times.Never` assertions as Low when the independence is structurally clear in the code but not enforced by the test.
+
+---
+
+## Shared Fixture Helpers That Are Only Used by Sibling Test Classes
+
+**Category: Process/Model**
+
+When a test file contains multiple [TestFixture] classes that share a base class, helpers in the base class may be designed for one fixture but never invoked by another. This is a coverage illusion: you can see a helper that creates alternative member types (e.g., chord member, web member), assume those types are tested by the primary fixture, and miss that the helper is only called by a sibling fixture in the same file.
+
+Detection pattern: when a guard is added to a method (e.g., `early return for non-panel-point member types''), check the primary fixture class in isolation — not the shared base class — for a test that actually invokes the guard path. If the helper that creates the non-primary member type appears only in the fixture for a different calculator or component in the same file, the guard is untested.
+
+Flag as **Medium** when:
+- The guard is new code added in the PR under review, AND
+- The shared helper that could test it exists but isn't called from the primary fixture
+
+---
+
+## Adapter/Mapper Configuration Round-Trip for Newly-Added Nullable Fields
+
+**Category: Process/Model**
+
+When a PR adds a new nullable field to a DTO that is the target of an adapter (Mapster, AutoMapper, or similar) or MessagePack serialization, check whether a round-trip test exists that (a) maps the DTO with a non-null value for the new field, and (b) maps back and asserts the value round-tripped correctly.
+
+The failure mode: the mapper configuration .Map(dest.NewField, ...) is correct at time of writing, but a future refactor of the source expression (e.g., changing the lambda from IfHasValue to direct property access) breaks the mapping silently. Without a round-trip test, this regression is only caught by integration tests.
+
+Flag as **Medium** when:
+- The new field uses a non-trivial expression in the mapper config (unit conversion, optional/nullable coercion, extension method call), AND
+- No round-trip test for that field exists
+
+Flag as **Low** when:
+- The field is a direct property assignment with no transformation

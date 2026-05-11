@@ -40,6 +40,30 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-06 — Fallback / recovery paths have fundamentally different performance profiles than hot loops
+
+**Observation**: A restore step used O(n) + O(k) traversals (IndexOf scan + linked-list walk). Taken in isolation it looks like a Medium algorithmic concern. But the step ran at most once per design session — only when the entire search loop had already exhausted all options. That upstream exhaustion loop had already done far more work.
+
+**Rule**: Before rating any O(n+) operation, establish call frequency. "At most once per session/request/user-action" is categorically different from "once per inner-loop iteration." If the path is a last-resort fallback that fires only after a preceding loop has already exhausted all options, the fallback's algorithmic cost is almost never the bottleneck — the upstream exhaustion is. Rate such findings Low or omit them unless n is large and unbounded.
+
+---
+
+## 2026-05-06 — In flow-graph or step-graph patterns, distinguish construction-time from execution-time allocations
+
+**Observation**: Default interface implementations of the form `IFlowAction SomeStep => new SomeStep()` looked like per-iteration object creation. Reading the flow builder revealed that step lambdas (`() => [flow.Do(...)]`) are lazy initializers called once during graph construction (via a name-keyed cache), not once per execution. The `new SomeStep()` ran once per flow instance, not once per design iteration.
+
+**Rule**: In rule-engine, flow-graph, or pipeline-builder patterns, check whether object-creating expressions are called at construction time or execution time before writing any allocation finding. Look for: named-step caching (`GetStep(name, () => [...])`), lazy initialization patterns, or builder DSLs. If the lambda runs once to build a graph and the graph is then executed repeatedly, only allocations inside `ExecuteStep`/`Execute`/`Run` methods (not the graph-building lambda) contribute to per-execution cost.
+
+---
+
+## 2026-05-06 — Check if the target property is itself an allocating expression before writing an O(n) finding
+
+**Observation**: A `FirstOrDefault(...)` call looked like an O(n) linear search concern. Reading the preceding property revealed it was expression-bodied and called `.Concat().ToList()` on every access — the heap allocation was the actual concern, not the scan length. The linear scan over small fixed-n (10–40 items) is negligible; the per-call allocation in a hot calculation loop is the real finding.
+
+**Rule**: When flagging a `FirstOrDefault`/`.Where()`/`.Select()` call as an O(n) concern, immediately also check the type returned by the preceding property/accessor. If that accessor is expression-bodied and calls `.ToList()` / `.ToArray()` / `.Concat().ToList()`, the allocation dominates the cost — write the finding about the allocation, not just the scan. The fix is typically to target a pre-allocated typed sub-collection directly (reducing both allocation and scan scope in one change).
+
+---
+
 ## 2026-04-22 — Small-n pre-existing framework patterns: do not escalate
 
 **Context**: `SegmentedEdge.DistanceAlong` calls `_line.ToSegments()` multiple times without caching. `FitOuterLappedChordReinforcement` is created per-property-access in logic providers.
@@ -55,6 +79,22 @@ Only append if the session revealed something surprising, a false positive patte
 **Observation**: A logic provider's expression-bodied property (`=>`) that creates new sub-flow instances on every access appeared to be a repeated-allocation concern because the property was referenced inside a loop construct. Reading the flow DSL's `GetStep` implementation revealed it memoizes by step name using a `HashSet` — the containing factory lambda is evaluated exactly once per `BuildFlow` call, making the property access happen exactly once per design run.
 
 **Rule**: Before flagging "property creates instances on every access" in a flow-graph DSL: (a) locate the `GetStep` / `Flow` DSL method, (b) confirm whether it deduplicates by name, (c) confirm how many times `BuildFlow` is called per unit of work. Only raise a finding if all three confirm repeated evaluation. This avoids a false positive that looks compelling from call-site inspection alone.
+
+---
+
+## 2026-05-08 — In MVVM+Blazor codebases, distinguish PropertyChanged frequency from render-relevant property changes
+
+**Observation**: Board sub-components subscribed to `ViewModel.PropertyChanged` with no filter, calling `StateHasChanged` on every property change. The tempting interpretation is "anything could affect the view" — but in practice, ViewModel properties divide into two groups: task-data properties (mutations to the `Tasks` collection or scored fields) that do need re-renders, and UI-state properties (`EditingTaskId`, `IsLoading`, `CurrentView`) that trigger re-renders in components that have no dependency on those properties. The correct fix is property-name filtering in the handler, not full re-render on every signal.
+
+**Rule**: When reviewing a `PropertyChanged` subscription in a Blazor component that calls `StateHasChanged` unconditionally, always check: (a) which ViewModel properties does this component's template actually read? (b) which `PropertyChanged` signals are actually mutation-relevant? If the component only renders task-list data, filter out `EditingTaskId`, modal state, and filter selections that belong to sibling components.
+
+---
+
+## 2026-05-08 — Expression-bodied properties that call ToList() are double-materialization risks in Blazor templates
+
+**Observation**: A `private IReadOnlyList<T> WhatNowItems => source.ToList()` pattern looked like a single materialization. Reading the Razor template showed it was referenced twice (`!WhatNowItems.Any()` guard + `@foreach`) — producing two full LINQ pipeline executions per render. This is a common Blazor pattern-mistake because expression-bodied properties feel like computed values but actually execute on each access.
+
+**Rule**: When reviewing a Blazor component's code-behind for `IEnumerable<T>` or `IReadOnlyList<T>` expression-bodied properties that call `.ToList()`, immediately check the razor template for multiple access points (`.Any()` + `foreach`, `.Count` + `foreach`, etc.). If found, flag as a medium allocation/compute finding. The fix is always to assign to a field in the lifecycle method, not a property getter.
 
 ---
 

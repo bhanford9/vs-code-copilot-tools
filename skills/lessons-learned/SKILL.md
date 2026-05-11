@@ -51,7 +51,10 @@ Before writing anything, reflect:
 - Did something go wrong that a future agent should avoid?
 - Did I have to figure out something not already in the SKILL.md?
 
-If the answer to all of these is **no**, skip the update entirely. Routine sessions do not produce entries.
+If the answer to all of these is **no**, do **not** skip the reflection step silently. Instead, report explicitly to the user:
+> "Lessons learned: nothing to report this session — workflow completed without unexpected behavior."
+
+Routine sessions do not produce written entries, but the reflection must always be acknowledged.
 
 ### 4. Choose the Right File
 
@@ -88,6 +91,21 @@ Before writing to either file, scan it for existing entries on the same topic:
 - Step-by-step summaries of what you did — that belongs in SKILL.md
 - Obvious facts that any capable agent would know without being told
 - Long explanations — brevity is essential; if an entry grows beyond a short paragraph, it's probably done
+
+## Skill Ownership Rules
+
+These rules apply to every skill that uses the LessonsLearned feedback loop:
+
+1. **Every skill owns its own LL step — always.** There are no exceptions, including when a skill is invoked as a sub-step of a larger workflow.
+2. **No "skip when invoked as sub-step" carve-outs.** Being called by a parent does not waive the LL obligation. The sub-skill must still run its own reflection.
+3. **Parent skills may additionally update sub-skill LL files, but this is optional.** A parent skill running its own LL step does not replace the sub-skill's step — it may supplement it.
+4. **"Nothing to report" is a required explicit message.** If nothing was learned, the skill must say so. Silent skipping is not permitted — it is indistinguishable from the agent forgetting to run the step.
+
+When creating or updating a skill, every SKILL.md must contain:
+- A read step that reads both `LessonsLearned.GLOBAL.md` and `LessonsLearned.md` (if it exists) before starting
+- A write step at the end that runs automatically, includes the two-tier routing, and always reports either new entries or "nothing to report this session"
+
+---
 
 ## Escalation Path: From Guidance to Enforcement
 

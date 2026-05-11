@@ -14,36 +14,47 @@ The pipeline supports two review modes:
 
 ```mermaid
 flowchart TD
-    Start([START HERE]) --> Orchestrator1[REVIEW-CodeReviewOrchestrator<br/>Entry Point & Finalization]
-    Orchestrator1 --> Requirements[Requirements Auditor<br/>- Extract domain requirements<br/>- Compare with work item<br/>- Identify gaps and risks]
+    Start([START HERE]) --> Orchestrator1[REVIEW-CodeReviewOrchestrator<br/>Entry Point]
+    Orchestrator1 --> ShowScope[Show changeset summary<br/>to user]
+    ShowScope --> UserConfirm{USER CONFIRMS<br/>One reply to begin}
+    UserConfirm --> Requirements[Requirements Auditor<br/>- Extract domain requirements<br/>- Compare with work item<br/>- Identify gaps and risks]
     Requirements --> Correctness[Code Correctness Auditor<br/>- Verify functional correctness<br/>- Check edge case handling<br/>- Validate against requirements]
-    Correctness --> UserApproval{USER APPROVAL<br/>Click 'Launch Parallel Audits'}
-    UserApproval --> Coordinator[Parallel Audit Coordinator<br/>Spawns 5 parallel auditors]
+    Correctness --> Coordinator[Parallel Audit Coordinator<br/>Spawns 7 parallel auditors]
     
     Coordinator --> UnitTest[Unit Test<br/>Coverage<br/>Auditor]
     Coordinator --> Maintainability[Maintainability<br/>Auditor]
     Coordinator --> Testability[Testability<br/>Auditor]
     Coordinator --> Performance[Performance<br/>Auditor]
     Coordinator --> Extensibility[Extensibility<br/>Auditor]
+    Coordinator --> Security[Security<br/>Auditor]
+    Coordinator --> RippleEffect[Ripple Effect<br/>Auditor]
     
     UnitTest --> FinalSynth[REVIEW-FinalSynthesizer<br/>Synthesize Final Review]
     Maintainability --> FinalSynth
     Testability --> FinalSynth
     Performance --> FinalSynth
     Extensibility --> FinalSynth
+    Security --> FinalSynth
+    RippleEffect --> FinalSynth
+    
+    FinalSynth --> Done([DONE — final-review.md])
     
     style Start fill:#90EE90
     style Orchestrator1 fill:#87CEEB
+    style ShowScope fill:#87CEEB
+    style UserConfirm fill:#FF6B6B
     style Requirements fill:#FFD700
     style Correctness fill:#FFD700
-    style UserApproval fill:#FF6B6B
     style Coordinator fill:#DDA0DD
     style UnitTest fill:#98FB98
     style Maintainability fill:#98FB98
     style Testability fill:#98FB98
     style Performance fill:#98FB98
     style Extensibility fill:#98FB98
+    style Security fill:#98FB98
+    style RippleEffect fill:#98FB98
     style FinalSynth fill:#87CEEB
+    style Done fill:#90EE90
 ```
 
 ## Agents
@@ -51,17 +62,17 @@ flowchart TD
 ### REVIEW-CodeReviewOrchestrator
 **File**: `REVIEW-CodeReviewOrchestrator.agent.md`
 
-Entry point for all reviews. Guides users through the pipeline and hands off to `REVIEW-FinalSynthesizer` after parallel audits complete.
+Entry point for all reviews. Shows the changeset summary, waits for a single user confirmation, then automatically runs the full pipeline end-to-end (Requirements → Correctness → Parallel Audits → Final Synthesis) with no further user interaction required.
 
 **When to use**: Start every code review here
 
 ### REVIEW-FinalSynthesizer
 **File**: `REVIEW-FinalSynthesizer.agent.md`
 
-Reads all 7 audit reports, applies patterns from `REVIEW-LessonsLearned.md`, and synthesizes a unified final review with merge recommendation.
+Reads all 9 audit reports, applies patterns from LessonsLearned, and synthesizes a unified final review with merge recommendation.
 
 **Outputs**: `/code-review/final-review.md`  
-**Invoked by**: Orchestrator handoff after parallel audits complete
+**Invoked by**: Orchestrator as a subagent after all parallel audits complete
 
 ### Requirements Auditor
 **File**: `REVIEW-RequirementsAuditor.agent.md`
@@ -80,16 +91,16 @@ Verifies the implementation correctly achieves requirements, validates edge case
 ### Parallel Audit Coordinator
 **File**: `REVIEW-ParallelAuditCoordinator.agent.md`
 
-Orchestrates simultaneous execution of all five parallel auditors by launching them as parallel subagents within the editor session.
+Orchestrates simultaneous execution of all seven parallel auditors by launching them as parallel subagents within the editor session.
 
 **How it works**:
 - Launches each auditor as a named subagent using the `agent` tool
-- All 5 run as parallel subagents in isolated context windows
-- Waits for all 5 to complete and return their results
-- Reports results and offers handoff to final synthesis
-- Uses the `agents` frontmatter property to restrict available subagents to the 5 auditors
+- All 7 run as parallel subagents in isolated context windows
+- Waits for all 7 to complete and return their results
+- Reports results and returns to the Orchestrator
+- Uses the `agents` frontmatter property to restrict available subagents to the 7 auditors
 
-**Invoked by**: User clicking "Launch Parallel Audits" handoff
+**Invoked by**: Orchestrator as a subagent after Correctness Audit completes
 
 ### Unit Test Coverage Auditor
 **File**: `REVIEW-UnitTestCoverageAuditor.agent.md`
@@ -161,15 +172,46 @@ Assesses future adaptability, design patterns, and ability to accommodate changi
 - Configuration vs code
 - API evolution strategy
 
+### Security Auditor
+**File**: `REVIEW-SecurityAuditor.agent.md`
+
+Identifies security vulnerabilities including OWASP Top 10 risks, injection vectors, broken access control, sensitive data exposure, and insecure defaults.
+
+**Outputs**: `/code-review/security-audit.md`
+
+**Focus**:
+- Injection risks (SQL, command, path, template, expression)
+- Broken access control and IDOR
+- Sensitive data in logs, serialization, error messages
+- Cryptographic weaknesses
+- Input validation at system boundaries
+- Security misconfiguration and insecure defaults
+- Authentication bypass
+
+### Ripple Effect Auditor
+**File**: `REVIEW-RippleEffectAuditor.agent.md`
+
+Finds what *wasn't* in the diff but should have been — call sites with stale assumptions, symmetric paths updated asymmetrically, and companion logic silently left behind.
+
+**Outputs**: `/code-review/ripple-effect-audit.md`
+
+**Focus**:
+- Call site completeness (callers that now carry wrong assumptions)
+- Symmetric path pairs (reader/writer, encoder/decoder, version branches, create/update)
+- Companion logic (mappers, DTOs, test reference data, config, documentation)
+- Implicit contracts between components only partially honored
+- Dead activation paths introduced by the change
+
 ## Usage
 
 ### Review Mode 1: Local Branch Review
 
 This is the default mode for reviewing all changes on your current branch.
 
-1. **Invoke the REVIEW-CodeReviewOrchestrator agent** using `ReviewLocal.prompt.md`
-2. The orchestrator will verify git context and show what changes will be reviewed
-3. **Click "Start Requirements Audit"** handoff to begin the pipeline
+1. **Invoke the REVIEW-CodeReviewOrchestrator agent**
+2. The orchestrator shows the changeset summary (commits, files, uncommitted changes)
+3. **Reply once to confirm** — the full pipeline then runs automatically end-to-end with no further clicks required
+4. When done, `final-review.md` is available in `/code-review/`
 
 ### Review Mode 2: Commit List Review
 
@@ -205,50 +247,28 @@ Use this mode to review a specific set of commits (e.g., from different branches
 
 ### Common Review Workflow (Both Modes)
 
-#### Sequential Phase
+The pipeline runs fully automatically after a single user confirmation. No handoff buttons to click.
 
-**Requirements Auditor** will:
-   - Analyze all changes since master branch
-   - Extract domain-level requirements
-   - Ask you for work item details (title, description, acceptance criteria)
-   - Compare code changes with work item requirements
-   - Create `/code-review/requirements-audit.md`
-   - Offer handoff to Code Correctness Auditor
+**Stage 1 — Requirements Audit (automatic)**
+- Analyzes all changes since master branch
+- Extracts domain-level requirements
+- Fetches work item details from Azure DevOps (if configured) or prompts once if fetch fails
+- Creates `/code-review/requirements-audit.md`
 
-**Code Correctness Auditor** will:
-   - Read the requirements audit
-   - Verify functional correctness
-   - Check edge case handling
-   - Validate against requirements
-   - Create `/code-review/code-correctness-audit.md`
-   - Offer "Launch Parallel Audits" handoff
+**Stage 2 — Code Correctness Audit (automatic)**
+- Reads the requirements audit
+- Verifies functional correctness and edge cases
+- Creates `/code-review/code-correctness-audit.md`
 
-#### Parallel Phase
+**Stage 3 — Parallel Audits (automatic, 7 auditors run simultaneously)**
+- Parallel Audit Coordinator launches all 7 auditors at once
+- Each runs in an isolated context window
+- Creates 7 reports in `/code-review/`
 
-**When ready** (after reviewing correctness audit), **click "Launch Parallel Audits"**
-
-**Parallel Audit Coordinator** will:
-   - Launch all 5 parallel auditors as subagents in a single parallel batch
-   - Each auditor runs in its own isolated context window via the `agent` tool
-   - All 5 run simultaneously as parallel subagents within the editor session
-   - Coordinator waits for all 5 to complete and return their results
-   - Each auditor independently creates its own report in `/code-review/`
-   - Coordinator reports results and offers handoff to final synthesis
-
-#### Finalization
-
-**After all parallel audits complete** (the coordinator will confirm this), **click "Generate Final Review"** handoff
-
-**Orchestrator** will:
-   - Read all 7 audit reports
-   - Synthesize findings across all dimensions
-   - Create `/code-review/final-review.md` with:
-     - Executive summary
-     - Issues prioritized by severity
-     - What's done well
-     - Summary by category
-     - Merge recommendation
-     - Actionable next steps
+**Stage 4 — Final Synthesis (automatic)**
+- Reads all 9 audit reports
+- Synthesizes findings, resolves conflicts between auditors
+- Creates `/code-review/final-review.md` with merge verdict
 
 ## Output Directory
 
@@ -265,6 +285,8 @@ This directory is created automatically if it doesn't exist. Files are overwritt
 - `testability-audit.md` - Testability analysis
 - `performance-audit.md` - Performance concerns
 - `extensibility-audit.md` - Future adaptability
+- `security-audit.md` - Security vulnerabilities
+- `ripple-effect-audit.md` - Incomplete propagation and missing companion logic
 - `final-review.md` - Synthesized comprehensive review
 
 ## Severity Levels
@@ -304,11 +326,15 @@ skills/code-review-pipeline/
       LessonsLearned.GLOBAL.md
     REVIEW-UnitTestCoverageAuditor/
       LessonsLearned.GLOBAL.md
+    REVIEW-SecurityAuditor/
+      LessonsLearned.GLOBAL.md
+    REVIEW-RippleEffectAuditor/
+      LessonsLearned.GLOBAL.md
     REVIEW-FinalSynthesizer/
       LessonsLearned.GLOBAL.md      ← Synthesis-specific findings
 ```
 
-Each parallel auditor reads and writes only its own directory. The FinalSynthesizer reads all 6 per-auditor files plus the pipeline-level file, and promotes broadly applicable findings to the pipeline level.
+Each parallel auditor reads and writes only its own directory. The FinalSynthesizer reads all 8 per-auditor files plus the pipeline-level file, and promotes broadly applicable findings to the pipeline level.
 
 ## Conventions
 
@@ -325,11 +351,15 @@ All agents follow shared conventions at runtime via the auto-injected `REVIEW-CO
 
 To add a new specialized auditor:
 
-1. Create `REVIEW-{Name}Auditor.agent.md`
-2. Follow the pattern of existing auditors
-3. Add to `REVIEW-ParallelAuditCoordinator` spawn list (if parallel) or as new handoff (if sequential)
-4. Update `REVIEW-CodeReviewOrchestrator` to read the new audit output
-5. Add output file to this README
+1. Create `REVIEW-{Name}Auditor.agent.md` with `user-invocable: false`
+2. Follow the pattern of existing auditors (workflow, audit_report_template, conventions sections)
+3. Create a `LessonsLearned.GLOBAL.md` in `skills/code-review-pipeline/lessons-learned/REVIEW-{Name}Auditor/`
+4. Add to `REVIEW-ParallelAuditCoordinator` — both the `agents:` frontmatter list and the subagent invocation instructions
+5. Add to `REVIEW-CodeReviewOrchestrator` — the `agents:` frontmatter list
+6. Update `REVIEW-FinalSynthesizer` — add the LL read in step 0 and the report file in step 1
+7. Update `SKILL.md` — agent roles table and LL directory tree
+8. Update `CONVENTIONS.md` — file naming section
+9. Update this document
 
 ### Modifying Audit Focus
 

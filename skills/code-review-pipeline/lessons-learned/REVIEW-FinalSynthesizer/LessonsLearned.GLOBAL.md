@@ -17,6 +17,19 @@ Only append if the session revealed something surprising about synthesis, a recu
 
 ---
 
+### Save/restore pattern commits produce a predictable four-auditor finding cluster
+Category: Process/Model
+
+Commits that add a "save last valid state → restore on fallback" pattern have a characteristic cross-auditor profile:
+- **Correctness**: Flags the defensive `index < 0` skip path as untested (Medium) and resolves equality semantics (key correctness question that must be answered before the audit can pass).
+- **Coverage**: Flags the same `index < 0` path and separately flags the `Reset()` null-clear behavior as untested (second Medium, distinct location).
+- **Testability**: Flags any round-trip test that verifies state but omits verification of the side effect (fit call) triggered by that state change (Medium).
+- **Extensibility**: Flags the unenforced co-required step pairing — the "always call StepB after StepA" invariant with no structural enforcement (Medium).
+
+When a save/restore commit arrives, expect all four of these findings to appear independently. Synthesize them as four distinct Medium issues rather than collapsing them — they have different locations, different recommended fixes, and different regression risks.
+
+---
+
 ### Correctness audit may miss behavioral divergence when requirements are inferred from code
 Category: Process/Model
 
@@ -106,6 +119,42 @@ When only the Extensibility auditor rates a finding High and no other auditor in
 Category: Process/Model
 
 When 4 of 7 auditors independently flag the same missing test file without cross-pollination, treat this as the single most actionable finding in the report — regardless of severity. It should appear first among the Medium issues, with a note that it reflects independent convergence. Even if the correctness audit found no bug, the 4-auditor signal means: a regression in that class would propagate silently. The recommended fix for this signal is always a dedicated test file, not test cases appended to existing files.
+
+---
+
+### Floor/ceiling omissions in arithmetic fixes are hard to detect from the diff alone
 Category: Process/Model
 
 When a fix involves replacing one calculation with another (e.g., different distance formula, different denominator), check whether the corrected formula requires a floor or ceiling that the old one did not. These omissions are only discoverable from the acceptance criteria, not from reading the diff. The code looks superficially correct without knowing the original design intent. Flag when the AC describes a minimum/maximum constraint and the code uses a raw expression that could underflow it.
+
+---
+
+### Ripple Effect "Critical" means blast-radius severity, not runtime bug — resolve to High in synthesis
+Category: Process/Model
+
+The Ripple Effect Auditor uses "Critical" to mean "this change scenario has a severe blast radius and includes silent failure modes." This is NOT equivalent to "current bug" or "current data corruption." When synthesizing, Ripple Effect Critical findings that have NO current runtime bug (only a future-change concern) should be resolved to **High** in the final report. The reasoning: the failure does not exist today, but the structural gap makes the failure inevitable when the scenario occurs. High is the correct severity — it communicates urgency without falsely implying the system is currently broken.
+
+Exception: if the Ripple Effect auditor identifies a silent failure mode that IS triggered by the current codebase state (not a future-change scenario), treat it as correctness-equivalent and keep as Critical.
+
+---
+
+### "No test project" is categorically different from "coverage gap on a method"
+Category: Process/Model
+
+When the Unit Test Coverage auditor reports 0 test projects / 0 test files, this is a different category from a coverage gap on a specific method or class. It means the entire test harness is absent. In synthesis:
+- List it as a standalone High issue (not merged with any individual coverage gap)
+- Include concrete starter test targets with the highest ROI (pure stateless classes first — zero setup, zero mocking)
+- Recommend a specific test framework matching workspace conventions (not a generic recommendation)
+- Do NOT list individual method-level coverage gaps as separate Critical issues when the root cause is a missing test project — they all trace to the same root. Consolidate them under the single "no test project" finding.
+
+---
+
+### Full-codebase reviews: root-cause synthesis is the primary deliverable, not a finding list
+Category: Process/Model
+
+When reviewing a complete codebase (no PR diff — `reviewMode: full-codebase`), the highest-value synthesis is not a flat list of issues but a set of 2–3 root causes that drive most individual findings. The recommended approach:
+1. After de-duplicating, identify which structural decisions generate the most downstream issues
+2. Promote those to a "Top N Root Causes" section that appears before the fix-order table
+3. Frame the fix order around root causes (e.g., "fix this first because it unblocks steps 2 and 3") rather than severity-first ordering
+
+In a PR review, the immediate merger decides the order. In a full-codebase review, the developer is planning a multi-session effort — a root-cause-first framing is far more actionable than a severity-sorted issue list.

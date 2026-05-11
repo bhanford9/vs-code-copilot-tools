@@ -16,6 +16,22 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-08 — `Enum.GetValues<T>()` in UI Is an Accurate Signal of Open Extension Points
+
+**Finding**: When reviewing enum-backed UI controls, check whether buttons/options are rendered via `Enum.GetValues<T>()` or via hard-coded element-per-value markup. `Enum.GetValues<T>()` is a genuine open extension point — adding an enum value automatically surfaces in the UI with zero code changes. Hard-coded per-value markup is a closed pattern. The two look similar at a glance; distinguish them before reporting extensibility findings for form controls.
+
+**Pattern**: This distinction can produce false positives if you assess "effort to add a horizon value" as "High" without checking the form component. Always check both the consuming form/component AND the business logic (inference, scoring) separately — the UI may be open while the business logic is closed, or vice versa. Report both facts in the finding with separate impact lines.
+
+---
+
+## 2026-05-08 — Duplicate Display Metadata in Multiple View Components Is a Reliable High-Value Finding
+
+**Finding**: When the same enum-to-CSS-class and enum-to-label mappings appear independently in multiple view components, always flag this as a Medium finding even if each individual occurrence is trivially small. The duplicated static method pattern compounds: each new view component independently re-authors the same mappings, and divergence between them becomes a source of subtle UI inconsistencies. A shared static display-metadata utility eliminates the multiplication.
+
+**Heuristic**: Search for the string `switch` in view code-behind files (`*.razor.cs`). If you find the same enum being switched for a style/label result in more than one file, flag the duplication and recommend a shared utility.
+
+---
+
 ## Boolean Flag Parameters on Resolver Methods Signal Incomplete Extensibility
 
 **Date**: 2026-04-28
@@ -50,6 +66,14 @@ When a C# 8+ interface uses default property/method implementations that `new` u
 
 ---
 
+## 2026-05-06 — Co-Required Step Pairs Without Structural Enforcement Are Medium Extensibility Findings
+
+**Category**: Process/Model
+
+When two flow steps must always appear in sequence (e.g., StepA followed immediately by StepB), and the framework provides no mechanism (base class, template method, composed sub-flow, or compile-time constraint) to enforce co-occurrence, rate this as Medium severity. The correct recommendation is either: (a) compose the pair into a single named unit so consumers reference one thing, or (b) add a prominent comment at the declaration site of the first step stating the required pairing. Do NOT rate this as Low simply because the pattern has been correctly applied so far — the risk is additive: each new call site is an independent opportunity for omission. Escalate to High only if the pair must appear in a hot path where an omission produces a silent wrong-answer defect with no exception signal (i.e., a bug exactly like the one the PR was fixing).
+
+---
+
 ## 2026-04-24 — Two-Toggle Mutual Exclusivity Invariants Need Explicit Documentation
 
 **Finding**: When a new toggle is introduced to replace an older one (new mechanism supersedes old mechanism), and the old mechanism has a bypass that prevents double-application, the bypass code has a hidden invariant: "the bypass must remain as long as both toggles can be independently on." This is a **toggle retirement trap**. After the new toggle is promoted, the bypass looks like dead code — but it is not. Removing it silently reintroduces the original defect.
@@ -62,6 +86,16 @@ When a C# 8+ interface uses default property/method implementations that `new` u
 If (3) is missing, flag High. If (2) is present with no retirement comment, recommend adding a `// RETIREMENT NOTE` comment at the bypass site.
 
 ---
+## 2026-05-06 — Version-Specific Namespace Does Not Guarantee Version-Specific Routing
+
+**Finding**: When a calculator class lives in a namespace named after a specification version (e.g., `Sji45.PanelPointShearStressCalculator`), do NOT assume it is only used for that version. Check the provider's `BuildCalculators` method to see whether it is version-routed or shared. A common pattern: a base calculator in the `Sji45` namespace is instantiated unconditionally in the shared provider, and version-specific overrides are applied via a separate mutation mechanism. If the mutation interface for a given member type has no version-specific implementation, the Sji45 calculator runs for ALL versions.
+
+**Consequence for audits**: If a fix targets "the Sji45 path" but the calculator used is shared (no version-specific mutation override), the fix implicitly affects all versions. Check whether characterization test reference files were updated for ALL versions that use the calculator — not just the named version. If only one version's reference files were updated, flag a High finding: the toggle/fix applies to an untested code path.
+
+**Pattern**: Search for `IPanelPointMutations` (or the equivalent mutation interface for the member type). If no `*Sji46Mutations.cs` implementation exists for that interface, the behavior is shared. Do this check before concluding a fix is version-isolated.
+
+---
+
 ## 2026-04-29 — Exclusion-Accumulation Naming on Public Interfaces Is a Medium Finding
 
 **Finding**: When a public interface method uses a naming pattern that accumulates excluded types in the method name (e.g., `HasAnyCheckOutputIgnoringX` → `HasAnyCheckOutputIgnoringXAndY` → ...), flag it as Medium severity. Each new excluded type requires renaming the public interface member, which is a breaking change for any external callers and forces updates at the interface declaration, implementation, all callers, and all test mocks. The violation compounds on public interfaces because name stability is an API contract.

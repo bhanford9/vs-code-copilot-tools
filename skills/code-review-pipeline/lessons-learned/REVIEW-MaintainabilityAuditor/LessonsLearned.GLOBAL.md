@@ -79,6 +79,42 @@ When a commit adds a guard (e.g., `CanReach`) to prevent a throw from being reac
 
 ---
 
+## Dead ViewModel Classes Indicate an Abandoned SRP Split — Flag as High
+
+**Date**: 2026-05-08
+**Category**: Process/Model
+
+When a codebase has a ViewModel class that was clearly intended for a specific page/form, but the page instead injects the broader host ViewModel and binds to state added there, flag this as **High SRP** — not merely a dead code Low. The dead ViewModel is evidence that a separation was planned but abandoned, and the host ViewModel has been inflated with page-specific state as a result. The maintainability risk is the **pattern it establishes**: every future page will continue to add state to the host ViewModel rather than creating a proper scoped ViewModel. The fix is completing the original separation intent, not simply deleting the dead class.
+
+---
+
+## Repeated `PropertyChanged` + `Dispose` Boilerplate Across Sibling Components Is a Base Class Signal
+
+**Date**: 2026-05-08
+**Category**: Process/Model
+
+When three or more sibling components in a component library all implement identical event-subscription / `OnInitialized` / `Dispose` patterns, this is a reliable **Medium** finding — not Low — because the subscription unsubscription has a safety-critical element (missing `Dispose` leaks event handler references). The correct recommendation is a base class that makes the pattern impossible to forget, not just a comment noting the duplication. The base class also serves as a contract that future components can inherit, preventing recurrence.
+
+---
+
+## Dead Component Parameters with String Types — Remove Rather Than Fix the Type
+
+**Date**: 2026-05-08
+**Category**: Process/Model
+
+When a component has a parameter of type `string` that receives enum-like values but is never read in the template or code-behind, resist recommending "fix the type to the enum type." The parameter is dead code and should be removed. Recommending a type fix implies the parameter has a future use. If it does not, YAGNI says remove it. Flag as **Medium YAGNI**, recommend deletion, and note that if the functionality is ever needed it should be added with the correct type at that time.
+
+---
+
+## `IfSome` Callback Null Checks Can Be Unreachable When Preceded by a None-Setting Guard
+
+**Category: Process/Model**
+**Date**: 2026-05-06
+
+In LanguageExt codebases that use the `InitializeX(param) / Option.IfSome(...)` pattern, the `IfSome` callback may contain null checks on `param` that are provably unreachable. The reason: the `InitializeX(null)` path typically sets the Option to `None`, preventing `IfSome` from ever firing — so any `if (param is not null)` guard inside the `IfSome` callback is dead code. When reviewing a mutation method that calls an initializer then `IfSome`, check whether the initializer's None-setting path makes inner null checks unreachable. This is a reliable Low-severity KISS finding on commits that add derived properties to mutation methods.
+
+---
+
 ## Paired Complementary Tests Parameterized on Side Predictably Produce Setup Duplication
 
 **Date**: 2026-04-23

@@ -8,6 +8,23 @@
 
 ---
 
+### Keyword/scoring array audits: check for duplicates AND substring relationships
+Category: Process/Model
+
+When auditing a classification or scoring engine that uses a static string array for keyword matching against free text (e.g., an importance scorer, a crisis keyword detector, a category classifier), always check for two defect classes:
+
+1. **Literal duplicates** — the same keyword string appears at two different indices. If the scorer counts `hits.Count` over the full array, a single text match produces a count of 2 instead of 1. Causes inflated scores for any text containing that keyword.
+
+2. **Substring relationships** — keyword A is a proper substring of keyword B (both in the array). Any text containing B will also match A, producing a count of 2 from a single textual concept. Common pairs: `"test"` / `"testing"`, `"automate"` / `"automation"`, `"doc"` / `"documentation"`.
+
+Both defects are invisible in happy-path tests (single keyword, no overlap) and only emerge when reviewing the array contents directly. Detection steps:
+- Scan the array for literal duplicates (sort and compare adjacent, or use a Set)
+- For each pair (A, B), test `B.Contains(A, StringComparison.Ordinal)` — if true, text containing B will double-count
+
+Flag these as High severity when the scoring threshold is close to the overcounting delta (e.g., threshold=3, duplicate adds +1 → a 2-keyword task becomes incorrectly "important").
+
+---
+
 ### Dead code claims require full-file verification
 Category: Process/Model
 
@@ -57,6 +74,17 @@ When a test file declares `_toggles = ToggleBuilder.AllDisabled().Build()` and t
 
 ---
 
+### `disable-model-invocation: true` blocks subagent invocation from trusted callers — use `user-invocable: false` instead
+Category: Process/Model
+
+`disable-model-invocation: true` prevents ALL programmatic invocation of an agent, including by an Orchestrator that explicitly lists it in its `agents:` frontmatter array. If sequential pipeline stages are marked `disable-model-invocation: true`, no Orchestrator can ever run them as subagents — the only option left is manual handoff buttons.
+
+The intended behavior in most cases is: hide from the user's agent picker, but still allow trusted caller invocation. That requires `user-invocable: false`, NOT `disable-model-invocation: true`.
+
+Rule: any agent that is meant to be called programmatically by a parent Orchestrator or Coordinator must use `user-invocable: false`. Reserve `disable-model-invocation: true` only for agents that must never be called by any agent under any circumstances.
+
+---
+
 ### Auto-start lessons learned after the final review report — do not prompt
 Category: Process/Model
 
@@ -64,5 +92,23 @@ The `lessons-learned` SKILL.md previously said to "always output a prompt to the
 
 DO: Start the lessons learned session automatically after the final report is presented.
 DON'T: Print "type 'lessons learned session'" and wait — the user must not have to ask for this step.
+
+---
+
+### Dead code verification on Windows: use `Get-ChildItem | Select-String` not `Select-String -Recurse`
+Category: Process/Model
+
+On Windows PowerShell, `Select-String -Recurse` does not accept a `-Recurse` parameter — it is not a valid flag. Use the pipeline pattern instead: `Get-ChildItem <path> -Recurse -Include "*.cs","*.razor" | Select-String -Pattern <symbol>`. This produces reliable cross-file symbol search results. The `Select-String -Path <file> -Pattern <symbol>` form works for single-file searches. Any auditor or synthesizer that needs to verify a dead-code claim on Windows should use the `Get-ChildItem | Select-String` pattern, not `Select-String -Recurse`.
+
+---
+
+### Static keyword array audits must check substring relationships, not just literal duplicates
+Category: Process/Model
+
+When any auditor reviews a classifier, scorer, or categorizer that uses a static string array for `text.Contains(keyword)` matching, both the following defect classes must be checked before reporting confidence:
+1. **Literal duplicates** — same string appears at two indices (e.g., `"improve"` at index 5 and 24)
+2. **Substring relationships** — keyword A is a proper substring of keyword B, both in the array (`"test"` ⊆ `"testing"`, `"automate"` ⊆ `"automation"`)
+
+Class 2 is more insidious than class 1: the duplicate is visible to a careful reader, but the substring collision is only detectable by systematically testing `B.Contains(A)` for each pair. Both produce inflation in count-based importance scorers where the threshold is close to the inflation delta. The severity is High when the inflation causes misclassification of common task titles — verify against the scoring threshold before rating.
 
 

@@ -30,7 +30,9 @@ The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor
 | `REVIEW-TestabilityAuditor` | DI boundaries, complexity, observability | Parallel phase |
 | `REVIEW-PerformanceAuditor` | Memory, algorithms, concurrency | Parallel phase |
 | `REVIEW-ExtensibilityAuditor` | OCP, extension points, future adaptability | Parallel phase |
-| `REVIEW-FinalSynthesizer` | Reads all 7 audit reports, applies LessonsLearned, writes final-review.md | After parallel phase completes |
+| `REVIEW-SecurityAuditor` | OWASP Top 10, injection, access control, sensitive data | Parallel phase |
+| `REVIEW-RippleEffectAuditor` | Incomplete propagation, missing companion logic, asymmetric paths | Parallel phase |
+| `REVIEW-FinalSynthesizer` | Reads all 9 audit reports, applies LessonsLearned, writes final-review.md | After parallel phase completes |
 
 ## Conventions
 
@@ -52,6 +54,8 @@ skills/code-review-pipeline/lessons-learned/
   REVIEW-PerformanceAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
   REVIEW-ExtensibilityAuditor/     LessonsLearned.GLOBAL.md + LessonsLearned.md
   REVIEW-UnitTestCoverageAuditor/  LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-SecurityAuditor/          LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-RippleEffectAuditor/      LessonsLearned.GLOBAL.md + LessonsLearned.md
   REVIEW-FinalSynthesizer/         LessonsLearned.GLOBAL.md + LessonsLearned.md
 ```
 

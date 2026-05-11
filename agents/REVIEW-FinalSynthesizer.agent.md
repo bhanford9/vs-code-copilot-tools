@@ -1,7 +1,7 @@
 ---
 name: REVIEW-FinalSynthesizer
 description: Synthesizes all parallel audit reports into a final code review report. Invoked after all parallel auditors have completed.
-disable-model-invocation: true
+user-invocable: false
 tools:
     - read
     - edit
@@ -18,12 +18,14 @@ Read your own LL files first:
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/LessonsLearned.GLOBAL.md`
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-FinalSynthesizer/LessonsLearned.md` (if it exists on disk)
 
-Also read all 5 per-auditor LL files for cross-auditor context (each may contain independent, even conflicting, patterns):
+Also read all 7 per-auditor LL files for cross-auditor context (each may contain independent, even conflicting, patterns):
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-MaintainabilityAuditor/LessonsLearned.GLOBAL.md`
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-TestabilityAuditor/LessonsLearned.GLOBAL.md`
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-PerformanceAuditor/LessonsLearned.GLOBAL.md`
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-ExtensibilityAuditor/LessonsLearned.GLOBAL.md`
 - `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-UnitTestCoverageAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-SecurityAuditor/LessonsLearned.GLOBAL.md`
+- `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-RippleEffectAuditor/LessonsLearned.GLOBAL.md`
 
 Apply any recorded patterns to improve synthesis quality. Conflicting per-auditor patterns are expected — use your judgment to reconcile them.
 
@@ -37,6 +39,8 @@ Load all audit reports from `/code-review/`:
 - `testability-audit.md`
 - `performance-audit.md`
 - `extensibility-audit.md`
+- `security-audit.md`
+- `ripple-effect-audit.md`
 
 ## 2. Analyze and Synthesize
 
@@ -65,6 +69,8 @@ Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow 
 
 **Promote to the pipeline-level LL** (`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`) only if a finding is broadly applicable to the entire review pipeline — not just synthesis. This should be rare. When in doubt, keep it in your own LL directory.
 
+Note: Per-auditor LL files from SecurityAuditor and RippleEffectAuditor may conflict with each other or with other auditors — reconcile factual conflicts the same way as for the original five auditors.
+
 </workflow>
 
 <final_review_template>
@@ -76,7 +82,7 @@ Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow 
 **Changes Reviewed**: All changes since master branch (committed + uncommitted)
 **Commits Reviewed**: {number} commits since master
 **Files Changed**: {number} files
-**Auditors**: Requirements, Code Correctness, Unit Test Coverage, Maintainability, Testability, Performance, Extensibility
+**Auditors**: Requirements, Code Correctness, Unit Test Coverage, Maintainability, Testability, Performance, Extensibility, Security, Ripple Effect
 
 ---
 
