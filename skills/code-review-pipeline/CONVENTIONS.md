@@ -21,6 +21,7 @@ Each auditor creates a single markdown file named according to its role:
 - `extensibility-audit.md` - Extensibility Auditor output
 - `security-audit.md` - Security Auditor output
 - `ripple-effect-audit.md` - Ripple Effect Auditor output
+- `structural-patterns-audit.md` - Structural Patterns Auditor output
 - `final-review.md` - Code Review Orchestrator final synthesis
 
 ## Git Changes Scope

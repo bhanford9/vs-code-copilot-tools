@@ -105,6 +105,23 @@ When creating or updating a skill, every SKILL.md must contain:
 - A read step that reads both `LessonsLearned.GLOBAL.md` and `LessonsLearned.md` (if it exists) before starting
 - A write step at the end that runs automatically, includes the two-tier routing, and always reports either new entries or "nothing to report this session"
 
+### Required Write Step Format
+
+Every SKILL.md must include a write step with this structure. Substitute skill-specific routing examples:
+
+    ### Step N — Lessons Learned Reflection
+
+    Run the lessons learned reflection automatically — do not ask for permission first.
+
+    Follow the `lessons-learned` skill protocol:
+    - **Codebase findings** (skill-specific examples) → write to `LessonsLearned.md`
+    - **Process/model findings** (skill-specific examples) → write to `LessonsLearned.GLOBAL.md`
+
+    If nothing new was learned this session, report explicitly:
+    > "Lessons learned: nothing to report this session."
+
+Skills structured as sections rather than numbered steps may use `## Lessons Learned Reflection` instead of `### Step N`.
+
 ---
 
 ## Escalation Path: From Guidance to Enforcement

@@ -16,6 +16,20 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-12 — Always Check `AddSingleton` Registrations for Global State When Multi-Tenant/Multi-Board Is Planned
+
+**Finding**: When a planned roadmap item includes multi-user, multi-board, or multi-tenant support, the first place to look for Critical extensibility blockers is the DI registration list — specifically any `AddSingleton` service that holds mutable state. A singleton that stores a "current board", "current user", or "current tenant" is architecturally incompatible with multiple concurrent users. The code that reads from the singleton looks correct in isolation, but every caller is implicitly sharing the same state. Flagging this as Critical (not High) is correct when: (a) the planned feature explicitly requires per-user isolation, and (b) every query in the application passes through the singleton to get its board/tenant scope.
+
+**Heuristic**: In `Program.cs` (or `Startup.cs`), search for `AddSingleton` and examine each registration. For each one, ask: "Would two concurrent users get different results from this service?" If yes and multi-user is planned, it's Critical.
+
+---
+
+## 2026-05-12 — Request/DTO Record Field Comparison Is a Reliable Extensibility Check
+
+**Finding**: When an entity has a FK column (e.g., `BoardId`, `OwnerId`) but the corresponding request/DTO record does not include that field, new objects can never be assigned that relationship through the normal API surface. The service's `AddAsync` method will never set the field. The data arrives unassigned and must be backfilled externally. This is a Low-to-Medium extensibility finding (exact severity depends on how soon the FK is needed) that is easy to miss because the entity and the request look correct in isolation. Always compare FK fields between entity and request records as a checklist step.
+
+---
+
 ## 2026-05-08 — `Enum.GetValues<T>()` in UI Is an Accurate Signal of Open Extension Points
 
 **Finding**: When reviewing enum-backed UI controls, check whether buttons/options are rendered via `Enum.GetValues<T>()` or via hard-coded element-per-value markup. `Enum.GetValues<T>()` is a genuine open extension point — adding an enum value automatically surfaces in the UI with zero code changes. Hard-coded per-value markup is a closed pattern. The two look similar at a glance; distinguish them before reporting extensibility findings for form controls.
@@ -32,7 +46,25 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
-## Boolean Flag Parameters on Resolver Methods Signal Incomplete Extensibility
+## 2026-05-13 — Dev Tool Tier Requires Lower Severity Calibration Than Production
+
+**Finding**: When the code under review is a developer-only tool (DevTools project, default-off toggle, never registered in production DI), apply a lower severity baseline than for production code. Patterns that would be Medium in production are Low in a dev tool; patterns that would be High are Medium at most. The key question is: "What is the actual cost if this needs to change?" For a dev tool used locally by a handful of engineers, modifying the code is trivial — there is no deployment, no API contract, no concurrent users.
+
+**Heuristic**: Ask "Is this in a DevTools project, behind a default-off toggle, and never referenced by production assemblies?" If yes, apply the severity downgrade. If the pattern also lives in the shared Framework layer (e.g., `FlowRunner`), evaluate that layer at production severity — the framework is reused broadly.
+
+**Corollary**: Do NOT flag missing abstractions in dev tools as High extensibility issues. A `bool` mode selector on a dev tool's constructor is Low, not Medium, unless a third mode is actively planned or the flag also appears in a production class.
+
+---
+
+## 2026-05-14 — Domain-Constrained Binary Parameters Are Low Severity, Not Medium
+
+**Finding**: The existing lesson about `bool` parameters says "Medium when a method has exactly two states and a third variant is plausible in the domain context." The key qualifier is **domain context**. When a `bool` encodes a **physical or domain-structural concept** where exactly two values are legally possible (e.g., left end / right end of a physical member, left side / right side of a joist), rate it as **Low**, not Medium. The "plausibility of a third variant" test fails when the domain itself constrains the cardinality to two.
+
+**Contrast**: A `bool useW2Fallback` that selects between two calculation strategies IS plausibly extensible to three strategies — rate that Medium. A `bool isRightSeat` on a joist factory where a joist has exactly two ends by structural definition is NOT plausibly extensible — rate that Low, with a note that an enum would improve readability without changing the severity assessment.
+
+**Heuristic**: Before assigning Medium for a bool parameter, ask: "Is there a structural, physical, or contractual reason this can only ever be two values?" If yes, downgrade to Low.
+
+
 
 **Date**: 2026-04-28
 **Category**: Process/Model
@@ -71,6 +103,24 @@ When a C# 8+ interface uses default property/method implementations that `new` u
 **Category**: Process/Model
 
 When two flow steps must always appear in sequence (e.g., StepA followed immediately by StepB), and the framework provides no mechanism (base class, template method, composed sub-flow, or compile-time constraint) to enforce co-occurrence, rate this as Medium severity. The correct recommendation is either: (a) compose the pair into a single named unit so consumers reference one thing, or (b) add a prominent comment at the declaration site of the first step stating the required pairing. Do NOT rate this as Low simply because the pattern has been correctly applied so far — the risk is additive: each new call site is an independent opportunity for omission. Escalate to High only if the pair must appear in a hot path where an omission produces a silent wrong-answer defect with no exception signal (i.e., a bug exactly like the one the PR was fixing).
+
+---
+
+## 2026-05-12 — Template Method FlowDecision Subclasses Are Not Tight-Coupling Issues
+
+**Category**: Process/Model
+
+When a codebase uses an abstract `FlowDecision` base class with a `DecideStep(TContext)` override as the primary extension mechanism, concrete subclasses that read all state from the shared context object (no injected dependencies) are idiomatic — **do not flag them as tight-coupling**. The context object is the intentional single dependency for all decision steps. Similarly, `AddSingleton`-free registration of parameterless decision classes directly instantiated in a constructor is the correct pattern, not a DI violation.
+
+Also: when an `internal interface` gains a new property (the standard extensibility step in this pattern), the blast radius is bounded to one assembly. Do not report this as a "breaking API change" — it is specifically not that when the interface is internal.
+
+---
+
+## 2026-05-12 — Asymmetric Features Between Sibling Classes Are Usually Intentional
+
+**Category**: Process/Model
+
+When sibling classes (e.g., `TopChordDesignEngineFlow` and `BottomChordDesignEngineFlow`) have different capabilities — one has a guard, the other does not — verify the business reason before flagging as a DRY violation or extensibility gap. Domain context frequently justifies asymmetry: if the skip condition is driven by a concern that genuinely only applies to one chord, separate implementations are the correct design. Always check the requirements-audit for the business reason before rating asymmetry at Medium or above.
 
 ---
 

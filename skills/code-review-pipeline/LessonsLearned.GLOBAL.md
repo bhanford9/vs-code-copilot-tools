@@ -8,6 +8,25 @@
 
 ---
 
+### Structural refactoring commits: flag toggle evaluation timing shift as a targeted correctness check
+Category: Process/Model
+
+When a private `BuildX()` method is extracted into a factory `Build()` method, pay attention to **when** toggle checks inside the old method were evaluated. If the old method was called once at construction time (e.g., in a constructor body), the toggle was evaluated once. If the factory `Build()` is called multiple times per request (e.g., once for left and once for right seat), the toggle is evaluated N times. This is almost always equivalent, but it is worth noting for the correctness auditor if toggle values could theoretically change between calls within a single request. Frame it as a "verify immutability" check rather than a "defect" finding — 9 times out of 10 it is a non-issue, but it is easy to overlook and cheap to verify.
+
+---
+
+### Method-extraction refactors: "field removed, parameter retained" is a valid pattern — not an orphan
+Category: Process/Model
+
+When a private method is extracted out of a class into a factory, some constructor parameters of the original class may appear to lose their field assignment in the diff (the `private readonly _x = x;` line is removed). Do NOT flag this as an orphaned parameter or a bug. It means the parameter had **two usages** before the extraction:
+
+1. Stored as a field to feed the now-removed private method
+2. Used directly inline in the constructor body to construct other objects (no field needed)
+
+After extraction, usage (1) disappears (the factory gets the service via its own DI injection), but usage (2) remains. The parameter must stay; only the field assignment goes. Check the full constructor body for inline usages before writing a "dead parameter" finding. Affected services in this pattern often include: `webEndAnalyzer`, `seatUpdater`, `toggles`, `tPlateSeatFitter`, `holdClearSeatFitter` — any service used both by the extracted method AND by other inline object construction.
+
+---
+
 ### Keyword/scoring array audits: check for duplicates AND substring relationships
 Category: Process/Model
 
@@ -106,6 +125,21 @@ DON'T: Print "type 'lessons learned session'" and wait — the user must not hav
 Category: Process/Model
 
 On Windows PowerShell, `Select-String -Recurse` does not accept a `-Recurse` parameter — it is not a valid flag. Use the pipeline pattern instead: `Get-ChildItem <path> -Recurse -Include "*.cs","*.razor" | Select-String -Pattern <symbol>`. This produces reliable cross-file symbol search results. The `Select-String -Path <file> -Pattern <symbol>` form works for single-file searches. Any auditor or synthesizer that needs to verify a dead-code claim on Windows should use the `Get-ChildItem | Select-String` pattern, not `Select-String -Recurse`.
+
+---
+
+### Environment lifecycle verification is required for conditional skip decisions that test mutable state
+Category: Process/Model
+
+When auditing a conditional skip (e.g., "skip this step if flag X is set"), always trace the **full lifecycle** of flag X — not just where it is set, but where it is cleared. Specifically:
+
+1. Find every call site that sets flag X to a truthy value
+2. Find every call site that resets flag X to null/false
+3. Map those calls against the flow execution order: does reset happen **before** the guarded step on every path where it should not skip?
+
+This is particularly easy to overlook when the flag is set inside a nested sub-flow (e.g., seat selection) and the guarded step is in an outer loop that reruns (e.g., `SelectMaterials` iteration 2). A developer reading the conditional skip logic in isolation may not trace whether the flag is still set from the previous iteration's nested sub-flow. On the other hand, a framework-level Reset() at the start of the outer iteration (e.g., `InitializeJoist.Reset()`) may silently make the logic safe — but only if you verify it exists.
+
+Rule: for any "is state X set?" check in a conditional gate, verify that X is cleared by a reliable mechanism before the gate is re-evaluated in any subsequent pass.
 
 ---
 

@@ -97,3 +97,38 @@ Rule:
 - If the source is a meeting/onboarding transcript, **any specific number, count, or formula** stated conversationally should be written as `> 📝 TODO: Verify — taken from onboarding discussion, may be a simplification` rather than stated as fact.
 - Architectural descriptions (how things work conceptually) from onboarding transcripts are generally trustworthy. Specific quantities and exhaustive enumerations are not.
 - DO: capture the concept accurately. DON'T: promote the approximate number into a heading or authoritative statement.
+
+---
+
+## The "Why Not How" Distinction Is Routinely Violated (2026-05-13)
+
+Category: Process/Model
+
+The most common mistake when producing architecture docs is writing a technical spec instead of a requirements-and-rationale document. The agent defaults to describing *what* each component does because that information is available from the code. The information the code doesn't provide — *why* a rule exists, *what requirement* it satisfies, *what breaks* if it's violated — is exactly what the docs should contain.
+
+**Concrete test:** Read a section you just wrote and ask: "Could a capable engineer infer this by reading the code for 10 minutes?" If yes, the section has low documentation value. The high-value content is the "why" behind design decisions, separation-of-concerns choices, and behavioral contracts.
+
+**Checklist for each section before finishing:**
+- [ ] The "Why does this exist?" question is answered with a domain requirement, not a technical explanation
+- [ ] At least one rule is expressed as a constraint with a consequence: "If X is bypassed, Y breaks because Z"
+- [ ] Any coding agent warning names both what NOT to do and what TO do instead, with a brief reason
+
+---
+
+## The README "Read When..." Column Is Load-Bearing (2026-05-13)
+
+Category: Process/Model
+
+The reading order table in README.md must include a "Read When..." column. Without it, a future agent must read the title of every document to decide which one it needs — consuming tokens on irrelevant docs. With it, the agent scans one table row and opens exactly the right file.
+
+The "Read When..." column describes the trigger condition ("Before touching eligibility or QueuedForDispatch transitions"), not just the topic ("Eligibility model"). Always write it as a trigger.
+
+---
+
+## Domain Organization vs. Step Organization (2026-05-13)
+
+Category: Process/Model
+
+When a system was built in numbered implementation steps, there is a strong pull to organize architecture docs around those steps. This is wrong. A future agent doesn't care that Machine was added in Step 7. It cares what a Machine *is* and why it's separate from a Workspace.
+
+**Rule:** Architecture docs describe the *finished system* organized by domain concept. Step files describe *how to build it* in implementation order. Never conflate the two.

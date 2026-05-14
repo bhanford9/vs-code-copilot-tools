@@ -61,6 +61,15 @@ When a method is renamed to include "IgnoringX" (e.g., `HasAnyCheckOutputIgnorin
 
 ---
 
+## Factory-consolidation constructors have high param counts by design — not an SRP violation
+
+**Date**: 2026-05-14
+**Category**: Process/Model
+
+When a refactoring commit introduces a new factory class specifically to consolidate scattered DI pass-throughs (the "threading elimination" pattern), the resulting factory constructor will have a high parameter count (often 15–25+ params). This is the expected and correct outcome — the point of the refactoring is to gather all related dependencies into one place. Do NOT flag a high parameter count as an SRP violation on a factory whose sole responsibility is constructing a specific family of objects. The correct test is whether all the dependencies are cohesive (do they all serve the same construction purpose?), not whether the count is high. A 21-param factory is fine if all 21 are seat-selection services. An 8-param factory with mixed cross-domain services is an SRP concern.
+
+---
+
 ## Apply existing lessons before assigning severity — re-read before rating
 
 **Date**: 2026-04-29
@@ -70,12 +79,48 @@ Step-list duplication within toggle branches (where both branches share surround
 
 ---
 
+## Flow-framework step/class names that double as execution-log labels should not be flagged for length
+
+**Date**: 2026-05-12
+**Category**: Process/Model
+
+In systems where `FlowDecision` or similar base classes accept a name string that appears verbatim in execution logs (e.g., `base(nameof(CheckIfShouldSkipChordDesignForInteriorReinforcement))`), long class names are diagnostic features, not style liabilities. A 56-character class name that produces a self-documenting log entry is preferable to a shortened name that requires source lookup during debugging. Do NOT flag these as a readability issue. Check whether the class name is used as a trace label before assigning any severity.
+
+---
+
 ## Guard-added Commits Leave Throw-Path Comments Stale — Check "Unchanged" Methods
 
 **Category: Process/Model**
 **Date**: 2026-04-23
 
 When a commit adds a guard (e.g., `CanReach`) to prevent a throw from being reached, the guarded method (e.g., `DistanceToClear`) is typically left "unchanged." But unchanged methods may carry comments like "impossible condition" that are now demonstrably false — the guard was added *because* the condition was observed. Always check throw-path comments in guarded methods for staleness, even when the guarded method is listed as unmodified. This is a reliable source of Medium maintainability findings on guard-adding commits.
+
+---
+
+## Blazor PropertyChanged Subscription Must Be Verified at the Root Page Level
+
+**Date**: 2026-05-12
+**Category**: Process/Model
+
+In Blazor Server MVVM patterns, child components that subscribe to `PropertyChanged` (via a base class like `ViewModelComponentBase`) re-render themselves, but do NOT trigger re-rendering of their parent or sibling components. This means:
+
+- Any component rendered as a direct child of a PAGE (not of a `ViewModelComponentBase` subcomponent) that reads from a ViewModel must ALSO subscribe to `PropertyChanged`, OR the parent page must subscribe and call `StateHasChanged`.
+- Concrete finding type: "Component X is a direct child of PAGE Y; PAGE Y does not subscribe to PropertyChanged; Component X reads ViewModel property Z; property Z changes but Component X never re-renders." This is a **High** reactivity bug.
+- Always check whether the root page component (`@page "/..."`) inherits `ViewModelComponentBase` or manually subscribes. If not, audit all non-ViewModelComponentBase children rendered at the page level for stale data risk.
+
+---
+
+## Full-Codebase Reviews Should Treat Missing ViewModel Interfaces as High — Not Convention Nitpick
+
+**Date**: 2026-05-12
+**Category**: Process/Model
+
+When a codebase has an explicit convention that all injectable classes must have interfaces, discovering a ViewModel that lacks an interface is not a Low/style finding. Rate it **High** because:
+1. The ViewModel is likely injected as a concrete type everywhere it's used (testability cost).
+2. The DI registration leaks the concrete type into the composition root.
+3. The test surface is permanently narrowed without compiler enforcement to detect this.
+
+If the explicit convention exists in a written instructions file, cite it in the finding.
 
 ---
 
@@ -215,3 +260,30 @@ The GLOBAL entry "Default interface member factories are identity-unstable — f
 **Category**: Process/Model
 
 When a class's public API takes a single "env" or "context" object and all its public methods accept that same object, any `private static` method in the same class with 4+ parameters is a reliable source of a Medium finding. Check whether the parameters were extracted from `env` in the calling method and immediately forwarded. If so, the private method could extract them itself, reducing the signature to only the parameters that are NOT derivable from `env` (typically just behavioral flags). This is distinct from the pre-existing parameters on the public interface — it only applies to private implementation helpers.
+
+---
+
+## Graphics renderer line count driven by domain element breadth is not an SRP violation
+
+**Date**: 2026-05-13
+**Category**: Process/Model
+
+When a renderer class is large (e.g., 800-1000 lines) because the domain model has many element types (N element types = N draw methods + N capture/snapshot methods), do NOT flag this as an SRP violation. The class has one responsibility — rendering the domain model as a visual output — and its length scales directly with domain breadth. The tell: each method handles a different named domain element, not a different concern. Rate the file length as a non-finding (or at most Low with "could be split if it grows further"). The signal that it IS an SRP violation: multiple unrelated orchestration concerns mixed into the same class (e.g., network I/O + rendering + state management).
+
+---
+
+## Pre-increment/rollback counter patterns are a Low KISS finding
+
+**Date**: 2026-05-13
+**Category**: Process/Model
+
+When a counter is incremented at the top of a method so its value can be embedded in a filename/label before a conditional write, then decremented if the write is suppressed — rate this as a **Low KISS finding**. The pattern is correct but non-obvious; the rollback is easy to drop in a future refactor. The recommended fix is either a comment explaining "pre-increment so the label uses the post-write number; roll back if suppressed" or a restructure that increments only on success. Do not escalate to Medium unless the counter appears in more than one code path.
+
+---
+
+## Test harness code that configures the DI container is excused from using production abstractions — but must be documented
+
+**Date**: 2026-05-13
+**Category**: Process/Model
+
+Test harness setup code that configures the DI container (e.g., registers services, reads config values to conditionally wire dependencies) often cannot use the production service abstractions it would normally use — because those services are part of the container being built. Raw config reads, string comparisons against toggle values, and direct `IServiceCollection` manipulation are all legitimate in this bootstrap context. Rate any resulting code quality gap as **Medium** (for missing documentation or case-sensitivity issues), not High (for bypassing the abstraction). The fix is always: add a comment explaining why the bootstrap constraint prohibits the production-code pattern.

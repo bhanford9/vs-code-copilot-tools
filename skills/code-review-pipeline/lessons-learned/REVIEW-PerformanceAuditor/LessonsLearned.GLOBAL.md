@@ -64,6 +64,14 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-14 — For "private method → factory" refactorings, verify allocation equivalence before rating factory overhead
+
+**Observation**: A refactoring that extracts a private method into a factory class (implementing a new interface) was flagged as "one new transient object per request." Reading the factory's `Build()` method revealed it creates the exact same objects as the removed private method. The factory itself is the only new allocation, and at one-per-request frequency it is categorically Low.
+
+**Rule**: When auditing a "private method extracted to factory" pattern: (1) confirm `Build()` creates the same objects as the old method (correctness audit gives this for free), (2) count total DI resolutions before vs. after (usually +1 factory object only), (3) verify DI lifetime direction (Transient factory → Singleton/Transient services is safe), (4) confirm call frequency against the enclosing `new ClassName()` call site. If all four confirm, the correct rating is Low or N/A — not Medium+.
+
+---
+
 ## 2026-04-22 — Small-n pre-existing framework patterns: do not escalate
 
 **Context**: `SegmentedEdge.DistanceAlong` calls `_line.ToSegments()` multiple times without caching. `FitOuterLappedChordReinforcement` is created per-property-access in logic providers.
@@ -95,6 +103,14 @@ Only append if the session revealed something surprising, a false positive patte
 **Observation**: A `private IReadOnlyList<T> WhatNowItems => source.ToList()` pattern looked like a single materialization. Reading the Razor template showed it was referenced twice (`!WhatNowItems.Any()` guard + `@foreach`) — producing two full LINQ pipeline executions per render. This is a common Blazor pattern-mistake because expression-bodied properties feel like computed values but actually execute on each access.
 
 **Rule**: When reviewing a Blazor component's code-behind for `IEnumerable<T>` or `IReadOnlyList<T>` expression-bodied properties that call `.ToList()`, immediately check the razor template for multiple access points (`.Any()` + `foreach`, `.Count` + `foreach`, etc.). If found, flag as a medium allocation/compute finding. The fix is always to assign to a field in the lifecycle method, not a property getter.
+
+---
+
+## 2026-05-13 — Native graphics libraries: factory methods returning IDisposable do not transfer ownership to the renderer
+
+**Observation**: A `CreatePath()` helper returned a `new SKPath()` (SkiaSharp unmanaged resource). Two call sites (`DrawPolygon`, `DrawGhostLayer`) passed the path to `canvas.DrawPath(...)` without `using var` or `.Dispose()`. The canvas copies/uses the path data immediately and does not take ownership. Each call leaked a native handle.
+
+**Rule**: When reviewing code that uses a native/unmanaged graphics library (SkiaSharp, Direct2D, OpenGL wrappers), verify that `IDisposable` types returned from factory helpers are disposed at the call site. The key signals: (1) a factory method returns `new SKPath()` / `new SKBitmap()` / etc., (2) the result is passed to a draw method, (3) there is no `using` or explicit `.Dispose()`. Draw methods (`canvas.DrawPath`, `canvas.DrawBitmap`) copy/consume the content but do not own or dispose the source object. This is the most common SkiaSharp resource leak pattern.
 
 ---
 

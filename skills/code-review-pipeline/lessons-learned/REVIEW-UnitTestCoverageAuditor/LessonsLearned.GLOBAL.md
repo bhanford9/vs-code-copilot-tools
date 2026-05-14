@@ -100,6 +100,49 @@ When a test is named `...WhenToggleEnabled` (or `...WhenFeatureOn`, `...IfFlagSe
 
 ---
 
+## Dev-Tool Code Still Warrants Tests for Its Pure Logic Layer
+
+**Category: Process/Model**
+
+When new code lives in a dev-only project (e.g., `Source/DevTools/`), do NOT apply a blanket "low severity" rating to all coverage gaps. Apply the same test-value analysis as for production code, then adjust severity based on runtime risk:
+
+- **Framework-layer APIs that enable the dev tool** (e.g., a new `RunObserved` method on a production `FlowRunner`) remain **High priority** even when the only consumer is a dev tool — the method lives in production code and a regression is production-blast-radius.
+- **Pure domain logic in the dev tool** (epsilon comparison, string parsing) rates **Medium** — the logic is non-trivial but runtime risk is dev-only.
+- **Rendering code that depends on graphics libraries** (SkiaSharp, GDI+) is **genuinely untestable** in unit tests — accept this explicitly and do not flag it as a gap.
+- **Integration test infrastructure changes** (collect-and-continue loops, failure-summary aggregation) are test code, not production code — no unit tests required.
+
+The risk axis to evaluate for each gap: "If this logic were wrong, would the failure be observable during a devtool run?" If yes and the logic is pure (no I/O), the test has value regardless of dev-only runtime path.
+
+---
+
+## `FlowRunner`-Style Generic Step Engines Are Highly Testable With a Builder Pattern
+
+**Category: Process/Model**
+
+When auditing coverage gaps for a generic step-execution engine (`FlowRunner<TKey, TContext>` or similar), note that the engine's own test suite likely already uses a low-dependency `FlowBuilder<string, int>` pattern that constructs minimal flows with integer context. New method variants (e.g., `RunObserved`) should have tests added directly to the existing flow test file using the same builder pattern — not in a new file or with a heavier fixture. The test effort is Small: the observer can be a local `LambdaObserver` record or anonymous implementation; the flow needs only 2–3 steps; the assertions are straightforward invocation counts or context values.
+
+---
+
+## Flow-Level Branch Coverage Is Distinct From Decision-Class Coverage
+
+**Category: Process/Model**
+
+When a codebase uses a flow/pipeline pattern where decisions are unit-tested in isolation and mocked at the flow level, the decision class tests can be thorough while the flow-level wiring of the `ifYes` branch is entirely untested.
+
+**Signal to look for**: In flow test `[SetUp]`, if a decision is always mocked to a single value (e.g., always `false`) and no test overrides it to the opposite value, the alternate branch is not covered at the integration level.
+
+**Recommended check**: For every `flow.Decide(...)` in a flow under test, both `ifYes` and `ifNo` branches should have at least one flow-level test. Rate the absence of one branch as **Medium** (not High) when the decision class itself is thoroughly unit-tested — the risk is wiring inversion, not logic error.
+
+---
+
+## Parametrization Consistency Reveals Coverage Asymmetry
+
+**Category: Process/Model**
+
+When multiple test methods in a parametrized test class use a `[Values] bool sideFlag` to cover left/right or similar asymmetry, but one test method drops that parameter and hard-codes a single case, flag it as a low-priority gap. The inconsistency is a documentation signal: the invariant (that both sides behave identically via `||` logic) is implicit rather than explicit. Recommend adding the parameter for consistency, not correctness.
+
+---
+
 ## Test Case Name States a Return Value That Contradicts `.Returns()`
 
 **Category: Process/Model**
@@ -214,3 +257,23 @@ Flag as **Medium** when:
 
 Flag as **Low** when:
 - The field is a direct property assignment with no transformation
+
+---
+
+## Integration Test Helpers That Manually Construct Objects Bypass Production Factory Code Paths
+
+**Category: Process/Model**
+
+When a refactoring introduces a factory class (e.g., `SeatSelectionFlowFactory`) whose job is to construct objects previously built inline, check whether existing integration tests have a local helper method that also constructs those same objects directly. This helper method is a "parallel construction path" — it was written before the factory existed and was never updated to route through the factory.
+
+The danger: all integration test assertions pass because the objects produced by the helper are correct. But the factory's code path (including any toggle branch, positional argument wiring, or runtime parameter threading) is never executed by any test. A bug in the factory is undetectable.
+
+**Detection pattern**: Look for integration test fixture methods named `Create[Thing]()`, `Build[Thing]()`, or `Setup[Thing]()` that construct the same type the factory produces. If those methods predate the factory, they are bypasses.
+
+**Recommended action**: Flag as **High** when:
+- The factory contains branching logic (toggle conditions, conditional assembly) AND
+- The integration test helper constructs the same objects manually without using the factory
+
+**Recommended fix**: Update the helper to instantiate the factory (with already-resolved DI services) and call `Build()`. This is typically a direct substitution with no test behavior change.
+
+This pattern is most common in codebases that refactor from "inline construction" to "factory" while leaving legacy integration tests untouched. The work item that introduces the factory often has an acceptance criterion that "test infrastructure is unchanged" — this is true at the mock/interface level, but should not be interpreted as "integration test helpers may keep bypassing the factory."

@@ -76,6 +76,30 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-14 — Factory extraction from call-chain threading is a net testability win, even with many parameters
+
+**Pattern**: When a private method (or scattered call-chain threading) is extracted into a factory class with N dependencies, the consuming classes now only need to mock one factory interface — not N individual services. This is a net testability improvement even if the factory itself has a large constructor.
+
+**Assessment heuristic**: Evaluate testability _at the consumer level_, not just at the factory level. A factory with 21 constructor parameters is not a testability concern for its consumers — they receive one mockable interface. The factory's own tests benefit from the single-responsibility boundary.
+
+**False positive avoidance**: Do NOT flag "21 constructor parameters" as a High or Medium issue when those parameters have been relocated from multiple upstream consumers to a single, dedicated class. The complexity has not increased — it has been surfaced and co-located.
+
+**Recommendation**: Flag the factory constructor size as Low if tests for the factory are missing. Flag as Medium only if there is no way to inject a test double at the consumer level (which the `internal` interface prevents being the case when `InternalsVisibleTo` is used).
+
+---
+
+## 2026-05-14 — Positional `new` argument forwarding in factory `Build()` methods creates a specific coverage gap
+
+**Pattern**: When a factory's `Build()` method constructs a leaf object with `new ConcreteType(arg1, arg2, ..., boolFlag, ..., argN)`, the correct forwarding of each positional argument (especially a `bool` flag at an interior position) cannot be verified from unit tests that only assert on the return type or behavior of the outer flow. The positional forwarding is an implementation detail of the factory's construction logic.
+
+**Coverage gap**: A test asserting `result is StandardEndFlow` confirms the toggle branch fires, but does not confirm that `isRightSeat` is at position 11 vs. position 8, or that the correct service is at each position.
+
+**Mitigation**: The gap is inherent to factory-composition patterns and is not unique to the extracted factory — the same gap existed in the private method before extraction. The mitigation is behavioral tests on the leaf object (e.g., `SeatSelectionLogicProvider` tests already cover this), not duplicated structural tests on the factory.
+
+**Recommendation**: Flag as Medium when the leaf constructor has many positional parameters of the same type (e.g., multiple `bool` or multiple `IServiceX` of identical interface). Flag as Low when all positional types are distinct (making transposition a compile error). Do not flag when the leaf object already has dedicated unit tests verifying its constructor behavior.
+
+---
+
 ## 2026-05-08 — Collaborator interface coverage matters more than service interface coverage
 
 **Pattern**: When a service class correctly receives its primary dependency via constructor injection (e.g., a `DbContext`), it is tempting to mark DI as "passing." The higher-priority check is whether the service's *internal collaborators* also have interfaces. A service that uses `private readonly SomeEngine _engine = new()` is fully DI-clean at its boundary yet completely unable to have collaborator behavior substituted in tests. Check all field initializers on every service, not just the constructor parameters.
@@ -92,6 +116,57 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-12 — Entity property initializers with DateTime.UtcNow are Low, not Medium/High
+
+**Pattern**: Entity/model classes commonly use `public DateTime CreatedAt { get; set; } = DateTime.UtcNow;` as a default value. This is evaluated once at object construction and remains stable — it is NOT a recurring clock dependency. It is Low severity because test setup can always override the value: `new TaskItem { CreatedAt = specificDate }`. Do not conflate these initializers with `DateTime.UtcNow` calls inside method bodies (which re-evaluate on every invocation).
+
+**False positive risk**: Flagging entity initializers at Medium or High overstates the testability impact. The only realistic friction is: forgetting to set `CreatedAt` in a test that cares about age-dependent behavior. The fix is a one-line override in test setup, not an architecture change.
+
+**Recommendation**: Flag as Low. Note in findings that tests should explicitly set timestamp properties when age-dependent behavior is under test. Do not recommend removing the initializer defaults — they are the correct production default.
+
+---
+
+## 2026-05-12 — Dual-constructor "with/without optional services" is a Medium testability smell
+
+**Pattern**: When a class has two constructors — one that omits optional services (making those fields null) for a simplified usage context (e.g., CLI) and one that accepts all dependencies for the full context (e.g., Web) — the class has hidden behavioral branching based on constructor choice. Tests that call the wrong constructor will silently exercise a code path that never runs in production.
+
+**Testability signal**: Look for `private readonly ILogger? _logger;` (nullable optional field) combined with `_logger?.LogWarning(...)` guards throughout the class. This is the signature of the dual-constructor pattern.
+
+**Recommendation**: Flag as Medium. The correct fix is: use `NullLogger<T>.Instance` and a null-object `IConfiguration` in the simplified context, keeping a single full-parameter constructor. This eliminates the conditional null behavior and makes both code paths testable through the same constructor.
+
+---
+
+## 2026-05-12 — Missing flow-branch test is Low, not High, when the branch predicate is directly unit-tested
+
+**Pattern**: A `flow.Decide()` wiring has two branches (`ifYes`/`ifNo`). All flow tests hold the decision at one value in `[SetUp]`, leaving the alternate branch dark at the flow level. This might appear High (an entire execution path is unexercised) — but the severity depends on whether the *predicate* deciding which branch runs is directly tested elsewhere.
+
+**Calibration rule**: If the `IFlowDecision` implementation class is separately unit-tested via its `Predicate()` method, and the flow graph itself is a declarative wiring (no logic), the missing alternate-branch flow test is **Low**, not High. The predicate logic is covered; only the routing contract is unverified.
+
+**Recommendation**: Flag as Low. Suggest a single dedicated test that sets the mock to the alternate return value and asserts only the alternate step name(s) appear in `_log`. Do not upgrade to High/Medium just because a flow path is dark — check whether the predicate is covered independently first.
+
+---
+
 ## 2026-05-08 — Zero-test codebases have 2–3 concrete blockers, not wholesale untestable architecture
 
 **Pattern**: A green-field codebase with zero test projects often has a structurally sound DI architecture and well-separated concerns. The testability gaps tend to cluster into 2–4 concrete fixes (missing interfaces, hidden time dependencies, one missing method on an interface). Resist framing the audit as "this codebase is untestable" — instead, produce an ordered remediation roadmap that shows exactly which fixes unlock which test categories. An estimate of "one day to unlock core tests" is far more actionable than a broad warning.
+
+---
+
+## 2026-05-13 — File I/O in a DevTools class is Medium, not High/Critical
+
+**Pattern**: A class whose entire purpose is to write output files (PNG, text, etc.) lives in a `DevTools` or `Tools` project and is never invoked in production. Its constructor calls `Directory.CreateDirectory` and its methods call `File.OpenWrite`. There is no `IFileSystem` abstraction.
+
+**Calibration rule**: This is **Medium**, not High or Critical. The class IS the I/O — abstracting the filesystem away would remove the feature. Tests using `Path.GetTempPath()` and `[TearDown]` cleanup are the pragmatic path. Flag it as Medium to document the constraint, but do not recommend architecture changes for a dev tool.
+
+**False positive risk**: Flagging this as High or Critical overstates the urgency and implies a blocking design flaw. The correct framing is: "tests require real disk; use temp directory pattern."
+
+---
+
+## 2026-05-13 — Optional `= null` constructor parameter is the cleanest seam for a dev-only feature
+
+**Pattern**: A production service has a long constructor list of required dependencies. A new optional dev-only feature is introduced via `IOptionalFeature? feature = null` as the last parameter. Existing DI registrations and tests compile unchanged. Tests that want to exercise the new path explicitly pass a mock.
+
+**Testability signal**: This is a positive signal — it is the correct design for an optional dev feature. The seam is clean, backward-compatible, and Moq-friendly. The only testability concern is: does any test *actually use the seam*? If no test passes a non-null value, the new path is untested even though the seam is excellent.
+
+**Recommendation**: When you see `= null` optional injection on a new feature, check whether the `RunObserved`/`if (feature != null)` branch has test coverage. The seam being good does not mean the path is exercised.
+

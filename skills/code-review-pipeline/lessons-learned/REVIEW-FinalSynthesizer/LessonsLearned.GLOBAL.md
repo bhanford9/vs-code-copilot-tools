@@ -104,6 +104,17 @@ When the same code element (e.g., a repeated filter predicate) is flagged by Mai
 
 ---
 
+### Dev-tool-plus-Framework-hook PRs: Framework API convergence dominates; DevTools findings stay at per-auditor ratings
+Category: Process/Model
+
+When a PR introduces BOTH a Framework-layer extension hook (e.g., a new public method on a generic infrastructure class) AND a concrete DevTools implementation that uses it, expect an asymmetric convergence pattern:
+- The Framework API's test gap will collect the highest independent-auditor count (3+) because Coverage, Testability, and Ripple Effect all identify the same behavioral contract gap from different angles
+- The DevTools layer findings each appear in only 1 auditor's report — even when multiple auditors look at them — because DevTool isolation, real-disk I/O, and non-testability arguments naturally dampen cross-auditor escalation
+
+Synthesis implication: Apply the 3+ independent flag rule to escalate the Framework finding to High; keep DevTools findings at their per-auditor ratings (do not attempt to escalate them via analogy with the Framework finding). The two layers have genuinely different severity thresholds.
+
+---
+
 ### Bool-flag on same class flagged by 3 auditors independently converges to Medium regardless of individual ratings
 Category: Process/Model
 
@@ -165,3 +176,70 @@ When reviewing a complete codebase (no PR diff — `reviewMode: full-codebase`),
 3. Frame the fix order around root causes (e.g., "fix this first because it unblocks steps 2 and 3") rather than severity-first ordering
 
 In a PR review, the immediate merger decides the order. In a full-codebase review, the developer is planning a multi-session effort — a root-cause-first framing is far more actionable than a severity-sorted issue list.
+
+---
+
+### Singleton-vs-scoped severity split: Performance/Testability say Low, Extensibility says Critical — split them
+Category: Process/Model
+
+When a singleton service is flagged by multiple auditors at different severities, the discrepancy usually reflects two distinct problems:
+- **Concurrency/testability concern** (singleton with non-atomic state): Low to Medium — affects current code
+- **Architectural extensibility blocker** (singleton forces all users to share one value when per-user scoping is needed): Critical — blocks an entire feature family
+
+Do not collapse these into one finding. List them as two separate findings under different themes (Performance/Testability theme vs. Architecture Blocker theme) at their independently correct severities. Merging them causes the Critical extensibility concern to be hidden behind the Low concurrency concern.
+
+---
+
+### Full-codebase reviews with 6+ auditors produce many duplicates: group by root cause, not by auditor
+Category: Process/Model
+
+When 6 auditors review the same codebase, expect 15–25% of findings to be cross-auditor duplicates. The synthesis job is dominated by deduplication rather than conflict resolution. The most efficient approach:
+1. Read all reports in parallel and build a mental (or scratch) map of: `{code location} → {auditors who flagged it} → {highest severity}`
+2. Group the final report by root cause / theme (e.g., "all DateTime.UtcNow findings" as one theme), not by auditor
+3. Within each theme, lead with the cross-cutting recommendation that fixes all findings in that theme in one change
+4. This produces a report with 8–10 themes rather than 40+ individual findings — far more actionable for planning
+
+A flat issue list sorted by severity is appropriate for PR reviews (reviewer has limited time). A themed, root-cause-grouped report is appropriate for full-codebase remediation planning sessions.
+
+---
+
+### Ripple Effect SymmetricPath finding vs. Extensibility scenario mention: carry Ripple Effect's severity as a clarification question
+Category: Process/Model
+
+When Ripple Effect raises a `SymmetricPath` concern as a rated finding (e.g., Medium) and Extensibility mentions the same gap only in a "future scenario" section without a rated finding, the correct synthesis treatment is:
+- Carry the Ripple Effect Medium into the final report (it is an explicitly rated finding)
+- Frame it as a **clarification question requiring author input**, not a "must fix" blocker
+- Use the phrasing: "Author confirms whether X is affected — if yes, add equivalent; if no, add a comment explaining the intentional asymmetry"
+
+This framing is appropriate because SymmetricPath findings are often valid questions about scope rather than confirmed defects. The author has the context to answer whether the omission was intentional. Do not escalate to High or frame as a bug until the author confirms the symmetric path is also broken.
+
+---
+
+### Threading-elimination refactors produce a predictable "parallel construction test debt" finding
+Category: Process/Model
+
+When a commit extracts a factory to consolidate construction logic that was previously threaded through intermediate layers, integration tests that previously accessed internal components directly cannot trivially be updated to route through the factory. The factory returns an opaque interface (e.g., `ISubFlow`), but the tests need the inner concrete object to pass as an argument deeper in the graph. This creates a permanent "parallel construction path": the factory is the production source of truth, but integration tests remain a second independent source.
+
+Synthesis treatment:
+- The Ripple Effect auditor will flag this as High (co-evolution risk), and the Unit Test Coverage auditor will flag the factory's zero test coverage independently.
+- Do NOT recommend rewriting all parallel-path integration tests — they cannot call `factory.Build()` for structural reasons.
+- The correct fix is: (a) add a dedicated factory-level test that exercises `Build()` via the DI container, confirming both toggle paths and serving as a canary, and (b) document the 12 (or N) existing parallel-path tests as a known co-evolution risk with a comment.
+- Rate the overall gap as High — the failure mode is a silent test regression when the factory signature changes.
+
+---
+
+### First-of-pattern factory naming mismatches have elevated severity — they become templates
+Category: Process/Model
+
+When a commit introduces the first implementation of a planned multi-factory pattern, a naming mismatch (e.g., interface named "FlowActionFactory" when `Build()` returns `ISubFlow` not `IFlowAction`) is **Medium**, not Low. The reasoning: the first concrete example is the template that all subsequent factory authors will copy. A name that confuses the abstraction in the first factory will be replicated across N future factories.
+
+This is distinct from a standalone naming issue (which is typically Low). Apply the "first-of-pattern" escalation when the work item description explicitly says "create factories" (plural) or otherwise signals that this is an establishing implementation. The severity should reflect the compounding cost of the mistake, not just the local cost.
+
+---
+
+### Three-auditor convergence on newly-introduced factory test gap: carry the highest rating (High)
+Category: Process/Model
+
+When Unit Test Coverage rates a factory's zero test coverage as High, and Testability and Ripple Effect independently identify the same gap at Medium, the correct synthesis resolution is **High** — not average or median. The pre-existing/introduced distinction is the deciding factor: the factory class is entirely new code (not pre-existing), so the highest auditor rating stands. The three-auditor convergence confirms the finding belongs in the report at full strength.
+
+This pattern is predictable for "extract factory" commits: the factory is the single most important new artifact, its toggle-conditional method is the only meaningful logic, and it is the first victim of future regressions if untested. Expect this exact three-auditor cluster whenever a factory with a toggle branch is extracted from an existing method.

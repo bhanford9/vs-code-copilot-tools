@@ -59,6 +59,52 @@ Confirmed via session debug log: `general-agent-behavior.instructions.md` loaded
 - The current enforcement gap: the harvest instruction fires at "session end," but the model does not have a reliable internal signal for when a session is ending vs. merely pausing.
 - **Watch for this pattern**: if the user completes the primary task (e.g., a code review), ends their request with something conclusory ("well done"), and no explicit harvest has occurred — proactively offer it. Don't wait for the user to ask "were there any documentation-related things?"
 
+---
+
+## Planning Sessions Are High-Value Harvest Targets (2026-05-13)
+
+Category: Process/Model
+
+When a session is pure planning-doc authorship (no codebase search, no debugging), the standard extraction prompts ("counterintuitive code," "high search-cost discoveries") yield nothing — but the session still produces high-value knowledge. The value comes from design decisions crystallized while writing step-by-step checklists: behavioral contracts, service layer boundaries, deferred migrations, and ephemeral token patterns.
+
+**Observation:** Writing a detailed checklist forces resolution of design ambiguities. Those resolutions (e.g., "derived status — never stored," "MachineToken is ephemeral, nulled after use," "CopilotAgentDispatchStrategy lives in CLI not Core") are precisely the coding agent traps that belong in the architecture docs.
+
+**Lesson:** For planning sessions, the extraction prompt to use is: "What design decisions were made while writing these step files that a future coding agent would get wrong without documentation?" Apply the scope gate to those items.
+
+## Knowledge Document Style: "Why" Not "How" (2026-05-13)
+
+Category: Process/Model
+
+The first attempt at a TaskTracker architecture document was rejected because it was organized around implementation steps (1–11) and described *how* each component works mechanically. The correct form is different:
+
+**Wrong:** Organized by step / component. Describes what each thing does. Technical spec feel.
+
+**Correct:** Organized by domain concept. Explains *why* the system is designed the way it is. Requirements-rationale feel. A future agent reads it to understand the intent so it can make decisions that preserve that intent — not just to understand the code.
+
+### The Document Structure That Works
+
+Each document in the knowledge base should answer these questions, in order:
+1. **What is this concept?** — Domain definition, not code description
+2. **Why does it exist?** — The requirement or domain problem it solves
+3. **What are the rules?** — Behavioral constraints expressed as requirements, not code
+4. **What must a coding agent know?** — The non-obvious constraints not derivable from reading the code
+
+### The Folder/File Structure That Works (from JEDI V2 reference)
+
+- `README.md` at root with a **reading order table** that includes a **"Read When..."** column — this is critical for token efficiency; an agent can scan it and open only the doc it needs
+- Numbered files (`01-`, `02-`) for navigation order
+- Topic with sub-topics becomes a folder with `00-overview.md` and numbered children
+- `glossary.md` at root, linked from every doc
+- YAML front matter: `tags`, `category`, `related` — enables lookup without full-file reads
+- Abstract blockquote immediately under H1: one sentence of "what this is and why it matters"
+- `📝 TODO` for documented gaps rather than omitting them
+
+### The ⚠️ Callout Still Belongs — But Inside "Why" Docs
+
+The `⚠️ Coding agent note:` callout from the previous pattern remains valid and valuable. The difference is context: in the old approach they appeared in a tech-spec doc; in the new approach they appear inside a "why does this rule exist?" section, which makes them more trustworthy and actionable.
+
+---
+
 ## Lessons Learned Files Must Live Next to the Skill (2026-04-25)
 
 Category: Process/Model
