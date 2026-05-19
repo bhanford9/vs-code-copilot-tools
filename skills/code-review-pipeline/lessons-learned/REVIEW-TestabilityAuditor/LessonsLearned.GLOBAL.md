@@ -16,6 +16,80 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-19 — EF Core Bulk Operations (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) Are In-Memory Provider Killers
+
+**Pattern**: In EF Core projects, `ExecuteUpdateAsync` and `ExecuteDeleteAsync` (EF Core 7+ bulk-update APIs) translate directly to SQL `UPDATE`/`DELETE` statements. The EF Core in-memory database provider does **not** support these methods and throws `InvalidOperationException` at runtime. Any service that uses them cannot be unit-tested with the standard in-memory provider.
+
+**Testability signal**: When auditing EF Core codebases, search for `ExecuteUpdateAsync` and `ExecuteDeleteAsync` calls — they are Critical testability blockers if unit testing is a goal. The affected methods require either a SQLite provider or a real database engine to test at any layer.
+
+**Recommendation**: Flag as Critical. The mitigation options are: (1) accept integration-test-only for those methods and document it explicitly; (2) extract the bulk operation into an injectable repository method that can be mocked; (3) switch to EF Core tracked-entity updates for the testable path (at some performance cost).
+
+---
+
+## 2026-05-19 — Partial `TimeProvider` Adoption Is a Reliable Source of Clock-Non-Determinism Bugs
+
+**Pattern**: When a codebase partially adopts `TimeProvider` injection (some services inject it, others still call `DateTime.UtcNow` directly), the services that were added *before* the pattern was established are the ones that missed it. These missed cases cluster around simpler or older services, not the complex ones.
+
+**Testability signal**: In any C# codebase that uses `TimeProvider`, check every service that handles time-sensitive operations (expiry, timestamps, audit records). If the class constructor does not have a `TimeProvider` parameter, search the method bodies for `DateTime.UtcNow` / `DateTime.Now`. A mix of injected and direct calls in the same layer is almost always an oversight.
+
+**Recommendation**: Flag each `DateTime.UtcNow` in a service without `TimeProvider` injection as High priority. The fix is a one-constructor-parameter change plus a `_time.GetUtcNow().UtcDateTime` substitution. The fix is low-cost and high-value.
+
+---
+
+## 2026-05-16 — Static fields initialized from environment at class load time are harder than instance calls
+
+**Pattern**: When a class computes an environment-dependent value (file path, environment variable, machine name) as a `private static readonly` field at class initialization time, there is absolutely no injection seam — not even a protected virtual method or constructor parameter. Even if the class implements an interface that callers mock, the *concrete implementation* cannot be tested in isolation.
+
+**Key distinction**: A method that calls `Environment.GetFolderPath(...)` inline can be overridden in a subclass or wrapped behind a virtual method with low effort. A `private static readonly` field evaluated once at class startup cannot be influenced by any runtime mechanism available to a test.
+
+**Testability signal**: Search for `private static readonly string SomePath = Path.Combine(Environment.GetFolderPath(...), ...)` or similar patterns. These are High priority because the implementation is untestable even when the interface is mocked.
+
+**Recommendation**: The minimal fix is a constructor parameter with a default (`string? settingsPath = null`). The static readonly field can remain as the default source, but tests can pass an override. This is a three-line change that unlocks full isolation.
+
+---
+
+## 2026-05-16 — Environment property bypassing an injectable settings object is a hidden dependency masquerading as correct design
+
+**Pattern**: A class correctly accepts a settings object via injection (e.g., `ISettingsService`). The settings object has a property (e.g., `WindowsUsername`) that callers set and rely on. But inside the class, one method calls `Environment.UserName` directly instead of reading from the settings object — effectively ignoring the injectable value.
+
+**Why this is insidious**: The DI structure looks correct at a glance. The interface is mocked, the settings object is returned from the mock. But the specific branch that reads `Environment.UserName` bypasses the entire injection chain. Tests that mock `ISettingsService` to return a controlled username will see different behavior than they expect.
+
+**Testability signal**: When a class has an injectable settings/config object with a user-identity field, check every method body for direct `Environment.UserName`, `Environment.MachineName`, `WindowsIdentity.GetCurrent()`, or similar calls. Flag any that shadow an already-injectable alternative.
+
+**Recommendation**: Replace the direct environment call with the settings property. This is a one-line fix that (a) improves testability, (b) improves correctness (the injectable value is the source of truth), and (c) eliminates the inconsistency.
+
+---
+
+## 2026-05-18 — CLI Tools: Anonymous Lambda Handlers Are Untestable By Construction
+
+**Pattern**: In CLI tools built on command-parsing frameworks (System.CommandLine, Spectre.Console, etc.), command handlers implemented as anonymous lambdas inside the entry point have no public surface and cannot be targeted by unit tests. The framework-level `SetAction(lambda)` registers a closure that captures local factory functions — there is no way to instantiate or invoke it from a test assembly.
+
+**Testability signal**: If all command logic lives in anonymous lambdas in `Program.cs` (or equivalent), the entire command layer is untestable by construction, even if all underlying services are well-abstracted behind interfaces. This is a structural problem, not an injection problem.
+
+**Recommendation**: Flag as Critical. The minimal fix is to extract each command's handler logic into a dedicated class with constructor-injected service dependencies. The entry point becomes a thin wiring layer.
+
+---
+
+## 2026-05-18 — "Partial Bypass" Pattern in Strategy Implementations
+
+**Pattern**: A class correctly injects an abstraction for its primary execution path (e.g., `IExecutor`) but a secondary path — verification, health-check, or pre-flight — creates the same external dependency directly (e.g., `new Process()`), bypassing the injected abstraction. The class appears well-designed on inspection but the secondary path is untestable with any mock of the primary interface.
+
+**Testability signal**: When reviewing strategy or adapter classes, check every method body — not just `Execute*`. Look for private static methods that launch processes, open network connections, or read the file system without going through the injected abstraction.
+
+**Recommendation**: Route all side-effectful calls through the injected abstraction. If the secondary path needs different invocation semantics, either extend the interface or introduce a second injected dependency.
+
+---
+
+## 2026-05-18 — `Environment.Exit()` in CLI Helper Methods Is a Test-Killer
+
+**Pattern**: CLI tools often place `Environment.Exit(1)` inside a shared error-formatting helper called from every command's error path. This makes every error path untestable — calling any command that hits an error will kill the entire test runner process, not propagate a testable exception.
+
+**Testability signal**: Search for `Environment.Exit` in methods that are not the entry point itself. Any helper or utility method that calls `Environment.Exit` poisons all callers.
+
+**Recommendation**: Flag as Critical. Replace with a typed exception pattern at the handler level; let only the CLI entry point catch and convert to `Environment.Exit`. This unlocks testing of all error paths.
+
+---
+
 ## 2026-04-22 — Toggle-always-disabled makes ON branches dead code
 
 **Pattern**: When a test fixture uses `ToggleBuilder.AllDisabled().Build()` as the sole `IToggles` instance, any `if (_toggles.IsEnabled(...))` branch in the test assertions is unreachable dead code — tests appear green while the toggle-ON path is completely uncovered.
@@ -43,6 +117,28 @@ Only append if the session revealed something surprising, a false positive patte
 **False positive risk**: Flagging this as Medium or High overstates the testability impact. The parameter is still interface-typed and mockable; the only cost is extra mock setup in tests of the intermediate providers. Since those providers are typically exercised via integration tests (not unit tests), the practical friction is minimal.
 
 **Recommendation**: Flag as Low. Note the pattern as a future architecture discussion point if constructor parameter lists grow further, but do not require a fix before merge.
+
+---
+
+## 2026-05-18 — CommunityToolkit.Mvvm `ObservableRecipient` + `IsActive = true` in constructor is a hidden messenger-registration side effect
+
+**Pattern**: When a ViewModel inherits from `ObservableRecipient` and sets `IsActive = true` in its constructor, the messenger registration fires immediately at instantiation. If the derived class does not forward an `IMessenger` to the base constructor (i.e., it omits the `base(messenger)` call), the class silently registers with `WeakReferenceMessenger.Default` — a static singleton. Tests that instantiate the ViewModel will pollute the shared messenger and can interfere with each other.
+
+**Key distinction**: The `ObservableRecipient` base class fully supports injectable messaging via `ObservableRecipient(IMessenger)`. The gap is exclusively in derived classes that don't expose this parameter to their callers.
+
+**Testability signal**: In any codebase using CommunityToolkit.Mvvm, search for classes that: (a) inherit `ObservableRecipient`, (b) set `IsActive = true` in the constructor, and (c) do NOT call `base(messenger)` with an injected instance. These classes are silently coupled to the static messenger.
+
+**Recommendation**: Add an optional `IMessenger? messenger = null` constructor parameter and call `: base(messenger ?? WeakReferenceMessenger.Default)`. This is a one-line change to the constructor signature and one `base()` call that unlocks full test isolation without breaking existing production DI registrations.
+
+---
+
+## 2026-05-18 — `IRecipient<T>.Receive()` forces fire-and-forget async; tests should bypass the message path for async-outcome assertions
+
+**Pattern**: `IRecipient<T>.Receive()` returns `void` by interface contract (CommunityToolkit.Mvvm). Any async work triggered inside `Receive()` must be fire-and-forget (`_ = DoWorkAsync()`). Tests that send a message and then immediately assert on state created by `DoWorkAsync` will race against the background task.
+
+**Testability signal**: Look for `_ = MethodAsync(...)` or `Task.Run(...)` inside any `Receive()` implementation. The discarded task means assertion timing is non-deterministic from a test perspective.
+
+**Recommendation**: Tests should call the underlying `async Task` method directly (if it is on the public interface) rather than triggering it via message. This avoids the timing concern entirely. For production code, consider adding exception logging via a continuation — silent task discard hides failures.
 
 ---
 

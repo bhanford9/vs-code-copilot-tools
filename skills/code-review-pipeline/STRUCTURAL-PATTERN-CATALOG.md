@@ -144,6 +144,93 @@ var handle = await _resourceService.AllocateAsync(id, ct);  // commitment only i
 
 ---
 
+## SP-006 — Closed Stage List
+
+**Signal**: A result type (record, class, or struct) has multiple fields of the same concrete type, where each field name is a stage name, criterion name, or gate name rather than a data category name. This is paired with a single evaluation method that assigns each field via sequential conditional logic — one block per named stage.
+
+**Review Question**: "When a new evaluation stage is needed, how many separate types and methods must change? If the result type itself must grow a new named field every time a stage is added, the stage set is baked into the type contract — making every extension a structural breaking change."
+
+**Severity Guidance**:
+- **High** if the stage count is ≥4, the result type lives in a shared contract or domain layer, or there is documented expectation that stages will grow over time
+- **Medium** if stages are stable but the monolithic evaluation method prevents per-stage unit testing without running all stages
+- **Low** if ≤3 stages with no indication of growth and the evaluation method is short enough to remain readable without extraction
+
+**What to Look For**:
+```csharp
+// SMELL: result record encodes stage names as field names
+public record EvaluationResult(
+    StageResult Completeness,       // stage name as field name
+    StageResult Authorization,      // stage name as field name
+    StageResult ResourceAvailability, // stage name as field name
+    IReadOnlyList<string> Blockers
+);
+
+// SMELL: evaluation method assigns each field sequentially
+public EvaluationResult Evaluate(Request r)
+{
+    StageResult completeness = CheckCompleteness(r);
+    StageResult authorization = CheckAuthorization(r);
+    StageResult resourceAvailability = CheckResourceAvailability(r);
+    return new EvaluationResult(completeness, authorization, resourceAvailability, ...);
+}
+```
+```csharp
+// CORRECT: result uses a keyed collection; stages are data, not field names
+public record EvaluationResult(
+    IReadOnlyDictionary<StageName, StageResult> Stages,
+    IReadOnlyList<string> Blockers
+);
+
+// CORRECT: evaluation delegates to an injected gate list
+public EvaluationResult Evaluate(Request r, IEnumerable<IEvaluationGate> gates)
+{
+    var stages = gates.ToDictionary(g => g.Name, g => g.Evaluate(r));
+    ...
+}
+```
+Adding a new stage: one new gate class + one DI registration. The result type and the orchestrating method are untouched.
+
+**Origin**: Identified in an evaluation service that implemented a fixed set of named validation criteria as a single method with one local variable per criterion name, paired with a result record that had one field per criterion. Adding a new criterion required modifying both the evaluation method and the result type — a two-file breaking change. Resolved by extracting each criterion into a gate interface registered via DI, and replacing the named fields with a keyed dictionary so the result type never needs to change when criteria are added.
+
+---
+
+## SP-007 — String Key for In-Solution Strategy Dispatch
+
+**Signal**: A strategy pattern, factory lookup, or keyed-dispatch mechanism uses a `string` as the discriminator key, but all strategy implementations and all call sites that produce or consume those keys are defined within the same solution and are known at compile time.
+
+**Review Question**: "Can all valid key values be enumerated at compile time from within this solution? If yes, a string key provides no advantage over an enum — and loses compiler enforcement, rename-refactoring support, and exhaustiveness checking at switch sites."
+
+**Severity Guidance**:
+- **High** if key values are assembled from or compared against user input, external configuration, or database columns — mismatches are undetectable until runtime and strings in the codebase can silently drift from values stored externally
+- **Medium** if keys are all literal constants defined in code but scattered across multiple files or classes with no central declaration, making a rename or audit difficult
+- **Low** if the string key is intentional for runtime extensibility — keys represent plugin identifiers, feature flags, or agent types loaded from configuration at startup that may not be known at build time; in this case the design intent should be documented explicitly
+
+**What to Look For**:
+```csharp
+// SMELL: string discriminator where all values are in-solution constants
+public interface IProcessor
+{
+    string ProcessorType { get; }  // returns a string literal in every implementation
+}
+
+// Consumer resolves by string — no compiler check if the string drifts
+var processor = _processors.First(p => p.ProcessorType == "batch-export");
+```
+```csharp
+// CORRECT: enum discriminator for in-solution fixed strategy sets
+public interface IProcessor
+{
+    ProcessorType Type { get; }    // enum — exhaustiveness is compiler-checkable
+}
+
+var processor = _processors.First(p => p.Type == ProcessorType.BatchExport);
+```
+The string-vs-enum distinction is intentional only when keys originate outside the solution (e.g., a plugin loaded from a NuGet package or a config file shipped by a third party). For all other cases, prefer an enum.
+
+**Origin**: Identified in a strategy registry where the discriminator was a `string` property returning a literal constant in every implementation. All consumers compared against those string literals directly. Since every possible value was defined within the solution, there was no reason to forgo the compile-time safety of an enum — renaming a strategy required a grep rather than a refactor, and typos in string comparisons were not caught at build time. Resolved by replacing the string discriminator with an enum whose cases enumerated all in-solution strategies.
+
+---
+
 ## Pattern Template
 
 Copy this template and append above this line to add a new pattern.

@@ -40,6 +40,24 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-19 — Full-Project Reviews: Skip the session-config.json base-branch step entirely
+
+When the user specifies "full-project review" (entire codebase, not a diff), the standard `git diff base...HEAD` workflow step is meaningless. Do NOT read or reference `session-config.json` — it may not exist and the base branch concept doesn't apply. Instead, enumerate all source files directly (file search + read all) and treat every file in scope as "changed." Adjust the audit summary wording from "Changes Analyzed" to "Files Analyzed."
+
+---
+
+## 2026-05-19 — Synchronous EF Core calls inside async methods are invisible to the compiler
+
+Synchronous EF Core calls (`.Any()`, `.ToList()`, `.Count()`, `.First()`, `.FirstOrDefault()` without the `Async` suffix on a DbSet) compile without warnings inside async methods. They are easy to miss on a scan. When reviewing repository/service layers, explicitly grep for these suffixless patterns on DbSet-typed variables — do not rely on noticing them while reading code linearly.
+
+---
+
+## 2026-05-19 — ExecuteUpdateAsync always requires a post-load round-trip — do not over-rate it
+
+When `ExecuteUpdateAsync` is used for optimistic concurrency, the code must always reload the entity afterward if any of its fields are needed for subsequent operations (history, response building, etc.). This is the inherent design cost of bypassing the change tracker — it is not a bug. Rate this pattern Medium (not High/Critical) and recommend the explicit trade-off analysis: switch to tracked optimistic concurrency vs. accept the extra round-trip.
+
+---
+
 ## 2026-05-06 — Fallback / recovery paths have fundamentally different performance profiles than hot loops
 
 **Observation**: A restore step used O(n) + O(k) traversals (IndexOf scan + linked-list walk). Taken in isolation it looks like a Medium algorithmic concern. But the step ran at most once per design session — only when the entire search loop had already exhausted all options. That upstream exhaustion loop had already done far more work.
@@ -69,6 +87,46 @@ Only append if the session revealed something surprising, a false positive patte
 **Observation**: A refactoring that extracts a private method into a factory class (implementing a new interface) was flagged as "one new transient object per request." Reading the factory's `Build()` method revealed it creates the exact same objects as the removed private method. The factory itself is the only new allocation, and at one-per-request frequency it is categorically Low.
 
 **Rule**: When auditing a "private method extracted to factory" pattern: (1) confirm `Build()` creates the same objects as the old method (correctness audit gives this for free), (2) count total DI resolutions before vs. after (usually +1 factory object only), (3) verify DI lifetime direction (Transient factory → Singleton/Transient services is safe), (4) confirm call frequency against the enclosing `new ClassName()` call site. If all four confirm, the correct rating is Low or N/A — not Medium+.
+
+---
+
+## 2026-05-18 — Computed ViewModel properties that call each other multiply materialization cost non-linearly
+
+**Observation**: In an MVVM ViewModel, a computed property (`FilteredEntries`) was called by: a `GroupedEntries` getter (1×), five stat-property getters (5×), and directly via `OnPropertyChanged` (1×). A single refresh method triggering all of these caused 7+ materializations of the same filtered list. The individual getters looked cheap in isolation; the cost was invisible until the call graph was traced.
+
+**Rule**: For any computed property that re-runs a LINQ filter/sort/materialize on every access, trace all callers before rating severity. If the same property is accessed by multiple sibling properties AND those siblings are notified in the same refresh call, multiply the cost accordingly. Rate as High if k × n > ~1,000 for typical data sizes. The fix is always: cache in a backing field, rebuild once, expose the cache.
+
+---
+
+## 2026-05-18 — Fire-and-forget async in a message handler is a dual-risk: exception loss AND thread safety
+
+**Observation**: A `Receive()` message-handler method dispatched an async operation as fire-and-forget (`_ = DoSomethingAsync()`). This introduced two distinct risks: (1) exceptions are silently swallowed, causing stale state with no diagnostic signal; (2) in UI frameworks that dispatch messages on the sender's thread (not the UI thread), the async continuation runs off the UI thread and can trigger invalid cross-thread property-change notifications.
+
+**Rule**: When auditing message handler implementations in MVVM ViewModels: always check (a) whether async is fire-and-forgotten, (b) which thread the message bus delivers on, and (c) whether the async continuation touches UI-bound properties. Flag fire-and-forget in message handlers as High when: the ViewModel has UI-thread-only observable properties AND the message bus does not guarantee UI-thread delivery. Recommend both `try/catch` wrapping and explicit UI-thread dispatch.
+
+---
+
+## 2026-05-16 — Interface contracts in pure domain layers encode performance anti-patterns before any implementation is written
+
+**Observation**: In a code review of a pure contract/domain layer (no EF, no HTTP, no I/O), the most impactful findings were in the interface method signatures, not the runtime method bodies. Specifically: list-returning methods with no pagination parameter force O(n) memory materialization in every compliant implementation; single-ID service methods on a hot loop path encode an N+1 database pattern that no implementation can avoid without violating the contract.
+
+**Rule**: When auditing a domain/contract layer, evaluate every list-returning interface method for: (a) presence of a `skip`/`take`, cursor, or date-range parameter; (b) whether the call site is inside a loop (N+1 risk). A method signature like `GetAllAsync()` returning `IReadOnlyList<T>` with no pagination is a performance bug baked into the contract — it must be fixed before implementations are written because retrofitting pagination after the fact is significantly more expensive. Do not limit performance audits of contract layers to the bodies of the few runtime classes that exist.
+
+---
+
+## 2026-05-16 — "Shared folder as database" architecture: cloud-sync latency replaces HTTP network latency
+
+**Observation**: A codebase that used `System.IO` to read all data from a shared OneDrive folder presented the same performance concerns as a chatty HTTP API — but the transport was the OS cloud-sync client, not a network socket. Files that were locally cached were fast; files that hadn't been synced yet triggered cloud downloads at 100–2000 ms each. The standard "N+1 reads per navigation" pattern applied directly, but the fix is an in-memory TTL cache (read once, hold in memory), not batching or compression.
+
+**Rule**: When reviewing a "shared folder as database" design (local OneDrive, Dropbox, network share), apply the same N+1 detection heuristic as for HTTP: count file reads per user action, not just whether individual reads are "fast on local disk." Recommend a service-level TTL cache before any parallelization — parallelizing cloud-synced reads can overwhelm the sync client and make things worse, not better.
+
+---
+
+## 2026-05-16 — Blazor expression-bodied IEnumerable properties double-enumerate in templates with empty-state guards
+
+**Observation**: A Blazor page declared a `FilteredPackages` property returning `IEnumerable<T>` (lazy LINQ). The template had a standard pattern: `@if (!FilteredPackages.Any())` (empty-state guard) followed by `@foreach (var x in FilteredPackages)` (render). This double-enumerates the lazy LINQ on every render cycle, running the predicate twice per render.
+
+**Rule**: When a Blazor template has both an empty-state guard and a `@foreach` on the same computed sequence, flag the property as double-enumerated. The fix is to materialize to a `List<T>` backing field that is recomputed only when source data or filter state changes. This is a common Blazor gotcha whenever someone adds an "empty results" UX pattern after the fact.
 
 ---
 

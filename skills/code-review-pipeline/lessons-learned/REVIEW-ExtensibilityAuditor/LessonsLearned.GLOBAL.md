@@ -10,9 +10,109 @@
 
 ---
 
+## 2026-05-19 — `const` with "Future Configurable" Comment Is a Reliable Medium Finding
+
+**Finding**: When a class contains a compile-time `const` (or `static readonly`) value with an inline comment saying "configurable per X in a future step" or "MVP constant — will become configurable", the comment is a documentation signal of a blocked extension point. The extension is consciously deferred but there is no injection path yet. This is a reliable **Medium** (High when a concrete planned feature depends on it, such as a new gate or a new host type). The fix is always: introduce an options type that follows the project's established `IOptions<T>` pattern with the current constant as the default value. The options type requires zero breaking changes — existing behavior is preserved via the default.
+
+**Heuristic**: Grep for comments containing "configurable", "future step", or "MVP constant" adjacent to `const` or `static readonly` field declarations. Each match is a medium extensibility candidate. Elevate to High if the requirements audit identifies a feature that will require the configured value to vary.
+
+**Corollary**: The options class template for the fix should mirror any existing options class in the same project — use it as the documented reference in the recommendation. This makes the fix concrete and pattern-consistent rather than generic.
+
+---
+
 ## When to Append an Entry
 
 Only append if the session revealed something surprising, a false positive pattern, or a finding worth noting for future extensibility reviews. If the review ran smoothly using existing knowledge, skip the update.
+
+---
+
+## 2026-05-18 — `IsActive = true` in MVVM Toolkit Constructor Is a Reliable High Finding for Testability
+
+**Finding**: In CommunityToolkit.Mvvm projects, `ObservableRecipient` subclasses that set `IsActive = true` in the constructor immediately invoke `OnActivated()` → `Messenger.RegisterAll(this)`. This is a side-effect constructor pattern: any test that `new`s the ViewModel subscribes it to `WeakReferenceMessenger.Default` before any test assertion runs. If the messenger is not reset between tests, messages can leak across test cases. This is a **High** extensibility finding — not Medium — because it eliminates the "construct dormant, activate on mount" lifecycle that makes MVVM ViewModels testable in isolation.
+
+**Heuristic**: In any MVVM Toolkit project using `ObservableRecipient`, search for `IsActive = true` in constructors. If found, flag as High and recommend moving activation to an explicit `Activate()` method or a navigation lifecycle hook.
+
+**Corollary**: `ObservableRecipient` accepts an `IMessenger` constructor parameter. If the class does not thread a custom `IMessenger` through to the base, it defaults to `WeakReferenceMessenger.Default` — a second static-singleton coupling that should be called out alongside the constructor-activation finding.
+
+---
+
+## 2026-05-18 — `ObservableCollection<T>` in a ViewModel Interface Is a Reliable Medium Finding
+
+**Finding**: When a ViewModel interface declares `ObservableCollection<ConcreteViewModel> Items { get; }`, any mock or alternate implementation must provide the full `ObservableCollection<T>` infrastructure — there is no `IObservableCollection<T>` in .NET. The finding is **Medium** (not High) because: (a) `ObservableCollection<T>` is the de-facto standard for MVVM collections and most test code can construct one trivially; (b) the coupling is in the collection type, not the element type. Elevate to High only if the concrete element type (`ConcreteViewModel`) also lacks an interface and has non-trivial behavior that test doubles would need to vary.
+
+**Heuristic**: In any ViewModel interface, any property that returns a concrete mutable type (`Dictionary<K,V>`, `ObservableCollection<T>`, `List<T>`) is a coupling finding. Prefer `IReadOnlyDictionary`, `IReadOnlyList`, or at least expose a read-only view. `Dictionary<K,V>` returning mutable is the higher-severity of the two because callers can write to the internal state without going through the ViewModel.
+
+---
+
+## 2026-05-16 — Service Interface Signature Is the Most Impactful Extensibility Check for Roadmap Features
+
+**Finding**: When the requirements audit has identified planned features with new data access patterns (e.g., round-aware queries, per-user aggregations, new write operations), the most impactful extensibility check is: does the current service interface signature accommodate the parameters those features will require? An interface method missing a `currentRound`, `userId`, or similar required parameter is a Medium extensibility blocker — not a Low — because changing an interface signature cascades to every caller and both DI registrations (or more, in multi-host architectures). The finding is especially actionable early: there is typically only one implementation and a handful of call sites, making the fix cheap now and expensive later.
+
+**Heuristic**: For each planned feature identified in the requirements audit, ask: "What parameters would a new or modified service method need?" Compare that against the current interface. If a required parameter is absent, flag the interface as incompatible with that feature at Medium severity (dev tool) or High (production service).
+
+---
+
+## 2026-05-16 — Data Model Granularity Mismatch Is a Compounding Extensibility Risk
+
+**Finding**: When a data model carries a single instance of a type (e.g., `Review: ReviewEntry` on a package item) but the roadmap plans to expand it to multiple instances (e.g., one review entry per mark), this is not just a correctness defect — it's an extensibility risk that compounds. Every UI feature built on top of the single-instance model must be refactored when the model is corrected. The earlier the mismatch is caught, the lower the refactor cost. Always check: does the granularity of the data returned by the service match the granularity that planned features will need? If the answer is "planned features need finer granularity than the current model provides," flag as Medium and recommend the model change before UI build-out continues.
+
+**Heuristic**: Look for fields like `SomeItem Item { get; set; }` (singular) on a container where the requirements audit describes a future state of `List<SomeItem> Items { get; set; }` (plural). The singular field is the signal. The severity depends on how much UI is already built on top of it.
+
+---
+
+## 2026-05-18 — Enum-as-Gate-Registry Is a Reliable High Finding
+
+**Finding**: When an interface has a `Name` property typed as an enum (e.g., `IEligibilityGate.Name => EligibilityGateName`), that enum is a closed registry in the core library. Every new implementation of the interface requires a core library change, violating OCP. This is a reliable **High** finding. The fix is always the same: replace the enum type with `string` and provide a constants class for well-known values.
+
+**Heuristic**: Any interface where a property returns an enum that represents "which kind am I" (registry pattern) is a candidate for this finding. Contrast with enums that represent *state* (valid) vs enums that represent *identity* (risky).
+
+---
+
+## 2026-05-18 — CLI Top-Level Statement Files Hide Extensibility Debt
+
+**Finding**: C# top-level statement `Program.cs` files that grow beyond ~300 lines with embedded local factory functions (`CreateSvc()`, `CreateDocSvc()`) are reliable signals of extensibility debt. The local factory functions serve as ad-hoc composition roots without DI. Each new service with complex dependencies requires a new factory function, and the file becomes a modification hotspot for every feature. Flag as **High** when the factory functions construct service dependencies with more than 2–3 levels of nesting, or when the file contains domain logic (MIME maps, switch statements on enum values) rather than only wiring.
+
+**Heuristic**: Count the number of local `Create*()` functions. If > 3, recommend a DI container. If the file contains any `switch` on an enum value that would need editing when new enum values are added, flag the specific switch.
+
+---
+
+## 2026-05-18 — `Enum.TryParse` Is the Fix for Closed Switch-on-Status Patterns
+
+**Finding**: When a CLI command maps a string arg to an enum value via a `switch` (e.g., `"pending" => TaskItemStatus.Pending`), any new enum value is silently unhandled (falls through to default). This is always a Medium finding. The fix is always one line: `Enum.TryParse<TEnum>(value, ignoreCase: true, out var parsed)`. Flag every such pattern — it is a consistent one-line fix with high forward-extensibility value.
+
+**Corollary**: The silent fallback to "return all" or "use default" is technically functional but behaviorally incorrect — callers expecting an empty result for an invalid filter get all results instead. Mention this behavioral inconsistency alongside the extensibility finding.
+
+---
+
+## 2026-05-18 — "Built But Not Wired" Infrastructure Is Critical, Not Dead Code
+
+**Finding**: When a project contains fully implemented infrastructure (dispatch loop, strategy resolver, coordinator) that is never activated via any command or entry point, this is a **Critical** extensibility finding — not a dead code warning. The extension points are real and well-designed, but dormant. Frame it as: "The extension point exists and is correct; the activation mechanism is missing." Recommend adding the entry point rather than removing the infrastructure.
+
+**Heuristic**: Before flagging any class as dead code, check whether it is referenced transitively by any other class in the same project. Only flag as truly dead if no class ever instantiates it. If it has interfaces, constructors, and tests — it was designed to be used.
+
+---
+
+## 2026-05-16 — Define Platform-Specific Service Seams Before the Feature, Not During It
+
+**Finding**: In a multi-host architecture (Desktop + Web, or Desktop + MAUI + Web), some planned features will need behavior that differs per host (e.g., "open file in system default handler" works on Desktop, not on Web). When the requirements audit identifies such features and no interface seam yet exists for the platform-specific operation, flag it as Medium at review time — not Low. The cost of defining the seam now (one interface + two null/real implementations) is near-zero. The cost of defining it mid-feature under schedule pressure is higher, and the risk of an incomplete seam (e.g., no `IsSupported` guard, no web no-op) breaks the alternative host. The check: does every planned platform-divergent feature have a corresponding `IXxxService` in the Core project?
+
+---
+
+## 2026-05-16 — Positional C# Records Used as Pipeline Output DTOs Are Frozen Extensibility Anti-Patterns
+
+**Finding**: When a C# positional record is used as the output type of a multi-step pipeline (e.g., an eligibility evaluation result, a validation summary, a scoring breakdown), every named parameter in the positional list becomes a breaking change surface. Adding a new pipeline gate/layer requires changing the record's parameter list, which breaks every call site that constructs or destructures the record. This is a High extensibility issue — not Medium — when: (a) the pipeline is actively evolving with more gates planned, and (b) the record is returned by a service interface consumed across multiple projects.
+
+**Heuristic**: Look for records with more than three named non-primitive positional parameters, especially when those parameters represent "categories" or "gates" of the same concept (e.g., five `LayerResult` fields named by check type). Any time a reader of the record would have to add a new same-typed field to extend the pipeline, the design is frozen. The fix is to replace fixed named fields with a dictionary or list, using constants for named access.
+
+**Corollary**: Distinguish between a positional record used as a simple data carrier (fine — adding fields is additive) vs. a positional record used as a categorized summary of pipeline results (problematic — each category is a positional parameter that breaks callers).
+
+---
+
+## 2026-05-16 — Strategy Pattern With Partial Extension Points Is a Reliable High-Severity Finding
+
+**Finding**: When a strategy interface provides one extension hook (e.g., `GetManifestMetadata()` for metadata customization) but not a parallel hook for an adjacent concern (e.g., prompt template, output format, completion signal), the "partial extension" is a reliable High finding. The pattern signals that the design was started correctly but not completed. The consequence is that the builder/orchestrator must hard-code the unhooked concern for all strategies, creating an OCP violation at the builder layer even while the strategy layer itself is correctly open.
+
+**Heuristic**: For every customization hook on a strategy interface, ask: "What other aspects of the operation could legitimately differ per strategy?" If the answer includes something the builder currently hard-codes, that is a missing extension point at High severity (if the variation is imminent) or Medium (if it's speculative). The fix is symmetric: add a `GetX()` method parallel to the existing `GetManifestMetadata()` pattern.
 
 ---
 

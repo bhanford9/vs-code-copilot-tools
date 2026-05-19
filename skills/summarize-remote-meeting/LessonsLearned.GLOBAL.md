@@ -31,3 +31,14 @@ When summarizing an onboarding/teaching meeting, the speaker is deliberately sim
 
 - When the meeting intent is explicitly "onboarding" or "teaching", add a **Side Note** warning that specific numbers and simplified rules in this summary are teaching approximations and should be verified before being promoted to reference documentation.
 - DO NOT flag every sentence — only specific numbers (`~70`, `exactly 3`) and categorical claims (`always`, `never`, `only`) that were stated casually in a teaching context.
+
+---
+
+### Live-Demo / Screen-Share Segments Require Context Inference
+Category: Process/Model
+
+When a remote meeting includes a live demo or screen-share, many transcript lines will be reactions to on-screen content that is not captured in the transcript (e.g., "Oh, this is great" or "I like that" with no referent). Do not treat these utterances as standalone content.
+
+- Identify that a live demo is occurring from contextual signals: participant says "share my screen," "let me show you," or similar, followed by fragmented reactive commentary.
+- Reconstruct demo content from surrounding explanatory dialogue — what did the presenter say *before* and *after* the reactions?
+- Classify pure reaction lines (no substantive content) as noise; ensure any decisions or insights voiced *during* the demo are captured from the surrounding context.

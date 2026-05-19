@@ -187,6 +187,23 @@ Practically: mark pure-function engine tests as Critical regardless of the appli
 
 ---
 
+## `[NotifyCanExecuteChangedFor]` Attribute Not Reflected in CanExecute Guard Is a Vestigial Code Signal
+
+**Category: Process/Model**
+
+When auditing CommunityToolkit.Mvvm (or similar MVVM) codebases, check whether every `[NotifyCanExecuteChangedFor(nameof(XCommand))]` attribute on a property is actually referenced inside the corresponding `CanX` method. If the attribute fires `CanExecuteChanged` but the guard doesn't read that property, it is either:
+
+- Vestigial: the property was once part of the guard, removed during a refactor, but the attribute was left behind
+- Incomplete: the guard *should* depend on the property but is missing the check (potential bug)
+
+**How to flag it:** Mark as **Medium** — the notification machinery is wasted overhead and could mislead a developer into thinking the property contributes to the command's enabled state. A test that changes the property and asserts `CanExecute` remains unchanged will document the vestigial nature and catch any accidental future dependency.
+
+**Recommended test naming**: `CanX_IsIndependentOf{PropertyName}` — this name serves as living documentation that the attribute is deliberately vestigial (if the test is kept) or triggers an investigation (if a developer sees the test fail after adding a dependency).
+
+Do not silently accept the attribute as "harmless overhead" — always surface it so the developer can decide whether to remove the attribute or add the missing guard check.
+
+---
+
 ## Collection-Add Tests That Assert Only Count Are Insufficient for Identity-Critical Logic
 
 **Category: Process/Model**

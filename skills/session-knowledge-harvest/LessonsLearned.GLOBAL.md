@@ -44,7 +44,17 @@ A `Stop` lifecycle hook was implemented to post a `systemMessage` reminder at se
 - The `Stop` input carries only `stop_hook_active`; no transcript, tool-use count, or file-edit count is available to filter on
 - The result was noisy and may have interfered with normal session termination
 
-Do not re-recommend a hook-based approach unless VS Code ships a `Stop` input field that includes session activity metadata.
+---
+
+## Partial replace_string_in_file at file head leaves orphan tail (2026-05-16)
+
+Category: Process/Model
+
+When using `replace_string_in_file` to replace only the header portion of a code file (e.g., the class declaration and injected fields), the tool replaces exactly the matched `oldString` and leaves everything after the match untouched.
+If the replacement adds a complete, self-closing class body, the original methods from the tail of the file become orphan code **outside the class** — causing `CS1022`/`CS0116` build errors.
+
+DO NOT use partial-head replacements to transform a class — replace the entire class, or use targeted method-level replacements.
+If this happens, use `Set-Content` via terminal to rewrite the entire file cleanly rather than making chained incremental repairs, which risk matching the wrong occurrence.
 
 ---
 

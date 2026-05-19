@@ -48,6 +48,27 @@ These three appear together on guard-pattern commits. Expect them and verify eac
 
 ---
 
+### Multi-auditor clock-injection findings: treat as one synthesized finding, not four separate ones
+Category: Process/Model
+
+When Maintainability, Testability, Extensibility, and Correctness all independently flag the same pattern (e.g., `DateTime.UtcNow` bypassing an injected `TimeProvider`), do NOT list them as four separate findings in the final report. Synthesize into one finding that cites all source auditors. Include the full impact from all auditor perspectives (inconsistency, test-flakiness, cross-clock comparison bugs, non-deterministic test assertions). This is a high-signal pattern: 4-auditor convergence on a naming/plumbing issue means it is the single highest-leverage mechanical fix available in the codebase.
+
+---
+
+### Symmetric-path ripple-effect findings form their own cluster: collect before the synthesis step
+Category: Process/Model
+
+When the Ripple Effect audit flags asymmetric paths (e.g., "every mutation method calls X except DeleteAsync"), enumerate ALL asymmetric mutations in the synthesis — don't just report the one the auditor found. Check the Ripple Effect audit's own "Symmetric Path Analysis" table if one is present: it often lists additional missing cases (e.g., UpdateHorizonAsync, BackfillScoresAsync) beyond the auditor's primary High finding. These are Medium findings in the synthesis; the auditor's primary finding is High. Failing to include the table entries makes the synthesis incomplete.
+
+---
+
+### Divergent parallel dispatch paths: always cross-reference with planning/design documents
+Category: Process/Model
+
+When a Ripple Effect audit finds a second write path that bypasses the canonical state machine, check whether a planning document (work-planning/*.md, implementation guides) also documents the illegal pattern as the intended approach. If yes, the planning document itself is a companion finding — developers following the plan will reproduce the bug. Flag the planning doc correction as a distinct finding in the synthesis (separate from the code fix). Upgrading the plan is not optional when the plan contradicts the canonical contract.
+
+---
+
 ### Severity disagreement on "dead toggle-ON test branches": Coverage says Critical, others say Medium — resolve to High
 Category: Process/Model
 
@@ -76,10 +97,60 @@ The pre-existing downgrade rule ("downgrade severity when the issue is pre-exist
 
 ---
 
+### MVVM Singleton Coupling Cluster has a predictable multi-auditor signature
+Category: Process/Model
+
+In MVVM projects using CommunityToolkit.Mvvm, a "singleton coupling cluster" — where `WeakReferenceMessenger.Default` is used directly in two places, `DateTime.UtcNow` is called without injection, and `IsActive = true` is set in the constructor — produces a highly predictable cross-auditor finding profile:
+- **Testability**: flags all three as High (no injection seam → cross-test contamination + clock instability)
+- **Extensibility**: flags `IsActive` in constructor as High (side-effect at construction) and `WeakReferenceMessenger.Default` as Medium (no scoped messenger)
+- **Performance**: may flag the fire-and-forget message handler as High (constructor-registered listener on global messenger receives messages from any thread)
+
+These three appear together. Synthesize as a single root-cause finding (H-level) with a single coordinated fix recommendation: inject `IMessenger` and `TimeProvider`, forward messenger to base class, move `IsActive` to `Activate()` or `OnNavigatedTo`. Do not list them as six separate auditor findings — collapse them into one cluster finding with a list of sub-impacts.
+
+---
+
+### Fire-and-Forget quadruple-flagging is the highest-confidence finding signal in ViewModel reviews
+Category: Process/Model
+
+When `_ = SomeAsync(...)` appears in a `void Receive()` method and is flagged by four independent auditors (Maintainability, Performance, Security, Ripple Effect), this is the maximum-confidence signal in a ViewModel review — no factual conflict between auditors, all four are independently correct. In synthesis:
+- Rate it High even if individual auditors rated it Medium
+- List all four impact vectors (exception loss, UI-thread safety, stale state, test assertion racing) in the consolidated finding
+- Recommend a single fix (try/catch + MainThread dispatch) that addresses all four
+
+---
+
+### Full-project ViewModel reviews: Unit Test Coverage audit produces 2-4× more findings than any other auditor
+Category: Process/Model
+
+In a full-project review (not a diff) where test coverage is zero, the Unit Test Coverage audit typically generates 20–25 findings vs. 6–10 for each structural auditor. Expect this distribution and do not treat the volume as meaning "the project is in terrible shape" — a single test file creation addresses the Critical and most High items simultaneously. When synthesizing, emphasize that the coverage findings resolve together (building the test project infrastructure unblocks all of them), rather than presenting them as 23 independent line items.
+
+---
+
+### Notification propagation bugs ("X never notified after UpdateCard") are user-visible correctness bugs, not design issues
+Category: Process/Model
+
+When a Ripple Effect auditor flags "computed property X is never notified after task mutations," this is a functional correctness bug (completed tasks remain visible in the view), not a design-level code smell. Synthesize at High priority with the explicit phrasing "user-visible bug" in the finding title. The fix is trivially small (one line inside the mutator), which makes the severity/effort ratio extremely favorable — call this out explicitly to help prioritizers pick it up first.
+
+---
+
 ### Severity discrepancies between auditors are usually a pre-existing vs. introduced distinction, not a factual conflict
 Category: Process/Model
 
 When two auditors give the same finding different severities, check whether one is judging it as code introduced by the PR and the other is judging absolute severity. Downgrade to the lower rating when the issue is pre-existing. Factual conflicts (two auditors assert opposite facts) require verification; severity disagreements require the pre-existing/introduced distinction check.
+
+---
+
+### Unreachable infrastructure clusters produce a dependency-chain merge block, not independent findings
+Category: Process/Model
+
+When a project contains a fully-implemented subsystem (many files) that is architecturally unreachable because no CLI/API entry point exists, the synthesis task is to identify the minimum dependency chain that must be resolved before the feature can be enabled — not to present each missing command or interface as an independent finding. In this pattern: (1) the unreachable infrastructure is ONE Critical finding, not N findings; (2) the secondary missing commands that the subsystem requires (approve, unblock, etc.) are each separate findings at a lower severity; (3) any architectural incompatibility that makes wiring harder than "just add a command" (e.g., DI container mismatch, IServiceScopeFactory required) elevates the entry-point fix from Small to Large effort and should be called out explicitly so prioritizers understand it is a batch, not a sequence.
+
+---
+
+### When auditors agree on a finding but differ on severity, the highest-severity rating is usually correct for full-project reviews
+Category: Process/Model
+
+In a full-project snapshot review (not a PR diff), auditors do not apply the "pre-existing downgrade" heuristic because all code is current. When three auditors independently flag the same element at High/Medium/Medium, synthesize at High — the pre-existing downgrade rule does not apply, and multiple independent detections reinforce the finding rather than averaging it.
 
 ---
 
@@ -199,6 +270,28 @@ When 6 auditors review the same codebase, expect 15–25% of findings to be cros
 3. Within each theme, lead with the cross-cutting recommendation that fixes all findings in that theme in one change
 4. This produces a report with 8–10 themes rather than 40+ individual findings — far more actionable for planning
 
+---
+
+### Vocabulary-mismatch-with-external-integrator is always Critical — escalate regardless of per-auditor rating
+Category: Process/Model
+
+When the same string vocabulary is scattered as magic literals across 6+ files AND mismatches the documented external-integration vocabulary (e.g., a packaging agent, an API partner, a sibling system), the synthesis severity is always Critical — regardless of what any individual auditor rated it. The defining failure mode is: the external system writes value X, the internal system looks for value Y, no error is raised, views silently show wrong/empty data. Two compounding factors make this worse: (1) the scatter across many files means no single fix location, and (2) no compiler catches the divergence. The fix requires defining a constants class first and replacing all literals second. Always recommend these as a two-part fix in that order.
+
+---
+
+### "Stored but never read" cluster requires a deliberate decision, not individual findings
+Category: Process/Model
+
+Full-codebase reviews consistently surface a cluster of schema fields that are deserialized but have no read sites — `DisplayName`, `Email`, `PackageId`, `Marks list`, `SchemaVersion`, `LastUpdated`, etc. In synthesis, do NOT list each dead field as a separate finding. Group them as a single "Dead Schema Fields" theme under Ripple Effect. The synthesis recommendation is always the same: require a deliberate per-field decision of "remove it or document when it will be used." The risk is false confidence — maintainers who see a field in the schema assume it is actively used and act on it, expecting behavior that never occurs.
+
+---
+
+### Full-codebase review Critical threshold = "any data written now is incompatible with the target design"
+Category: Process/Model
+
+In a PR review, Critical = "current runtime bug." In a full-codebase review of an in-progress project, Critical should be reserved for: "data written with the current schema cannot be used correctly by the planned system." This is a forward-compatibility blocker, not a backward-compatibility regression. The phrasing in the report should reflect this: use "must fix before any production data is written" not "blocks merge." The fix-order table becomes the actionable deliverable rather than a merge decision.
+
+
 A flat issue list sorted by severity is appropriate for PR reviews (reviewer has limited time). A themed, root-cause-grouped report is appropriate for full-codebase remediation planning sessions.
 
 ---
@@ -243,3 +336,31 @@ Category: Process/Model
 When Unit Test Coverage rates a factory's zero test coverage as High, and Testability and Ripple Effect independently identify the same gap at Medium, the correct synthesis resolution is **High** — not average or median. The pre-existing/introduced distinction is the deciding factor: the factory class is entirely new code (not pre-existing), so the highest auditor rating stands. The three-auditor convergence confirms the finding belongs in the report at full strength.
 
 This pattern is predictable for "extract factory" commits: the factory is the single most important new artifact, its toggle-conditional method is the only meaningful logic, and it is the first victim of future regressions if untested. Expect this exact three-auditor cluster whenever a factory with a toggle branch is extracted from an existing method.
+
+---
+
+### Cross-auditor schema-mismatch cluster: consolidate into one Critical root cause before reporting
+Category: Process/Model
+
+When multiple Critical findings from 4+ independent auditors all trace to the same structural data-layer error — field type mismatch, incompatible representation, wrong storage format — a flat severity-sorted issue list obscures the root cause and inflates the Critical count. Each auditor identifies a symptom:
+- **Correctness**: wrong values persisted or read back
+- **Security**: data integrity or injection risk from malformed input
+- **Extensibility**: schema as a hard coupling point for future changes
+- **Ripple Effect**: cascade impact if schema is corrected post-data-write
+
+Synthesis action: after de-duplicating, verify whether multiple Criticals share a schema root. If yes: (1) create a "Schema Integrity" theme at the top of the Critical Issues section, (2) list each specific mismatch as a sub-bullet under one root-cause entry rather than independent findings, (3) suppress per-auditor symptom listings as redundant. The result is fewer Critical line items, each clearly actionable.
+
+Distinction from "Vocabulary-mismatch-with-external-integrator" (existing entry): that entry handles string literals scattered across files that mismatch a documented external partner's vocabulary. This entry handles structural type/field/representation mismatches at the data layer that may have no external partner at all — the bug is internal schema incoherence.
+
+---
+
+### Coverage auditor exclusion: lower the convergence threshold for test-related findings
+Category: Process/Model
+
+The "3+ auditors independently flagged this" escalation rule assumes all standard auditors are active. Unit Test Coverage is typically the third independent voice on any test gap — Correctness and Testability flag the same gap from different angles, and Coverage makes it three. When Coverage is explicitly excluded from the review:
+
+- Lower the convergence threshold from 3+ to **2+** for findings that are inherently test-related (missing tests, untested paths, coverage gaps on newly-introduced logic)
+- A Correctness + Testability co-flag on a test gap with Coverage absent is equivalent in signal strength to a three-auditor finding with Coverage present — the exclusion changed the denominator, not the strength of the signal
+- Do not silently downgrade these findings to their per-auditor severity just because the convergence count is lower
+
+This adjustment prevents systematic under-escalation on test-related findings any time Coverage is scoped out (e.g., dev-tool reviews, spike reviews, reviews of legacy code with no test harness).

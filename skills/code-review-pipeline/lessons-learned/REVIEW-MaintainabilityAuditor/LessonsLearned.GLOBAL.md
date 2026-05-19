@@ -118,6 +118,66 @@ In Blazor Server MVVM patterns, child components that subscribe to `PropertyChan
 When a codebase has an explicit convention that all injectable classes must have interfaces, discovering a ViewModel that lacks an interface is not a Low/style finding. Rate it **High** because:
 1. The ViewModel is likely injected as a concrete type everywhere it's used (testability cost).
 2. The DI registration leaks the concrete type into the composition root.
+
+---
+
+## Static factory + mutator duplication is a reliable High finding in MVVM ViewModels
+
+**Date**: 2026-05-18
+**Category**: Process/Model
+
+In CommunityToolkit.Mvvm codebases (and MVVM in general), ViewModel classes often have two separate field-mapping operations over the same source entity:
+- A static `FromEntity(entity)` factory used at initial load time
+- An `UpdateFromEntity(entity)` (or inline update block) used after edits/refreshes
+
+When both exist as separate, non-sharing code blocks, they are a **High** DRY violation — not just Medium — because:
+1. The mappings will silently drift as the entity grows
+2. Drift produces stale UI state (edits appear to not save) — a user-visible bug with no compile-time signal
+3. The fix is cheap: move all mapping into the ViewModel as `UpdateFrom(entity)`, call it from the factory
+
+The correct pattern is `static FromEntity` delegating to `UpdateFrom` on a fresh instance. When you see both a factory and a separate update-by-field block over the same entity type, rate it **High**.
+
+---
+
+## `IsLoading` not in try/finally is a reliable High finding in any async load ViewModel
+
+**Date**: 2026-05-18
+**Category**: Process/Model
+
+Any async ViewModel method that sets a loading flag at the start (`IsLoading = true`) and resets it inline at the end (not in `finally`) is a **High** finding — not Medium. The failure mode:
+- Service throws on a transient error
+- `IsLoading` stays `true` permanently for the ViewModel's lifetime
+- User sees infinite spinner with no recovery path
+
+---
+
+## Scan All Services in a Persistence Layer for TimeProvider Adoption Consistency
+
+**Date**: 2026-05-19
+**Category**: Process/Model
+
+When reviewing a .NET service layer (e.g., EF Core data services), do a cross-cutting scan: does every service that writes timestamps inject and use `TimeProvider`, or are some using `DateTime.UtcNow` directly? Partial adoption is a reliable **High** finding because:
+1. Services without `TimeProvider` cannot be unit-tested for timestamp-sensitive behavior.
+2. Invite token expiry, `CompletedAt` correctness, and audit trail accuracy depend on a controlled clock in tests.
+3. The pattern gap is invisible to consumers — nothing in the type system signals "this service ignores the injected clock."
+
+Look especially at services that write fields like `CreatedAt`, `UpdatedAt`, or expiry timestamps. If they take a `TimeProvider` constructor parameter in other services but not in these ones, it is a High gap, not Low style.
+
+---
+
+## Dual-Constructor Pattern for DI vs. Non-DI Context Is a Medium Coupling Finding
+
+**Date**: 2026-05-19
+**Category**: Process/Model
+
+When a class has two public constructors — one minimal (e.g., only the DB context, for CLI or design-time use) and one full (e.g., DB context + config + logger, for web DI) — this is a **Medium** maintainability finding. The consequence:
+1. Optional fields must be nullable throughout the class, adding null-check noise to every method that uses them.
+2. A developer adding a new dependency must decide which constructor to extend, and may add it to only one.
+3. Every new log statement must remember the `?.` form for the CLI path.
+
+The correct fix is a single constructor with nullable optional parameters (C# supports default `= null`). This preserves CLI usability while making the optional nature explicit at declaration rather than scattered across 20+ null-checks in the body.
+
+This finding recurs reliably in async load commands. The fix is always `try/finally { IsLoading = false; }`. Rate it High because the user-facing impact is a fully broken screen on any service fault.
 3. The test surface is permanently narrowed without compiler enforcement to detect this.
 
 If the explicit convention exists in a written instructions file, cite it in the finding.
@@ -287,3 +347,60 @@ When a counter is incremented at the top of a method so its value can be embedde
 **Category**: Process/Model
 
 Test harness setup code that configures the DI container (e.g., registers services, reads config values to conditionally wire dependencies) often cannot use the production service abstractions it would normally use — because those services are part of the container being built. Raw config reads, string comparisons against toggle values, and direct `IServiceCollection` manipulation are all legitimate in this bootstrap context. Rate any resulting code quality gap as **Medium** (for missing documentation or case-sensitivity issues), not High (for bypassing the abstraction). The fix is always: add a comment explaining why the bootstrap constraint prohibits the production-code pattern.
+
+---
+
+## Role-based + status-based UIs have a predictable string vocabulary scatter pattern — always check for constants
+
+**Date**: 2026-05-16
+**Category**: Process/Model
+
+In apps that combine role-based routing with status-machine-style display logic (badge colors, sort orders, filter dropdowns), the domain vocabulary (role names and status names) tends to scatter across a specific set of file types in a predictable pattern:
+1. Service/initialization — role inference result strings
+2. Routing — role-to-route mapping switches
+3. Layout/shell — role display label switches, nav label computed properties
+4. Page guards — role string comparisons in `OnInitializedAsync`
+5. Data model — status string literals in `ComputedStatus` / sort lambdas
+6. Page code-behind — badge class switch expressions, filter comparisons
+7. Sort expressions — status strings as sort keys with ordinal magic numbers
+
+When a codebase exhibits this structure and has no constants class for these strings, rate the missing-constants finding as **High** (not Medium). The vocabulary is spread across 7 structural categories that all require independent maintenance for any vocabulary change. Additionally: if the correctness audit identifies any status/role vocabulary mismatch with an external system, the absence of constants directly amplifies the severity of that correctness finding — there is no single place to correct it.
+
+The fix pattern: one `static class` per vocabulary domain (e.g., `UserRole`, `ReviewStatus`), placed in the Core/shared layer so all projects can reference it. Razor templates can reference these directly; no adapter layer needed.
+
+---
+
+## Service Interface Methods Referencing Non-Existent Entity Properties — Reliable Medium Finding
+
+**Date**: 2026-05-16
+**Category**: Process/Model
+
+In domain-centric codebases where service interfaces are the primary API surface, a `SetXxxAsync(Guid id, T value)` method on a service interface implicitly promises that the entity has a readable `Xxx` property. When the entity does not have the corresponding property, callers can set the state but cannot read it back from the entity — breaking the write/read symmetry that consumers expect.
+
+When reviewing domain contracts:
+1. For each `SetXxxAsync` or mutation method on a service interface, verify the corresponding property exists on the entity type it returns
+2. If the property is absent, rate it as **Medium** — this is an Interface-Entity Gap that creates invisible state consumers cannot introspect
+3. Do NOT assume the property is stored as an EF shadow property unless you can confirm it — shadow properties are invisible to the domain by design, which makes the gap worse, not better
+4. Also check `TaskHistoryChangeType` / event log enum values — they record state transitions that must correspond to settable/readable fields
+
+A related pattern: enums that exist in Core but have no corresponding property on any entity. These are often orphaned after a field was removed from the entity without cleaning up the enum. Rate as Low (YAGNI/dead code) and recommend verifying before deletion.
+
+---
+
+## Computed Properties Calling `DateTime.UtcNow` — Rate Higher When Project Has No Tests Yet
+
+**Date**: 2026-05-16
+**Category**: Process/Model
+
+When a computed property (e.g., `Machine.Status`) calls `DateTime.UtcNow` directly, and the codebase already establishes a `TimeProvider` injection pattern elsewhere (e.g., in a sibling service class), this inconsistency is normally a **Medium** — two ways to do the same thing, testability concern.
+
+Elevate to **High** when: the review explicitly notes the project has no unit tests yet. The reason for the elevation is that the inconsistency becomes a structural testability blocker the moment the first test suite is introduced — the test author cannot mock time for the entity without modifying the production code. In a codebase with existing tests, the prior pattern likely already works around it. In a test-less codebase, fixing it now is cheap; fixing it after a test suite exists (and has workarounds baked in) is expensive.
+
+---
+
+## CLI composition root factories are intentional, not DI violations — flag drift risk only
+
+**Date**: 2026-05-18
+**Category**: Process/Model
+
+CLI tools without a DI host commonly use local factory functions (CreateXxx()) to manually construct services. This is an intentional, appropriate pattern — not an SRP violation or DI anti-pattern. Do NOT flag a CreateXxx() factory as "wrong." Instead, evaluate it for *drift risk*: if the constructed service has 5+ positional constructor arguments and is likely to gain new dependencies, rate the factory as **High** (drift-safety concern) and recommend a comment documenting what must be kept in sync. The severity is earned by invisible-failure mode (no compiler error when the constructor gains a param), not by the pattern's existence.
