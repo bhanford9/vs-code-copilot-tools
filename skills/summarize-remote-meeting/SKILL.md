@@ -57,7 +57,7 @@ Before classifying any segment, establish the **intended purpose** of this meeti
 
 **Write a one-sentence Meeting Intent Statement:**
 
-> "This meeting was intended to: {specific goal, e.g., 'onboard a new developer on the design and analysis architecture of the JEDI V2 system'}."
+> "This meeting was intended to: {specific goal, e.g., 'onboard a new developer on the architecture of the order processing service'}."
 
 This statement is your filter. Every segment will be evaluated against it in Step 3. Do not skip this step — it is the anchor for all filtering decisions.
 
@@ -73,6 +73,8 @@ Read the full transcript once through, tagging each meaningful segment with one 
 | `[TANGENTIAL]` | Related to the participants or project but not the meeting's goal; low summary value |
 | `[OFF-TOPIC]` | Unrelated to the meeting intent — interruptions, side conversations, social chat, unrelated field issues |
 
+**TANGENTIAL vs. OFF-TOPIC disambiguation:** If content involves the same team or project but does not directly serve the meeting's goal (e.g., a participant describing a new internal workflow being applied to their own team), classify as TANGENTIAL, not OFF-TOPIC. OFF-TOPIC is reserved for content with no meaningful connection to the participants' shared work.
+
 ### Off-Topic Patterns to Watch For in Remote Meetings
 
 These are the most common ways a remote meeting loses its thread:
@@ -85,6 +87,7 @@ These are the most common ways a remote meeting loses its thread:
 | **Weekend / personal chat** | Non-work social content | "How was your weekend?", "Did you catch the game?" |
 | **Cross-team context dump** | A participant explains something from a different team's domain that is not directly relevant | Long explanation of another team's system that doesn't connect back to the meeting topic |
 | **Tool setup / access issues** | Meeting pauses while someone troubleshoots a non-topic tool | "Let me share my screen... hold on, something's wrong with my mic" (beyond a brief pause) |
+| **Embedded secondary meeting** | A distinct meeting (standup, sync, all-hands) occurs mid-recording before the primary meeting could begin; clear agenda shift, different or expanded attendee set | Full team standup captured because the host did not stop recording in time |
 
 ### Boundary Detection
 
@@ -95,6 +98,14 @@ When classifying, identify:
 - **Re-entry marker**: Note the timestamp and the speaker's words that signal the resume. This is important for reconstruction in Step 5.
 
 **Do not silently discard any segment.** Record every classified segment — its timestamp range, classification, and brief description — in the Segment Log below.
+
+### Handling Live Demos and Screen-Shares
+
+When a remote meeting includes a live demo or screen-share, many transcript lines will be reactions to on-screen content not captured in the transcript (e.g., "Oh, this is great" or "I like that" with no referent).
+
+- Identify a live demo from contextual signals: a speaker says "share my screen," "let me show you," or similar, followed by fragmented reactive commentary
+- Reconstruct demo content from explanatory dialogue **before** and **after** the reactions
+- Classify pure reaction lines (no substantive content) as noise; capture any decisions or insights voiced during the demo from the surrounding context
 
 ---
 
@@ -199,6 +210,8 @@ Produce the output file at the configured path. Use this structure:
 - Write for a reader who was not on the call — be self-contained
 - Do not editorialize about why segments were off-topic unless there is something genuinely noteworthy
 - Action items from off-topic segments are real deliverables — do not bury them
+
+**Onboarding and teaching meetings:** When the meeting intent is explicitly onboarding or teaching, the Side Notes section must include a disclaimer that specific numbers and simplified rules in the summary are teaching approximations and should be verified before being promoted to reference documentation. Flag only specific numbers and categorical claims ("always," "never," "only") stated casually in a teaching context — not every sentence.
 
 ---
 

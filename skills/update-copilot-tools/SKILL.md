@@ -87,8 +87,12 @@ Present the user with:
 
 ### Step 6 — Execute approved actions
 If the user approved the settings merge in Step 4, invoke the `merge-copilot-settings` skill now.
+- Run the merge **before** prompting any VS Code reload — the reload picks up the merged values. Doing it in reverse order leaves stale location settings active until the next reload.
+- After the merge completes, remind the user to reload VS Code (Ctrl+Shift+P → "Reload Window").
 
 If any hook paths were flagged as broken, show the exact path that failed and ask the user how to resolve it before continuing.
+
+If hook JSON files changed but no paths were broken, remind the user to reload VS Code so the updated hooks take effect.
 
 ### Step 7 — Lessons Learned
 **Tell the user**:
@@ -99,7 +103,5 @@ When the user runs lessons learned, follow the two-tier feedback loop: write pro
 ---
 
 ## Notes
-- The repo path is always `C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools` on Windows.
 - VS Code auto-reloads agents, prompts, instructions, and skills from the filesystem — no VS Code reload needed for those. A reload **is** recommended after a settings merge or hook JSON change.
-- If `settings.base.json` changed, always run `merge-copilot-settings` **before** reloading VS Code — otherwise the reload picks up stale location settings.
-- `ORIG_HEAD` is unreliable when rebasing local commits on top of remote changes. Always capture `$beforeHead` before the pull instead.
+- `ORIG_HEAD` is unreliable when rebasing local commits on top of remote changes. Always capture `$beforeHead` before the pull instead (already shown in Step 2).

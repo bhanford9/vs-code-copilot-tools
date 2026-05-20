@@ -6,7 +6,7 @@ Do not document sessions that went smoothly.
 
 ---
 
-> Both entries that previously lived here have been promoted into the SKILL.md body (Step 1 dual-context intake behavior and the explicit intake gate pattern). No entries remain. Add new entries below when something hard, slow, or surprising occurs in a session.
+> All entries that previously lived here have been promoted into the SKILL.md body. The most recent promotion: the `read-knowledge-docs` + `create-knowledge-docs` pairing rule (added as the "Skill Pairing Rule" under "When to Use This Skill vs. Reading Files Directly"). No entries remain. Add new entries below when something hard, slow, or surprising occurs in a session.
 
 ---
 

@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-TestabilityAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -152,7 +167,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-06 — Round-trip tests that verify state but not dependent side effects leave a regression gap
 
-**Pattern**: A "round-trip" test (save then restore, or serialize then deserialize) may correctly verify that intermediate state is set to the right value after the restore step, while using a loose mock for the service that consumes that state. If the consuming service call (e.g., a `FitChord` call that uses the restored position) is not verified, the test is green even if the side effect is silently removed.
+**Pattern**: A "round-trip" test (save then restore, or serialize then deserialize) may correctly verify that intermediate state is set to the right value after the restore step, while using a loose mock for the service that consumes that state. If the consuming service call (e.g., a downstream fit or transform call that uses the restored state) is not verified, the test is green even if the side effect is silently removed.
 
 **Testability signal**: Look for round-trip or lifecycle tests that use `new Mock<IService>().Object` (no name, no setup, no verify) when the step under test is supposed to call that service. The test verifies "the right value was reached" but not "the downstream action that depends on that value was taken."
 
@@ -188,9 +203,9 @@ Only append if the session revealed something surprising, a false positive patte
 
 **Pattern**: When a factory's `Build()` method constructs a leaf object with `new ConcreteType(arg1, arg2, ..., boolFlag, ..., argN)`, the correct forwarding of each positional argument (especially a `bool` flag at an interior position) cannot be verified from unit tests that only assert on the return type or behavior of the outer flow. The positional forwarding is an implementation detail of the factory's construction logic.
 
-**Coverage gap**: A test asserting `result is StandardEndFlow` confirms the toggle branch fires, but does not confirm that `isRightSeat` is at position 11 vs. position 8, or that the correct service is at each position.
+**Coverage gap**: A test asserting `result is ExpectedFlowType` confirms the toggle branch fires, but does not confirm that a flag or dependency is at the correct positional argument slot in a multi-parameter constructor.
 
-**Mitigation**: The gap is inherent to factory-composition patterns and is not unique to the extracted factory — the same gap existed in the private method before extraction. The mitigation is behavioral tests on the leaf object (e.g., `SeatSelectionLogicProvider` tests already cover this), not duplicated structural tests on the factory.
+**Mitigation**: The gap is inherent to factory-composition patterns and is not unique to the extracted factory — the same gap existed in the private method before extraction. The mitigation is behavioral tests on the leaf object (which should already exist if the object has its own test file), not duplicated structural tests on the factory.
 
 **Recommendation**: Flag as Medium when the leaf constructor has many positional parameters of the same type (e.g., multiple `bool` or multiple `IServiceX` of identical interface). Flag as Low when all positional types are distinct (making transposition a compile error). Do not flag when the leaf object already has dedicated unit tests verifying its constructor behavior.
 
@@ -214,7 +229,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-12 — Entity property initializers with DateTime.UtcNow are Low, not Medium/High
 
-**Pattern**: Entity/model classes commonly use `public DateTime CreatedAt { get; set; } = DateTime.UtcNow;` as a default value. This is evaluated once at object construction and remains stable — it is NOT a recurring clock dependency. It is Low severity because test setup can always override the value: `new TaskItem { CreatedAt = specificDate }`. Do not conflate these initializers with `DateTime.UtcNow` calls inside method bodies (which re-evaluate on every invocation).
+**Pattern**: Entity/model classes commonly use `public DateTime CreatedAt { get; set; } = DateTime.UtcNow;` as a default value. This is evaluated once at object construction and remains stable — it is NOT a recurring clock dependency. It is Low severity because test setup can always override the value: `new DomainEntity { CreatedAt = specificDate }`. Do not conflate these initializers with `DateTime.UtcNow` calls inside method bodies (which re-evaluate on every invocation).
 
 **False positive risk**: Flagging entity initializers at Medium or High overstates the testability impact. The only realistic friction is: forgetting to set `CreatedAt` in a test that cares about age-dependent behavior. The fix is a one-line override in test setup, not an architecture change.
 
@@ -265,4 +280,29 @@ Only append if the session revealed something surprising, a false positive patte
 **Testability signal**: This is a positive signal — it is the correct design for an optional dev feature. The seam is clean, backward-compatible, and Moq-friendly. The only testability concern is: does any test *actually use the seam*? If no test passes a non-null value, the new path is untested even though the seam is excellent.
 
 **Recommendation**: When you see `= null` optional injection on a new feature, check whether the `RunObserved`/`if (feature != null)` branch has test coverage. The seam being good does not mean the path is exercised.
+
+
+---
+
+## 2026-05-19 — `private static` Helpers Are High Priority When Their Only Test Path Requires External I/O
+
+**Pattern**: The 2026-04-28 entry correctly notes that `private static` helpers are NOT a testability gap — they are tested through the public API. However, this holds only when the public API itself is testable. When the *only accessible path* to the private helper requires traversing a method that calls an external I/O system (filesystem, network, database) with no injection seam, the helper is effectively untestable even though its implementation is pure.
+
+**Key distinction**:
+- `private static int Compute(int a, int b)` where the public API is directly testable: Low/not-a-gap (2026-04-28 rule applies)
+- `private static bool IsMoreRecent(...)` inside a class where reaching it requires real filesystem I/O with no abstraction seam: **High** (this rule applies)
+
+**Testability signal**: When auditing a private static helper, trace the call chain UP. Ask: "Can I reach this helper from a test without touching real I/O?" If the answer is no, flag High regardless of the helper's own complexity.
+
+**Recommendation**: Minimum fix is access modifier change to `internal` + `[assembly: InternalsVisibleTo(...)]` (3-line change). Longer fix: extract to a public static class decoupled from the owning service.
+
+---
+
+## 2026-05-19 — Abstraction Interface Names Must Signal Scope Precisely, or Tests Will Miss the Real Gap
+
+**Pattern**: When a project contains an interface named `IFileSystemService` but that interface only covers UI operations (tree browsing, shell-open), a developer auditing the data service will discover the interface, assume file I/O is abstracted, and move on — without noticing that the actual data-reading code calls `System.IO` directly. The misleading name causes a false-negative testability assessment.
+
+**Testability signal**: When you see a file-system-sounding interface in a project, check its methods immediately. If they are UI/navigation operations, flag the naming mismatch and look for raw `System.IO` calls in data services as a separate High priority item.
+
+**Recommendation**: Rename the UI-scoped interface to reflect its actual purpose (`IFileNavigationService`, `IShellFileService`). Add a separate interface for data-layer I/O when it is needed. The naming gap is Medium — but it masks a potentially High gap in the data layer.
 

@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-SecurityAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -76,6 +91,34 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-19 — Blazor `@` Binding Auto-Encodes: XSS Via Toast/Label Content Is Not a Valid Finding
+
+**Pattern**: In Blazor (Server, WASM, Hybrid), the standard `@expression` syntax in `.razor` files applies HTML encoding unconditionally before writing to the DOM. A `@toast.Message` or `@entry.Email` binding cannot produce XSS regardless of what the string contains — it will be rendered as literal text, not markup. This applies to both text node interpolation and attribute values bound via `@`.
+
+**Exception**: XSS is still possible if the developer explicitly opts out via `@((MarkupString)rawHtml)` or `@Html.Raw(...)`. These require deliberate use of `MarkupString` or `IHtmlContent`. Always grep for `MarkupString` in any Blazor codebase if XSS is a concern.
+
+**Heuristic**: Start Blazor XSS analysis by searching for `MarkupString` and `Html.Raw` rather than examining individual `@expression` bindings. If neither exists, the XSS surface is essentially zero.
+
+---
+
+## 2026-05-19 — System.Text.Json Typed Deserialization Is Safe Against Gadget-Chain Attacks
+
+**Pattern**: `JsonSerializer.Deserialize<T>()` with a concrete or generic type target does not support polymorphic type instantiation by default. An attacker cannot inject a `$type` field to force construction of an arbitrary .NET type — System.Text.Json ignores unknown properties and deserializes only into the declared type. The risk only re-opens when `[JsonDerivedType]` attributes or a custom `JsonConverter`/`DefaultJsonTypeInfoResolver` with `IncludeFields = true` and broad type resolution is present.
+
+**Heuristic**: For any `JsonSerializer.Deserialize` call, only escalate to a deserialization-gadget finding if `[JsonDerivedType]`, `JsonConverter`, or polymorphic resolver configuration is present. Grep for those patterns first as a rapid-disqualification shortcut.
+
+---
+
+## 2026-05-19 — Unvalidated Path Parameters in Service Method Signatures Are a Latent Risk Pattern
+
+**Pattern**: Service methods that accept a folder or file path as a `string` parameter and use it directly in `Path.Combine` + write operations have no guaranteed trusted-root at the method boundary. Even when all current callers supply trusted values (e.g., from `Directory.EnumerateDirectories`), the method signature is an open invitation for future callers to supply an arbitrary path. The risk is latent, not present.
+
+**Heuristic**: When a `Save*` or `Write*` method takes a path parameter and the service has a concept of a "configured root" (e.g., from settings), always check whether the method asserts `Path.GetFullPath(paramPath).StartsWith(rootPath)`. If not, flag as Low with a concrete remediation snippet. Do not escalate beyond Low unless a current caller is actually untrusted.
+
+**Severity guidance**: Low for internal tools where all callers are in the same process. Medium if the path parameter is derived from a network payload or user-submitted form value.
+
+---
+
 ## 2026-05-18 — Fire-and-Forget Async in MVVM Message Receivers Is a Dispatch-State Risk
 
 **Pattern**: In CommunityToolkit.Mvvm (and similar MVVM frameworks), `IRecipient<T>.Receive()` is synchronous by interface contract. When a message triggers async work, the idiomatic result is `_ = SomeAsyncMethod()` — a discarded task. This silently swallows any exception thrown by the async path. If the async work updates security-relevant in-memory state (e.g., dispatch approval flags, task status), a failure leaves the ViewModel in a stale, potentially misleading state with no error signal to the user.
@@ -88,7 +131,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-18 — MVVM Dispatch Approval Gates: ViewModel Should Assert Pre-Conditions
 
-**Pattern**: In MVVM dispatch approval flows, the ViewModel layer is the last place where domain context (task state, category config) is available before a service call. When the service is the only enforcement gate for a safety-critical operation (autonomous dispatch), any regression or future gap in the service layer is unchecked. The ViewModel should assert readily-available pre-conditions (e.g., `card.AllowsAutonomousDispatch == true`) before calling the service.
+**Pattern**: In MVVM dispatch approval flows, the ViewModel layer is the last place where domain context (task state, category config) is available before a service call. When the service is the only enforcement gate for a safety-critical operation (autonomous dispatch), any regression or future gap in the service layer is unchecked. The ViewModel should assert readily-available pre-conditions (e.g., verifying the domain entity's own flag that permits the operation) before calling the service.
 
 **Heuristic**: For any approval or dispatch-enabling method in a ViewModel, ask: "Does the ViewModel have access to a property that would immediately disqualify this call?" If yes, assert it before the service call — even if the service will also enforce it. The cost is one `if` statement; the benefit is defense-in-depth for an irreversible operation.
 

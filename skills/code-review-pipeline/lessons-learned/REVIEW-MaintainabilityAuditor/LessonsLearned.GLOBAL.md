@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-MaintainabilityAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -48,7 +63,7 @@ The correctness audit's "known gaps" (e.g., a missing `Math.Max` floor) directly
 **Category: Process/Model**
 **Date**: 2026-04-22
 
-When a method is confirmed commutative (e.g., `DistanceAlong(a, b) == DistanceAlong(b, a)`) and the code uses an inline ternary to swap arguments by side, flag it as a **Medium KISS violation** (unnecessary complexity) rather than a correctness risk. The finding should recommend simplifying the call site, not re-examining the method's commutativity.
+When a method is confirmed commutative (e.g., `Compute(a, b) == Compute(b, a)`) and the code uses an inline ternary to swap arguments by side, flag it as a **Medium KISS violation** (unnecessary complexity) rather than a correctness risk. The finding should recommend simplifying the call site, not re-examining the method's commutativity.
 
 ---
 
@@ -57,7 +72,7 @@ When a method is confirmed commutative (e.g., `DistanceAlong(a, b) == DistanceAl
 **Date**: 2026-04-29
 **Category**: Process/Model
 
-When a method is renamed to include "IgnoringX" (e.g., `HasAnyCheckOutputIgnoringMoiChecks`), but the implementation only ignores X when a toggle is ON — and includes X when the toggle is OFF — the method name is actively misleading for the default (toggle-off) production state. Rate this as **Medium**: callers see only the method name and cannot know there is conditional behavior inside. The fix is either to name the method to reflect its conditional semantics, or to add an inline comment. This pattern occurs reliably on toggle-integration commits that backfit toggle awareness into pre-existing utility methods.
+When a method is renamed to include "IgnoringX" (e.g., `HasOutputIgnoringSomeChecks`), but the implementation only ignores X when a toggle is ON — and includes X when the toggle is OFF — the method name is actively misleading for the default (toggle-off) production state. Rate this as **Medium**: callers see only the method name and cannot know there is conditional behavior inside. The fix is either to name the method to reflect its conditional semantics, or to add an inline comment. This pattern occurs reliably on toggle-integration commits that backfit toggle awareness into pre-existing utility methods.
 
 ---
 
@@ -66,7 +81,7 @@ When a method is renamed to include "IgnoringX" (e.g., `HasAnyCheckOutputIgnorin
 **Date**: 2026-05-14
 **Category**: Process/Model
 
-When a refactoring commit introduces a new factory class specifically to consolidate scattered DI pass-throughs (the "threading elimination" pattern), the resulting factory constructor will have a high parameter count (often 15–25+ params). This is the expected and correct outcome — the point of the refactoring is to gather all related dependencies into one place. Do NOT flag a high parameter count as an SRP violation on a factory whose sole responsibility is constructing a specific family of objects. The correct test is whether all the dependencies are cohesive (do they all serve the same construction purpose?), not whether the count is high. A 21-param factory is fine if all 21 are seat-selection services. An 8-param factory with mixed cross-domain services is an SRP concern.
+When a refactoring commit introduces a new factory class specifically to consolidate scattered DI pass-throughs (the "threading elimination" pattern), the resulting factory constructor will have a high parameter count (often 15–25+ params). This is the expected and correct outcome — the point of the refactoring is to gather all related dependencies into one place. Do NOT flag a high parameter count as an SRP violation on a factory whose sole responsibility is constructing a specific family of objects. The correct test is whether all the dependencies are cohesive (do they all serve the same construction purpose?), not whether the count is high. A 21-param factory is fine if all 21 are cohesive construction dependencies. An 8-param factory with mixed cross-domain services is an SRP concern.
 
 ---
 
@@ -84,7 +99,7 @@ Step-list duplication within toggle branches (where both branches share surround
 **Date**: 2026-05-12
 **Category**: Process/Model
 
-In systems where `FlowDecision` or similar base classes accept a name string that appears verbatim in execution logs (e.g., `base(nameof(CheckIfShouldSkipChordDesignForInteriorReinforcement))`), long class names are diagnostic features, not style liabilities. A 56-character class name that produces a self-documenting log entry is preferable to a shortened name that requires source lookup during debugging. Do NOT flag these as a readability issue. Check whether the class name is used as a trace label before assigning any severity.
+In systems where `FlowDecision` or similar base classes accept a name string that appears verbatim in execution logs (e.g., `base(nameof(CheckIfShouldSkipSomePhaseForSomeCondition))`), long class names are diagnostic features, not style liabilities. A 56-character class name that produces a self-documenting log entry is preferable to a shortened name that requires source lookup during debugging. Do NOT flag these as a readability issue. Check whether the class name is used as a trace label before assigning any severity.
 
 ---
 
@@ -118,6 +133,9 @@ In Blazor Server MVVM patterns, child components that subscribe to `PropertyChan
 When a codebase has an explicit convention that all injectable classes must have interfaces, discovering a ViewModel that lacks an interface is not a Low/style finding. Rate it **High** because:
 1. The ViewModel is likely injected as a concrete type everywhere it's used (testability cost).
 2. The DI registration leaks the concrete type into the composition root.
+3. The test surface is permanently narrowed without compiler enforcement to detect this.
+
+If the explicit convention exists in a written instructions file, cite it in the finding.
 
 ---
 
@@ -149,6 +167,8 @@ Any async ViewModel method that sets a loading flag at the start (`IsLoading = t
 - `IsLoading` stays `true` permanently for the ViewModel's lifetime
 - User sees infinite spinner with no recovery path
 
+This finding recurs reliably in async load commands. The fix is always `try/finally { IsLoading = false; }`. Rate it High because the user-facing impact is a fully broken screen on any service fault.
+
 ---
 
 ## Scan All Services in a Persistence Layer for TimeProvider Adoption Consistency
@@ -176,11 +196,6 @@ When a class has two public constructors — one minimal (e.g., only the DB cont
 3. Every new log statement must remember the `?.` form for the CLI path.
 
 The correct fix is a single constructor with nullable optional parameters (C# supports default `= null`). This preserves CLI usability while making the optional nature explicit at declaration rather than scattered across 20+ null-checks in the body.
-
-This finding recurs reliably in async load commands. The fix is always `try/finally { IsLoading = false; }`. Rate it High because the user-facing impact is a fully broken screen on any service fault.
-3. The test surface is permanently narrowed without compiler enforcement to detect this.
-
-If the explicit convention exists in a written instructions file, cite it in the finding.
 
 ---
 
@@ -225,7 +240,7 @@ In LanguageExt codebases that use the `InitializeX(param) / Option.IfSome(...)` 
 **Date**: 2026-04-23
 **Category**: Process/Model
 
-When a toggle-addition commit adds two complementary test methods — one asserting the "data present" path and one the "data absent" path — and both are parameterized on `[Values] bool isLeftSide`, their setup code is structurally forced to be near-identical: same section factory call, same joist description, same seat environment, differing only in the `designInputs`. This is a reliable Medium-finding pattern on toggle-feature commits. Look for this specifically: two new tests in the same fixture, both `[Values] bool isLeftSide`, same toggle setup, diverging only at the thing under test. Extract-to-helper is the correct recommendation; not `[SetUp]` (only two of N tests in the fixture use it).
+When a toggle-addition commit adds two complementary test methods — one asserting the "data present" path and one the "data absent" path — and both are parameterized on `[Values] bool isLeftSide`, their setup code is structurally forced to be near-identical: same domain object factory call, same context configuration, differing only in the `designInputs`. This is a reliable Medium-finding pattern on toggle-feature commits. Look for this specifically: two new tests in the same fixture, both `[Values] bool isLeftSide`, same toggle setup, diverging only at the thing under test. Extract-to-helper is the correct recommendation; not `[SetUp]` (only two of N tests in the fixture use it).
 
 ---
 
@@ -234,7 +249,7 @@ When a toggle-addition commit adds two complementary test methods — one assert
 **Date**: 2026-04-24
 **Category**: Process/Model
 
-When a toggle-gated feature is threaded into an extension method via `IToggles? toggles = null`, the null default creates a silent failure mode: any call site that omits the parameter gets toggle-off behavior regardless of the system-level toggle state — no compiler error, no runtime warning. Current callers may be correct, but the risk compounds over the toggle's lifetime in the codebase.
+When a toggle-gated feature is threaded into an extension method via `IFeatureFlags? toggles = null` (or an equivalent nullable feature-flag parameter), the null default creates a silent failure mode: any call site that omits the parameter gets toggle-off behavior regardless of the system-level toggle state — no compiler error, no runtime warning. Current callers may be correct, but the risk compounds over the toggle's lifetime in the codebase.
 
 Rate this as **Medium** and recommend one of:
 1. A documentation comment on the parameter explaining that production paths must pass it explicitly.
@@ -301,7 +316,7 @@ Do not conflate this with dependency injection wiring (DI is fine). The concern 
 **Date**: 2026-04-28
 **Category**: Process/Model
 
-When a class defines a named constant to avoid a magic number (e.g., `private const double _reinforcementLengthPastPanelPoint = 3d`) but then names a method using the raw value (e.g., `GetW2InterceptPlus3OnChord`), flag this as **Low readability**. The constant exists precisely to avoid value-specific names; encoding the value in the method name re-introduces the maintenance risk — if the constant value changes, the method name becomes stale documentation. The reliable recommendation: remove the value from the method name and describe the operation instead (e.g., `GetW2InterceptPlusOffsetOnChord`).
+When a class defines a named constant to avoid a magic number (e.g., `private const double _offsetDistance = 3d`) but then names a method using the raw value (e.g., `GetBaseValuePlus3`), flag this as **Low readability**. The constant exists precisely to avoid value-specific names; encoding the value in the method name re-introduces the maintenance risk — if the constant value changes, the method name becomes stale documentation. The reliable recommendation: remove the value from the method name and describe the operation instead (e.g., `GetBaseValuePlusOffset`).
 
 ---
 
@@ -381,7 +396,7 @@ When reviewing domain contracts:
 1. For each `SetXxxAsync` or mutation method on a service interface, verify the corresponding property exists on the entity type it returns
 2. If the property is absent, rate it as **Medium** — this is an Interface-Entity Gap that creates invisible state consumers cannot introspect
 3. Do NOT assume the property is stored as an EF shadow property unless you can confirm it — shadow properties are invisible to the domain by design, which makes the gap worse, not better
-4. Also check `TaskHistoryChangeType` / event log enum values — they record state transitions that must correspond to settable/readable fields
+4. Also check change-type / event log enum values — they record state transitions that must correspond to settable/readable fields
 
 A related pattern: enums that exist in Core but have no corresponding property on any entity. These are often orphaned after a field was removed from the entity without cleaning up the enum. Rate as Low (YAGNI/dead code) and recommend verifying before deletion.
 
@@ -404,3 +419,32 @@ Elevate to **High** when: the review explicitly notes the project has no unit te
 **Category**: Process/Model
 
 CLI tools without a DI host commonly use local factory functions (CreateXxx()) to manually construct services. This is an intentional, appropriate pattern — not an SRP violation or DI anti-pattern. Do NOT flag a CreateXxx() factory as "wrong." Instead, evaluate it for *drift risk*: if the constructed service has 5+ positional constructor arguments and is likely to gain new dependencies, rate the factory as **High** (drift-safety concern) and recommend a comment documenting what must be kept in sync. The severity is earned by invisible-failure mode (no compiler error when the constructor gains a param), not by the pattern's existence.
+
+---
+
+## Snapshot-based dirty detection (JSON serialization) is a valid MVVM pattern for nested ViewModels — flag the performance assumption, not the approach
+
+**Date**: 2026-05-19
+**Category**: Process/Model
+
+When a ViewModel with nested child objects (entries containing sub-collections) uses JSON serialization to snapshot state and compare for dirty detection, do NOT flag the serialization approach as a KISS violation or poor design. For small datasets, this is often the *simpler and more correct* approach than building an observable event graph across nested view models. The observable graph requires subscribing/unsubscribing at every level, handling collection replacements, and intercepting every mutation path — significant complexity that the snapshot approach avoids entirely.
+
+The correct finding is **Medium** on the performance assumption: IsDirty computed as a serialization comparison is called on every Blazor render cycle (once per binding site per render). For small datasets this is imperceptible; for large datasets it silently becomes expensive. Recommend documenting the performance assumption inline, not rewriting the approach.
+
+---
+
+## Blazor RegisterLocationChangingHandler must be called after first render — OnAfterRender(firstRender) placement is correct
+
+**Date**: 2026-05-19
+**Category**: Process/Model
+
+When reviewing Blazor components that register a RegisterLocationChangingHandler inside OnAfterRender(bool firstRender) guarded by if (firstRender), do NOT flag this as non-standard lifecycle usage. The Blazor framework requires the component to be interactive before RegisterLocationChangingHandler can be called safely; calling it in OnInitializedAsync fails silently in server-pre-rendered and SSR scenarios. The correct finding is **Low / comment-level**: note that a comment explaining the OnAfterRender placement would prevent future developers from "fixing" it by moving it to OnInitializedAsync.
+
+---
+
+## Pass-through async delegators in Blazor code-behinds are a reliable Low YAGNI finding
+
+**Date**: 2026-05-19
+**Category**: Process/Model
+
+In Blazor components, one-line code-behind wrapper methods of the form private async Task Foo() => await ViewModel.Foo() are unnecessary: Blazor's @onclick directive accepts Task-returning no-parameter method references directly (e.g., @onclick="ViewModel.Foo"). When these wrappers appear, flag as **Low YAGNI** — they add one layer of indirection with no benefit. Do not confuse with wrappers that add pre/post logic, which are legitimate.

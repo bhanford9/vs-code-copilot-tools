@@ -39,6 +39,7 @@ This example demonstrates all best practices:
 ```csharp
 // Note: Always verify the actual namespace before using enum types.
 // — identical enum names can exist across multiple namespaces in a codebase.
+// Also: never infer member names — open the enum definition and read actual member names.
 [TestCase(Direction.Left, ExpectedResult = 100.0)]
 [TestCase(Direction.Right, ExpectedResult = 100.0)]
 public double ShouldCalculateValueWhenDirectionIsSet(Direction direction)
@@ -64,6 +65,11 @@ public double ShouldCalculateValueWhenDirectionIsSet(Direction direction)
 Mock dependencies (other classes/services) using Moq to isolate the unit under test.
 For non-mockable types (records, structs, concrete classes), check `LessonsLearned.md` for project-specific support helpers.
 
+### Verify Types Before Mocking
+Always open the interface or class definition to check property return types before writing mock setup. A property name can be misleading (e.g., `Length` may return a custom struct, not `double`); a type mismatch causes a compile error.
+
+Avoid `Mock.Of<T>()` when a nested property returns a concrete type (not an interface). Use `mockParent.SetupGet(x => x.Property).Returns(concreteInstance)` instead.
+
 ### Verifiable Pattern
 For mocked dependencies with expectations, use Verifiable pattern:
 
@@ -73,6 +79,8 @@ sut.PerformAction(mock.Object);
 mock.Verify();
 Assert.That(sut.Result, Is.EqualTo(expectedResult));
 ```
+
+> **Note:** `Verifiable(Times.Once)` requires Moq ≥ 4.18. Verify the project's Moq package version before using this overload.
 
 ## Feedback Loop
 

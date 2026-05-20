@@ -71,6 +71,20 @@ Before writing, classify the lesson using the category tag:
 
 **CRITICAL — GLOBAL file content test**: Before writing any sentence to a `LessonsLearned.GLOBAL.md` file, ask: "Could this sentence appear unchanged in a review of a completely different codebase?" If it contains a work item ID, class name, method name, test name, file name, or any other artifact from the current repo, the answer is no — it belongs in `LessonsLearned.md` instead. The pattern or heuristic itself may be global; the example that illustrates it is almost always codebase-specific. Strip examples entirely, or rephrase them in the abstract before writing to GLOBAL.
 
+**MANDATORY SANITIZATION GATE — Execute before every GLOBAL write:**
+
+This is not optional. Skipping it is the primary mechanism by which proprietary code details accumulate in a public repository.
+
+Before finalizing any entry for `LessonsLearned.GLOBAL.md`, complete this checklist:
+
+1. **List every capitalized identifier** in your proposed text: class names, interface names, method names, enum names, type names, namespace fragments, file paths, and abbreviations.
+2. **Classify each one:** Is it a standard language or framework type (e.g., `DateTime`, `IOptions<T>`, `ObservableCollection<T>`, `EF Core`, `Blazor`)? Or is it a project-specific name (e.g., `WorkflowState`, `MeasurementValue`, `IValidationRule`, `DomainEntity`)?
+3. **Project-specific identifiers must be removed or replaced** with a generic placeholder before writing. Use abstract names like `EntityStatus`, `DomainType`, `INamedExtensionPoint`, or `Compute(a, b)`.
+4. **Domain-specific abbreviations** (e.g., engineering acronyms, business-domain shorthands) must be spelled out in generic terms or removed entirely.
+5. **Read the final entry once more.** If understanding it requires knowing which project it came from, rewrite it more abstractly or route it to `LessonsLearned.md` instead.
+
+**If in doubt, write to `LessonsLearned.md`.** A lesson written locally and never promoted is harmless. A lesson written to GLOBAL with proprietary identifiers is a permanent leak into a public repository.
+
 ### 5. Check for Duplicates First
 
 Before writing to either file, scan it for existing entries on the same topic:
@@ -148,6 +162,7 @@ When a `Process/Model` lesson in `LessonsLearned.GLOBAL.md` reveals a defect or 
 1. **Promote it to the SKILL.md body** (the canonical source of truth)
 2. Remove or condense the `LessonsLearned.GLOBAL.md` entry (e.g., note "Promoted to SKILL.md: [topic]")
 3. Do not leave duplicates between LessonsLearned.GLOBAL.md and SKILL.md
+4. **Treat the promotion as one atomic operation** — write the content to SKILL.md and remove it from LessonsLearned in the same edit (using `multi_replace_string_in_file` or equivalent). Never stage it as two separate passes; the second step is easily forgotten and creates a window where information exists in both places.
 
 `Codebase` entries in `LessonsLearned.md` are user-specific and are promoted to SKILL.md only in the rare case they represent a universal pattern (not a workspace-specific fact).
 

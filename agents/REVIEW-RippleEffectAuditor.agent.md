@@ -56,7 +56,7 @@ git diff "$($cfg.baseBranch)...HEAD" -- "*.cs" "*.ts" "*.py" | Select-String "^\
 **When one side of a paired implementation changed, did the other side change too?**
 - **Reader/Writer pairs**: If a serializer changed, did the deserializer change with it?
 - **Encoder/Decoder pairs**: If encoding logic changed, did decoding logic change with it?
-- **Version-specific parallel implementations**: If one version branch (e.g., Sji45, Sji46, V1, V2) was updated, does the parallel branch still make sense? Were the right branches updated?
+- **Version-specific parallel implementations**: If one version branch (e.g., V1, V2, V3, or a "legacy" and "current" branch pair) was updated, does the parallel branch still make sense? Were the right branches updated?
 - **Symmetric validation paths**: If a create path validates a field, does the update path validate the same field?
 - **Mirror interfaces**: If an interface method changed, do all implementations reflect the change?
 

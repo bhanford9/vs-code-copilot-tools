@@ -168,7 +168,7 @@ After implementing, tell the user:
 4. What to share back for analysis (the log file contents or path)
 
 Example:
-> "Logging has been added to `DesignEngine.cs` and `LoadResolver.cs`. Run the `[SpecificTest]` test (or trigger the relevant workflow). The output will be written to `_debug_logs/design-engine.csv` and `_debug_logs/load-resolver.log` at the repo root. Please share those file contents when done."
+> "Logging has been added to `OrderProcessor.cs` and `ShippingService.cs`. Run the `[SpecificTest]` test (or trigger the relevant workflow). The output will be written to `_debug_logs/order-processor.csv` and `_debug_logs/shipping-service.log` at the repo root. Please share those file contents when done."
 
 ---
 
@@ -179,7 +179,7 @@ Example:
 - Include CorrelationId on every single entry so entries from different files can be linked
 - Use ISO 8601 timestamps (`DateTime.UtcNow.ToString("o")`)
 - Write to `_debug_logs/` at the repo root
-- Create nested directory structure if it helps organize by feature/component (`_debug_logs/design-engine/`, `_debug_logs/load-resolver/`)
+- Create nested directory structure if it helps organize by feature/component (`_debug_logs/order-processor/`, `_debug_logs/shipping-service/`)
 - Add `_debug_logs/` to `.gitignore` if not already present
 - Use `File.AppendAllText` (append) so multiple runs accumulate; the user can delete the file between runs to reset
 - Use `Interlocked.Increment` for counters in concurrent code

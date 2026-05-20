@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-UnitTestCoverageAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -16,23 +31,41 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## Zero-Test Subsystems Require Infrastructure Assessment First
+
+**Category: Process/Model**
+
+When reviewing a subsystem that has **no test project at all**, lead the report with an infrastructure assessment before the per-requirement coverage table. The standard "coverage by requirement" analysis becomes secondary to answering: "what would it take to create a test project?" and "are the methods testable as-is?".
+
+Key questions to answer early in a zero-test audit:
+1. What test framework and mocking library does the broader solution use? (Match it — do not introduce a new framework.)
+2. Are the critical methods `public`, `internal`, or `private`? If `private static`, recommend making them `internal static` + `[assembly: InternalsVisibleTo(...)]`. Name this as a prerequisite blocker, not a recommendation.
+3. What interfaces exist for dependencies? If the service under test has interface-typed collaborators, mocking is trivial — say so explicitly. If concrete types are used, note that as a testability gap.
+4. Does a DI container initialization path exist that could be reused in tests, or must the object be constructed manually?
+
+Rating in a zero-test audit: the overall score should be 0/10 (or "Inadequate") and the primary recommendation should be "create test project first." Do not soften this to "Poor" just because the production code is logically correct.
+
+
+
+---
+
 ## Dead Toggle Assertions in Test Fixtures
 
 **Category: Process/Model**
 
-When reviewing tests that gate assertions on a feature toggle, check whether the toggle instance used in the fixture (`_toggles = ToggleBuilder.AllDisabled().Build()`) makes any `if (_toggles.IsEnabled(...))` assertion branches permanently dead code. This pattern is common when a developer adds toggle-aware test branching but forgets to create a second toggle instance with the toggle enabled.
+When reviewing tests that gate assertions on a feature toggle, check whether the toggle instance used in the fixture (e.g., built with an all-disabled toggle helper) makes any `if (toggles.IsEnabled(...))` assertion branches permanently dead code. This pattern is common when a developer adds toggle-aware test branching but forgets to create a second toggle instance with the toggle enabled.
 
 - Rating this as **Critical** is correct when the dead branch is the primary behavior change under test (not just a parallel path).
 - Do NOT downgrade to Medium just because the developer has written the expected-log arrays — the arrays being present means they thought about it, but the code never executes.
-- Recommend: extract to parameterized `[TestCase(true/false)]` pattern OR add a parallel `_togglesOn` fixture field. Both are valid; mention both so developer can choose.
+- Recommend: extract to parameterized `[TestCase(true/false)]` pattern OR add a parallel toggle-enabled fixture field. Both are valid; mention both so developer can choose.
 
 ---
 
-## Check Test Geometry for Degenerate Cases When Auditing Numeric Fixes
+## Check Test Inputs for Degenerate Cases When Auditing Numeric Fixes
 
 **Category: Process/Model**
 
-When reviewing a fix that changes a distance calculation (e.g., Euclidean → chord-parallel, absolute → projected), always check whether the test geometry is degenerate for that distinction. Horizontal edges, perpendicular projections, and axis-aligned scenarios often produce identical values under both the old and new calculation. If the only test geometry is degenerate, the core fix is untestable and the test provides false confidence. Look for an explicitly non-degenerate geometry (e.g., a sloped chord, an angled projection) before concluding the fix is tested.
+When reviewing a fix that changes a calculation formula (e.g., from one distance metric to another, or from an absolute value to a projected one), always check whether the test input is degenerate for that distinction. Symmetric, axis-aligned, or boundary-condition inputs often produce identical values under both the old and new formula. If the only test input is degenerate, the core fix is untestable and the test provides false confidence. Look for an explicitly non-degenerate input (e.g., an off-axis or angled configuration where the two formulas would produce meaningfully different results) before concluding the fix is tested.
 
 ---
 
@@ -40,7 +73,7 @@ When reviewing a fix that changes a distance calculation (e.g., Euclidean → ch
 
 **Category: Process/Model**
 
-When a requirements audit or correctness audit identifies a known implementation gap (e.g., missing `Math.Max` floor), always check whether the test suite has a test that documents the current incorrect behavior. If not, this is a coverage gap regardless of whether the gap is "acknowledged." A test that asserts the current (wrong) behavior prevents silent fixes and regression in either direction. Flag the absence of such a test as High priority even when the gap itself was flagged by a prior audit.
+When a requirements audit or correctness audit identifies a known implementation gap (e.g., a missing floor or ceiling constraint in a numeric computation), always check whether the test suite has a test that documents the current incorrect behavior. If not, this is a coverage gap regardless of whether the gap is "acknowledged." A test that asserts the current (wrong) behavior prevents silent fixes and regression in either direction. Flag the absence of such a test as High priority even when the gap itself was flagged by a prior audit.
 
 ---
 
@@ -48,7 +81,7 @@ When a requirements audit or correctness audit identifies a known implementation
 
 **Category: Process/Model**
 
-When a test uses `Is.GreaterThan(x)` or `Is.LessThan(x)` for the single test case that exercises the feature's core correctness (e.g., "sloped joist produces longer distance"), flag it as a weak assertion. The test proves the direction of change but not the magnitude. Any implementation that produces a result in the right direction (but wrong magnitude) passes. Recommend replacing with an exact expected value derived from the test geometry.
+When a test uses `Is.GreaterThan(x)` or `Is.LessThan(x)` for the single test case that exercises the feature's core correctness (e.g., "the corrected formula produces a larger result than the old formula for this specific non-degenerate input"), flag it as a weak assertion. The test proves the direction of change but not the magnitude. Any implementation that produces a result in the right direction (but wrong magnitude) passes. Recommend replacing with an exact expected value derived from the test geometry.
 
 ---
 
@@ -96,7 +129,7 @@ When a test is named `...WhenToggleEnabled` (or `...WhenFeatureOn`, `...IfFlagSe
 - The medium-severity finding is the **naming confusion**, not the correctness of the assertion.
 - The recommendation is a rename (remove the toggle qualifier) PLUS a note that the toggle-ON scenario for that behavior may be untested in the new code path.
 - Do not mark this High — the assertion is not wrong, only the name. But do explicitly surface it so the developer knows to add the toggle-ON test for the new path.
-- Combine this observation with a check of whether the new code path's equivalent guard (e.g., same `EffectiveDepth` check in a different method) has any test at all with the toggle enabled.
+- Combine this observation with a check of whether the new code path's equivalent guard (e.g., the same predicate check in a different method) has any test at all with the toggle enabled.
 
 ---
 
@@ -242,7 +275,7 @@ When a class with a `Reset()`, `Clear()`, or `Initialize()` method gains new mut
 
 **Category: Process/Model**
 
-In tests that verify "method A was called once" (via `Verifiable(Times.Once)`), the absence of a `Times.Never` assertion for a related "method B" is not caught by Moq — void methods default to no-op when called without setup. When two independently guarded code blocks each call a different method (e.g., restore top chord vs. restore bottom chord), both the positive assertion (called once) and the negative assertion (other method never called) are needed for the test to be complete. Flag the missing `Times.Never` assertions as Low when the independence is structurally clear in the code but not enforced by the test.
+In tests that verify "method A was called once" (via `Verifiable(Times.Once)`), the absence of a `Times.Never` assertion for a related "method B" is not caught by Moq — void methods default to no-op when called without setup. When two independently guarded code blocks each call a different method (e.g., restore component A vs. restore component B), both the positive assertion (called once) and the negative assertion (other method never called) are needed for the test to be complete. Flag the missing `Times.Never` assertions as Low when the independence is structurally clear in the code but not enforced by the test.
 
 ---
 
@@ -250,9 +283,9 @@ In tests that verify "method A was called once" (via `Verifiable(Times.Once)`), 
 
 **Category: Process/Model**
 
-When a test file contains multiple [TestFixture] classes that share a base class, helpers in the base class may be designed for one fixture but never invoked by another. This is a coverage illusion: you can see a helper that creates alternative member types (e.g., chord member, web member), assume those types are tested by the primary fixture, and miss that the helper is only called by a sibling fixture in the same file.
+When a test file contains multiple [TestFixture] classes that share a base class, helpers in the base class may be designed for one fixture but never invoked by another. This is a coverage illusion: you can see a helper that creates alternative input types (e.g., type A, type B), assume those types are tested by the primary fixture, and miss that the helper is only called by a sibling fixture in the same file.
 
-Detection pattern: when a guard is added to a method (e.g., `early return for non-panel-point member types''), check the primary fixture class in isolation — not the shared base class — for a test that actually invokes the guard path. If the helper that creates the non-primary member type appears only in the fixture for a different calculator or component in the same file, the guard is untested.
+Detection pattern: when a guard is added to a method (e.g., `early return for non-primary input types`), check the primary fixture class in isolation — not the shared base class — for a test that actually invokes the guard path. If the helper that creates the non-primary type appears only in the fixture for a different calculator or component in the same file, the guard is untested.
 
 Flag as **Medium** when:
 - The guard is new code added in the PR under review, AND
@@ -281,7 +314,7 @@ Flag as **Low** when:
 
 **Category: Process/Model**
 
-When a refactoring introduces a factory class (e.g., `SeatSelectionFlowFactory`) whose job is to construct objects previously built inline, check whether existing integration tests have a local helper method that also constructs those same objects directly. This helper method is a "parallel construction path" — it was written before the factory existed and was never updated to route through the factory.
+When a refactoring introduces a factory class (e.g., `ComponentFlowFactory`) whose job is to construct objects previously built inline, check whether existing integration tests have a local helper method that also constructs those same objects directly. This helper method is a "parallel construction path" — it was written before the factory existed and was never updated to route through the factory.
 
 The danger: all integration test assertions pass because the objects produced by the helper are correct. But the factory's code path (including any toggle branch, positional argument wiring, or runtime parameter threading) is never executed by any test. A bug in the factory is undetectable.
 

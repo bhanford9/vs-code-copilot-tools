@@ -39,9 +39,11 @@ Every Azure DevOps story must include:
 ## Critical Rules
 
 - **File paths**: Always plain text with backticks (e.g., `src/api/handler.ts`), NEVER markdown links
-- **Goal section**: Outcome-focused, not implementation details
-- **Details section**: No code snippets, no step-by-step procedures, focus on WHAT and WHERE
-- **Acceptance criteria**: High-level business requirements, not implementation details or test cases
+- **Section headers**: All five sections (`Blocked By`, `Backing Content`, `Goal`, `Details`, `Acceptance Criteria`) are H2 (`##`). There is no `## Description` wrapper around them.
+- **Goal section**: Product-outcome language, not technical language ("Users can export their profile data" not "The ExportService is extended to support JSON serialization"). 1–2 sentences maximum — if 3+ sentences are needed, split the story.
+- **Details section**: No code snippets, no step-by-step procedures, focus on WHAT and WHERE. Self-check before finalizing: "Does any sentence tell the developer HOW to implement this?" If yes, remove it.
+- **Acceptance criteria**: High-level business requirements independently testable by a QA engineer — not the developer who wrote the story. 3–7 criteria. Unit tests are always implied and do not need a separate criterion unless there is a specific coverage requirement.
+- **Output format**: Always `create_file` to a `.md` path (e.g., `work-items/<slug>.md`). Never paste the full story body in a chat message as the primary deliverable.
 
 ## Section Quick Reference
 

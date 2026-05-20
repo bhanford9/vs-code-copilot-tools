@@ -2,17 +2,26 @@
 
 > # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> **This file is committed to a shared repository and read across all projects and codebases.**
+> **This file is committed to a public shared repository and read across all projects and codebases.**
 >
-> The following are BANNED from this file:
-> - Class names, interface names, method names, field names
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
 > - File paths, namespace names, project names, solution names
-> - Work item IDs, ticket numbers, branch names
-> - Any name that is specific to one repository, team, or system
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
 >
 > **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that are true regardless of the codebase, programming language, or domain.
 >
-> **The test:** Remove all proper nouns. If the sentence still makes sense as general engineering advice, it belongs here. If it requires context from a specific project to be meaningful, it belongs in `LessonsLearned.md` (gitignored, local only).
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -98,7 +107,7 @@ When SP-001 fires on an eligibility, authorization, or validation method with nu
 
 ## Entry 4 — SP-003 static-call variant also appears in computed properties on entities, not just method bodies
 
-**Session**: Domain/contract layer structural review (TaskTracker.Core, May 2026)
+**Session**: Domain/contract layer structural review (May 2026)
 **Category**: Process/Model
 
 LessonsLearned Entry 1 noted that SP-003's static-call variant (inline system-clock access) appears in method bodies of service-layer classes. This session confirmed the same variant in a **computed property on a domain entity** — specifically a `Status` property that calls `DateTime.UtcNow` inline to determine a state value. This is distinct from a service method body: the static call is evaluated on every property read, not just during an explicit operation.
@@ -111,7 +120,7 @@ LessonsLearned Entry 1 noted that SP-003's static-call variant (inline system-cl
 
 ## Entry 5 — A general update command that bundles state-machine fields with content fields is a distinct smell confirmed in a pure contract layer
 
-**Session**: Domain/contract layer structural review (TaskTracker.Core, May 2026)
+**Session**: Domain/contract layer structural review (May 2026)
 **Category**: Process/Model
 
 Entry 2 first identified SP-006 (Feature Envy on State Transition) in an application/service layer. This session confirmed the same pattern in a pure **domain contract layer** (interfaces and request records only) — a general update record that carries a status-transition field alongside content fields, while the same service interface also declares dedicated named transition methods.
@@ -120,7 +129,7 @@ Entry 2 first identified SP-006 (Feature Envy on State Transition) in an applica
 
 ## Entry 6 — Two methods mapping the same type pair with intentionally different field sets is a distinct structural smell (Asymmetric Sibling Mappings)
 
-**Session**: Full ViewModel project structural review (TaskTracker.ViewModels, May 2026)
+**Session**: Full ViewModel project structural review (May 2026)
 **Category**: Process/Model
 
 When a class contains two methods that both transfer state from the same source type to the same target type (e.g., a factory/initializer and an updater), they will naturally cover different field sets — the updater may intentionally skip immutable fields. The structural risk is that field additions to the source type must be propagated to both methods with no compile-time enforcement, and the asymmetry is enforced only by comments or tribal knowledge.
@@ -135,7 +144,7 @@ When a class contains two methods that both transfer state from the same source 
 
 ## Entry 7 — Duplicated conditional initialization blocks are a structural smell even when the logic is simple
 
-**Session**: Full ViewModel project structural review (TaskTracker.ViewModels, May 2026)
+**Session**: Full ViewModel project structural review (May 2026)
 **Category**: Process/Model
 
 The same branching pattern (e.g., "if no board is set, use the global variant; otherwise use the scoped variant") appearing verbatim in two unrelated classes is a structural smell even if the logic is short. The structural risk is not the code volume but the implicit maintenance contract: a rule change requires finding every site independently. Unlike pure code duplication (which a linter can detect), the smell here is that the condition encodes a domain or scoping rule that belongs in one place.
@@ -152,7 +161,7 @@ The same branching pattern (e.g., "if no board is set, use the global variant; o
 
 ## Entry 6 — Dual-channel notification (SP-008 proposed) is distinct from SP-007 Side-Channel State Sharing
 
-**Session**: Domain/contract layer structural review (TaskTracker.Core, May 2026)
+**Session**: Domain/contract layer structural review (May 2026)
 **Category**: Process/Model
 
 SP-007 (Side-Channel State Sharing) covers two components exchanging state through an implicit, untyped side channel (string keys, file paths) without compile-time enforcement of the contract. The Dual-Channel Notification smell (proposed SP-008) is different: two typed, intentional interfaces both represent the same domain event but differ in transport (sync vs. async, in-process vs. network). The risk in SP-008 is **completeness** (every call site must invoke all channels) and **extensibility** (a third channel requires updating every call site). The risk in SP-007 is **discoverability** (the contract is invisible to the type system). They share no mechanism and should remain separate catalog entries.
@@ -163,7 +172,7 @@ SP-007 (Side-Channel State Sharing) covers two components exchanging state throu
 
 ## Entry 7 — "Misleading Async Contract" (SP-009 proposed) is detectable by searching for Task.FromResult at method exit
 
-**Session**: Domain/contract layer structural review (TaskTracker.Core, May 2026)
+**Session**: Domain/contract layer structural review (May 2026)
 **Category**: Process/Model
 
 When an interface method is declared with `Task<T>` return type and an `Async` suffix, but the implementation returns `Task.FromResult(...)` with no `await` anywhere in the method body, the async contract is misleading. The practical detection method: search for `Task.FromResult` in any class that implements an interface with an `Async`-suffixed method. Any match is a candidate for this pattern.

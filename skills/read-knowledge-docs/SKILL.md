@@ -34,6 +34,10 @@ Use this skill (or the `KnowledgeDocsResearcher` agent) when:
 
 Read files directly (without this skill) only when you already know exactly which file and section you need.
 
+### Skill Pairing Rule
+
+`read-knowledge-docs` and `create-knowledge-docs` are a paired set. Load both whenever the session intent includes **updating or extending** existing knowledge-base docs — not only when writing from scratch. `read-knowledge-docs` alone is sufficient only for pure research sessions with no intent to write. When in doubt whether you are "just reading" or "reading before writing," load both.
+
 ---
 
 ## Step 1: Intake

@@ -71,6 +71,14 @@ Any `📝 TODO` in the existing documentation that was answered during this sess
 **New terms used**
 Any term — domain, code, or system — that was used in this session and doesn't have a glossary entry.
 
+### Planning-Session Variant
+
+When the session was pure planning-doc authorship (no codebase search, no debugging), the standard prompts above typically yield few results. Use this prompt instead:
+
+> "What design decisions were made while authoring these step files that a future coding agent would get wrong without documentation? What behavioral constraints, service boundaries, or ephemeral-vs-persistent data distinctions were resolved during drafting?"
+
+Apply the scope gate to each result before classifying.
+
 ---
 
 ## Phase 2: Classify

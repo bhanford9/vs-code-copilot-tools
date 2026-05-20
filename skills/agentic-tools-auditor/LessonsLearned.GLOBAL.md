@@ -11,29 +11,9 @@
 
 The checking-csharp-errors SKILL.md was reported as entirely missing when it actually existed with different content than expected. The auditor should verify existence and content separately. Finding "no file" when a file exists is a High-confidence failure. Mitigation: add an explicit existence check step before evaluating content; report "file exists but lacks expected content" separately from "file not found."
 
-### Preference Scope Extrapolation
-
-When the user declined a hook for one specific item (#17 — orchestrator Stop hook for LessonsLearned), the agent extrapolated this as a general preference against hooks and segregated all subsequent hook proposals out of the main discussion. This was wrong. The user's reason was specific to that item (hook couldn't reason about session content; a flow step could). The agent should have recorded the reason and scope, then evaluated every subsequent hook proposal on its own merits. Rule added to SKILL.md: when a user declines a recommendation for one item, confirm scope explicitly before generalising.
-
-### Architecture Proposals Need a Discussion Gate
-
-Architecture proposals (agent splits, SessionStart hooks, phase-gate artifacts) were included in the roadmap without a collaborative review step. Some required a conversation before implementation (the Orchestrator split needed user confirmation of pain points). The user had to call this out. SKILL.md now requires architecture proposals to be held for explicit user discussion before being promoted to the roadmap.
-
-### Roadmap Didn't Capture All Findings
-
-Two clusters of findings (writing-csharp-tests improvements, REVIEW orchestration architecture proposals) fell outside the 20-item roadmap and were only caught in a separate cross-check pass at the end. The synthesis now includes a "Findings Outside the Roadmap" section to prevent this.
-
 ### Shared Severity Scale Required Across Auditors
 
 "Medium" in one AUDIT.md was not comparable to "Medium" in another. The synthesis priority table was harder to trust as a result. SKILL.md now requires a severity calibration table in AUDIT-CONTEXT.md before individual auditors start.
-
-### Structural Surgery Risk
-
-When removing the synthesis section from the Orchestrator during A4, the closing `</workflow>` tag was silently lost. Not caught until the next session. When deleting multi-line regions from structured documents, explicitly verify that all paired open/close tags are intact afterward.
-
-### Checklist Drift
-
-Completed items were not always marked done immediately — items #7 and #8 were finished but the checklist wasn't updated until later. Checklists must be updated as each item completes, not batched.
 
 ---
 
@@ -76,12 +56,6 @@ The following terms from audited skills are reliable signals of low-determinism 
 - "appropriate" — synonym for "I haven't defined this"
 - "some" — vague quantity with no bound
 
-### Conflict Resolution Decisions Made
-
-1. **Enum mapping strategy** — when `Enum.Parse` and Mapster `EnumMappingStrategy.ByName` both appear as alternatives in the same codebase, the Mapster approach is authoritative. `Enum.Parse` should be removed because it throws on unknown values and is case-sensitive. The skill with the more permissive suggestion should cross-reference the stricter skill.
-
-2. **Mapper method naming** — apparent conflicts between `ToModel()`/`ToEntity()` (application-layer names) and `MapToDomain()`/`MapToStorage()`/`UpdateFrom()` (infrastructure-layer names) are NOT conflicts — they operate at different layers with different directionality. When both appear, verify direction before flagging as a conflict.
-
 ### Process Notes
 
 - Sub-agent parallelism worked well up to 8 agents. For 9+ items, split into waves of 8. Attempting >10 parallel agents in one batch caused context management issues in this session.
@@ -104,14 +78,6 @@ The following terms from audited skills are reliable signals of low-determinism 
 - **Missing `disable-model-invocation: true` on sub-agents** — 6 of 9 code review pipeline agents lack this flag, allowing VS Code semantic matching to invoke pipeline-stage agents out of context.
 
 - **Zero LessonsLearned for high-churn skills** — 4 of 5 skills had no LessonsLearned.md. The `writing-csharp-tests` skill generates the most session activity (UnitTestWriter references it 4+ times per session) and had the highest practical need.
-
-### Documentation Notes
-
-- All five documentation URLs are current and accurate as of 2026-04-10.
-- **New finding vs. prior session:** VS Code now supports 8 hook lifecycle events (added `PreCompact`, `SubagentStart`, `SubagentStop`, `UserPromptSubmit`). Prior session only documented 4. Update SKILL.md reference table to include the 4 new events.
-- **`infer` field is deprecated** — replaced by `user-invocable` + `disable-model-invocation`. Any `.agent.md` using `infer:` should be updated. Not found in this session's files but worth adding to checklist.
-- **Agent-scoped hooks in frontmatter** remain in Preview (`chat.useCustomAgentHooks` required). The agentic-tools-auditor agent already uses them — flag this when the feature is stable.
-- **Skills standard now open (agentskills.io)** — portability is a genuine feature, not aspirational. User-level skills at `~/.copilot/skills/` work across workspaces, confirmed.
 
 ### Hardest Dimension to Assess
 
@@ -139,14 +105,6 @@ The following terms from audited skills are reliable signals of low-determinism 
 - **Critical failure modes in LessonsLearned never promoted to SKILL body** — writing-csharp-tests had this. Recommend a "Known Failure Modes" section in every SKILL.md populated from LessonsLearned entries.
 
 - **Broken skill reference** — `checking-csharp-errors` SKILL.md was entirely missing; only LessonsLearned.md existed. This causes silent failure on every skill load attempt. Always check for skill directories with ONLY a LessonsLearned.md.
-
-### Documentation Notes (2026-04-13)
-
-- All five documentation URLs are current and accurate as of April 2026. No changes from previous session's notes.
-- **`infer` confirmed deprecated** — docs explicitly show migration path to `user-invocable` + `disable-model-invocation`. Flag any agent using `infer:`.
-- **VS Code detects `.md` files in `~/.copilot/agents/`** — confirmed in docs for `.github/agents/` folder; behavior for `~/.copilot/agents/` is ambiguous. `07-WorkItemCreator.md` was present with wrong extension — may or may not load.
-- **Agent-scoped hooks remain Preview** — `chat.useCustomAgentHooks: true` required.
-- **All 5 REVIEW parallel auditors had `user-invocable: false`** — the task brief had this wrong (only MaintainabilityAuditor was observed to have it during inventory scan). Sub-agent reading the actual files was more accurate. Always trust actual file reads over inventory scan assumptions when inconsistencies appear.
 
 ### Hardest Dimension to Assess
 
@@ -207,17 +165,14 @@ The following terms from audited skills are reliable signals of low-determinism 
 
 ## vs-code-copilot-tools Workspace Audit — Session D (2026-04-21)
 
-### Both disable-model-invocation AND user-invocable: false = completely unreachable agent
-`individual-auditor.agent.md` had BOTH `user-invocable: false` AND `disable-model-invocation: true`. Per VS Code docs, the combination makes the agent unreachable via any mechanism: not from the picker, not via handoff, not via agent tool. `AgenticToolsAuditor` had `agents: [individual-auditor]` and called it via agent tool — all those invocations fail silently. When auditing sub-agents, always check that parallel/programmatic sub-agent targets have `user-invocable: false` ONLY (no `disable-model-invocation`).
+### `user-invocable` / `disable-model-invocation` flag matrix
+Promoted to SKILL.md Dimension 6. Core finding: combining both flags makes an agent completely unreachable; `user-invocable: false` alone is correct for agents invoked only via the `agent` tool.
 
 ### Hook exit-code mismatch: script says blocking but exits 0
-`check-test-comments.ps1` had a code comment stating "exits 2 (blocking) if comments are found" but the actual exit code was 0 in the violation path. The hook ran and reported findings but never blocked anything. When auditing hook scripts, always verify the exit code in the actual violation branch — a comment claiming blocking behavior is not the same as actually blocking. Add exit code checks to the Dimension 6 structural checklist.
+Promoted to SKILL.md Dimension 6 (Hooks structural checks).
 
 ### Prompts driving multi-step workflows silently fail without `mode: agent`
-`review-lessons.prompt.md` and `fork-and-improve.prompt.md` both contained instructions to read files and make edits, but had no `mode: agent` or `agent:` frontmatter. In default (ask/chat) mode, the agent reads the prompt but cannot execute file operations. No error is shown — it just doesn't work. When auditing prompts, always check: if the body contains "read", "edit", "write", or "run", it needs `mode: agent`.
-
-### grep_search may return stale results for deleted files
-`grep_search` returned a match for `skills/summarize-meeting-transcript/SKILL.md` which did not exist on disk (verified via `Test-Path`). This is a VS Code search cache artifact. Always verify existence with a terminal command when a grep hit seems unexpected. The discovery guide should note this caveat.
+Promoted to SKILL.md Dimension 6 (Prompt Files structural check).
 
 ### Process: Explore sub-agents cannot write files; use unnamed sub-agents for file creation
 `runSubagent` with `agentName: "Explore"` returns results but cannot create files — the Explore agent is read-only. Use `runSubagent` without `agentName` (or with a file-writing capable agent) when AUDIT.md files need to be written. Useful pattern: use Explore for analysis tasks that return summaries, use unnamed sub-agents for tasks that must create files.
@@ -227,120 +182,35 @@ Full workspace audit of 54 items (23 agents, 18 skills, 8 prompts, 3 instruction
 
 ### SessionStart Path Injection Is Not Feasible for Multi-Workspace Configs
 
-A `SessionStart` hook to write the vs-code-copilot-tools root path to a temp file was explored as an alternative to hard-coded install paths. It was rejected because:
-
-- vs-code-copilot-tools is loaded as a **secondary** skills/agents/hooks source into other workspaces via VS Code settings — agents run in the context of the active project workspace, not the vs-code-copilot-tools directory.
-- The hook fires in the active workspace context, making `$PSScriptRoot` and workspace-relative paths unreliable for identifying where vs-code-copilot-tools itself lives.
-- A per-session temp file could be made workspace-specific to avoid multi-session collisions, but the workspace context problem remains unsolvable without VS Code exposing the secondary config root as a variable.
-
-**Rule:** Do not propose `SessionStart` hooks for path injection in multi-workspace configurations. The documented install location (`~/Repos/vs-code-copilot-tools/`) is the correct and sufficient constraint. Hard-coded paths are intentional, not a defect.
-
----
-
+**Rule:** Do not propose `SessionStart` hooks for path injection when a skill/agent package is loaded as a secondary source into other workspaces. The hook fires in the active workspace context, making `$PSScriptRoot` and workspace-relative paths unreliable for identifying the secondary source location. Hard-coded install paths are intentional in this scenario.
 
 ---
 
 ## Review Pipeline Handoff Breakage (2026-04-14)
 
-### user-invocable: false breaks handoff buttons - never set this on handoff targets
-
-user-invocable: false makes an agent reachable only "as a subagent or programmatically" per VS Code docs. Handoff button clicks are user-initiated transitions, NOT programmatic invocations - VS Code cannot switch to an agent with this flag when the user clicks a handoff button. The button renders but does nothing; the active agent silently retains control and processes the next prompt itself.
-
-Affected agents during this incident: REVIEW-RequirementsAuditor, REVIEW-CodeCorrectnessAuditor, REVIEW-FinalSynthesizer - all had user-invocable: false, so every handoff in the sequential pipeline was broken.
-
-Rule: Any agent that appears as a handoffs.agent target must NOT have user-invocable: false. Use disable-model-invocation: true instead if you want to prevent unintended semantic invocation while keeping handoffs functional.
-
-### disable-model-invocation: true blocks subagent invocation - never set this on parallel-auditor agents
-
-disable-model-invocation: true prevents the agent from being invoked as a subagent by other agents. For agents that a coordinator must launch via the agent tool (the 5 REVIEW parallel auditors), this flag makes coordinator invocation silently fail.
-
-Rule: Agents intended as subagent targets must NOT have disable-model-invocation: true. Use user-invocable: false alone to hide them from the picker while keeping them invocable.
-
-### Correct flag matrix for review pipeline
-
-| Agent role | user-invocable | disable-model-invocation | Rationale |
-|---|---|---|---|
-| Entry point (Orchestrator, Coordinator) | default (true) | optional | Visible in picker; flag acceptable if semantic cold-start is undesirable |
-| Sequential handoff targets (RequirementsAuditor, CorrectnessAuditor, FinalSynthesizer) | default (true) | true (acceptable) | Reached via handoff buttons; flag prevents unintended semantic invocation |
-| Parallel auditors (5 agents) | false | **must be absent** | Hidden from picker; must be invocable via agent tool by Coordinator — flag would break all invocations |
-
-### Blanket Policy: Never Use `tools:` Restrictions on Agents
-
-User policy (2026-04-21): **Do not add or recommend `tools:` frontmatter lists on agents.** Tool names change frequently in VS Code, making these lists a constant maintenance burden. The performance difference between restricted and unrestricted tool access is negligible. Agents should run with all available tools.
-
-**Audit implication:** Never flag a missing `tools:` list as a defect. Never recommend adding one. If a `tools:` list already exists and is causing breakage (e.g., a renamed tool no longer resolves), recommend removing it rather than updating it.
-
----
-
-### Policy: Use `disable-model-invocation: true` Only in Special Situations
-
-User policy (2026-04-21, revised): **Use `disable-model-invocation: true` only when intentionally preventing semantic/unintended invocation for agents that are reached exclusively via handoff buttons or direct user switching** — never add it reflexively.
-
-What this flag actually prevents:
-- VS Code from semantically matching and suggesting the agent out of context
-- Other agents from invoking it via the `agent` tool (subagent invocation)
-
-What this flag does NOT prevent:
-- Handoff button clicks (user-initiated transitions — these work fine)
-- A user manually switching to the agent in the picker
-
-**When it is appropriate:** Mid-pipeline stage agents (e.g., GapFinder, GapResolver, ArchitecturalDesigner, Implementation, review pipeline sequential stages) that should not be cold-started by semantic matching. These are reachable via handoff buttons and not invoked via agent tool — the flag is safe and intentional.
-
-**When it is NOT appropriate:**
-1. **Never** use it on agents that another agent must invoke via the `agent` tool (parallel sub-agents, individual auditors). It will silently block all agent-tool invocations.
-2. **Never** combine it with `user-invocable: false` — that combination makes the agent completely unreachable.
-
-**Audit implication:** Do not flag the presence of `disable-model-invocation: true` as an automatic defect. Evaluate intent: if the agent is a pipeline stage reached only via handoffs, the flag is correct. If the agent needs to be launched via agent tool, it must be removed. If both flags are present together, that is always a defect.
-
-The access-control flag `user-invocable: false` remains for agents hidden from the picker (parallel sub-agents invoked exclusively via the `agent` tool).
+Flag matrix and access-control policies (`user-invocable`, `disable-model-invocation`, `tools:` restrictions) promoted to SKILL.md Dimension 6. See the flag matrix table there for the complete rules.
 
 ---
 
 ## vs-code-copilot-tools Workspace Audit — Session E (2026-04-21)
 
-### FEATURES.md Skill Name Drift Is Not Caught by the Audit
+### Documentation Index Skill Name Drift Is Not Caught by the Audit
 
-`FEATURES.md` referenced `summarize-meeting-transcript` — a skill name that does not exist. The actual skills are `summarize-remote-meeting` and `summarize-workshop-recording`. The per-item audits never flagged this because they audit individual config items, not the documentation index.
-
-**Rule:** After completing the implementation roadmap and before pre-commit cleanup, explicitly verify that every skill name referenced in `FEATURES.md` matches an actual directory under `skills/`. A quick check:
-
-```powershell
-# List all skill directory names
-Get-ChildItem -Path "C:\Users\$env:USERNAME\Repos\vs-code-copilot-tools\skills" -Directory | Select-Object -ExpandProperty Name
-```
-
-Compare against every skill name mentioned in `FEATURES.md`. Any name that doesn't appear in the directory listing is stale or wrong.
+Skill name references in documentation index files (e.g., `FEATURES.md`, `README.md`) are not audited by per-item audits. After completing the roadmap, explicitly verify that every skill name referenced in any documentation index matches an actual skill directory. Stale names cause silent confusion but no runtime error.
 
 ---
 
-## Session-Knowledge-Harvest Hook Pattern (2026-04-22)
+## Session-Knowledge-Harvest Hook Pattern
 
-### Stop Hook Is the Least-Noisy Lifecycle Event for Session-End Reminders
+**Tested and rejected:** A `Stop` hook for harvest reminders was implemented and removed — `Stop` fires unconditionally on every session end with no filtering capability (`stop_hook_active` is the only input field). Do **not** re-recommend unless VS Code ships a `Stop` input field with a tool-use count or transcript access.
 
-When evaluating hooks to reinforce the `session-knowledge-harvest` workflow, `Stop` is the correct lifecycle event:
-- Fires exactly once per session (not per prompt or per tool use)
-- Supports `systemMessage` output to post a non-blocking reminder in the chat panel at session end — the moment when the user would actually run the harvest
-- The `stop_hook_active` guard prevents loops; since the hook does not use `decision: "block"`, a loop is not actually possible, but the guard is still good practice
+**Cross-cutting behavioral rules** (rules that should apply in every session, every repo) belong in `general-agent-behavior.instructions.md` (`applyTo: "**"`), not workspace-specific `copilot-instructions.md`. User-level instructions apply across all workspaces automatically.
 
-`SessionStart` was considered but rejected: injecting context at session start adds pressure from turn one, which risks the agent over-documenting routine utility sessions. `UserPromptSubmit` was rejected as too noisy (fires every turn).
+---
 
-**Tried and removed (2026-04-22):** The `Stop` hook was implemented and tested. It fired unconditionally on every session end — including trivial sessions — and posted a noisy `systemMessage` in chat every time. The `Stop` input only carries `stop_hook_active`; there is no transcript, tool-use count, or any other signal to filter on. The hook was removed. The always-on instruction in `general-agent-behavior.instructions.md` and the `harvest.prompt.md` prompt file are the chosen approach instead.
+## VS Code Documentation Notes (Consolidated)
 
-### Future Audit Check: Is There a Better Hook for Knowledge Reminders?
-
-As of April 2026, VS Code has eight lifecycle events. None allows conditional "did meaningful work happen?" filtering from within the hook script — `Stop` input only carries `stop_hook_active`. Do **not** re-recommend a `Stop` hook for harvest reminders unless VS Code ships one of the following:
-
-- A `Stop` input field that includes a tool-use count or file-edit count for the session
-- A `transcript_path` field whose content is readable by the script before it exits
-- A new lifecycle event that only fires when the session contained substantive agent tool use
-
-Check for these in the VS Code hooks documentation on every audit run before considering any hook-based harvest reminder.
-
-### `general-agent-behavior.instructions.md` Is the Strongest Always-In-Context Channel
-
-When auditing where to place cross-cutting behavioral rules (rules that should apply in every session, in every repo), `general-agent-behavior.instructions.md` (`applyTo: "**"`) is more reliable than a workspace-specific `copilot-instructions.md` because:
-- It is loaded via VS Code user-level settings and applies across all workspaces automatically
-- It is co-located with the Ambiguity Scan rule, which has proven high compliance — the agent consistently reads and follows both rules together
-- A `copilot-instructions.md` only applies to the workspace it lives in
-
-**Audit implication:** When a cross-cutting behavioral rule (e.g., "always run the harvest skill at session end") needs to be enforced everywhere, recommend adding it to `general-agent-behavior.instructions.md` rather than creating a new workspace `copilot-instructions.md`.
+- **`infer:` field is deprecated** — replace with `user-invocable` + `disable-model-invocation`. Flag any `.agent.md` using `infer:`.
+- **Agent-scoped hooks in `.agent.md` frontmatter** remain in Preview (`chat.useCustomAgentHooks: true` required). Verify current stability status on each audit run.
+- **Hook lifecycle events**: 8 events as of April 2026 (`Stop`, `PostToolUse`, `PreToolUse`, `SessionStart`, `SubagentStart`, `SubagentStop`, `PreCompact`, `UserPromptSubmit`). Verify count in hooks documentation on each run — this changed from 4 to 8 across versions.
+- **Skills standard open (agentskills.io)** — user-level skills at `~/.copilot/skills/` work across all workspaces.

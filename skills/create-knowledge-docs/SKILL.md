@@ -61,6 +61,8 @@ A knowledge base is not a flat list of facts. It tells stories at multiple level
 3. **What needs a glossary?** — Any domain-specific terms, system-specific terms, or terms that are named differently in code vs. in the domain.
 4. **What needs a diagram?** — Any system with components that interact, any process with distinct phases, any concept that involves cycles or hierarchy.
 
+> **Warning — Domain Organization vs. Step Organization:** When the system was built in numbered implementation steps, there is a strong pull to organize docs around those steps. Resist this. Architecture docs describe the *finished system* organized by domain concept — what a thing *is* and why it is separate from something else. Step files describe *how to build it* in implementation order. Never conflate the two.
+
 ### Plan Output Format
 
 Present the plan as:
@@ -109,6 +111,15 @@ If the user says "looks good" or equivalent, proceed immediately. Do not re-summ
 
 Every document produced by this skill **must** follow the standards below. These are not optional — they are what makes the output useful for AI retrieval and human navigation.
 
+> **Content Quality Principle — Document the "Why," Not the "How"**
+>
+> The most common mistake when producing architecture docs is describing *what* each component does — information a capable engineer could infer by reading the code for 10 minutes. High-value documentation answers *why* a rule exists, *what requirement* it satisfies, and *what breaks* if it is violated.
+>
+> Before finishing any section, verify:
+> - [ ] The "Why does this exist?" question is answered with a domain requirement, not a technical explanation
+> - [ ] At least one rule is expressed as a constraint with a consequence: "If X is bypassed, Y breaks because Z"
+> - [ ] Any coding-agent warning names both what NOT to do and what TO do instead, with a brief reason
+
 ---
 
 ### 4a. File and Folder Conventions
@@ -127,12 +138,12 @@ docs/knowledge-base/
 ├── README.md                    ← root navigation index (unique — one per knowledge base)
 ├── glossary.md                  ← cross-cutting; always stays at root
 ├── 01-overview.md               ← leaf section (no sub-sections)
-├── 03-design-engine/
+├── 03-pricing-service/
 │   ├── 00-overview.md           ← section overview (replaces the flat file)
-│   ├── 01-chord-sizing.md       ← leaf sub-section
-│   └── 02-web-sizing/
+│   ├── 01-discount-model.md     ← leaf sub-section
+│   └── 02-shipping-rates/
 │       ├── 00-overview.md
-│       └── 01-v1s-web.md
+│       └── 01-standard-rates.md
 └── infographics/
 ```
 
@@ -153,7 +164,7 @@ Top-level and `00-overview.md` files must always be sufficient to build a mental
 #### Other File Naming Rules
 
 - File names: lowercase, hyphen-separated, no spaces
-- Names should be meaningful as standalone search queries: `chord-sizing.md` not `part1.md`
+- Names should be meaningful as standalone search queries: `discount-model.md` not `part1.md`
 - Use a subfolder for infographics: `infographics/`
 
 ---
@@ -390,6 +401,8 @@ The root `README.md` must:
 | [01-overview.md](01-overview.md) | High-level system scope and context | First thing, always |
 | [glossary.md](glossary.md) | All domain term definitions | Any time a term is unfamiliar |
 ```
+
+> **"Read When…" must be a trigger condition, not a topic label.** Write "Before implementing any payment flow" — not "Payment system." A trigger tells an agent exactly when to open the file; a topic label forces the agent to read every title before deciding.
 
 The README is the entry point for both human readers and AI agents discovering this knowledge base for the first time. Keep it short — it is a map, not content.
 

@@ -10,125 +10,26 @@ Do not document sessions that went smoothly.
 
 Category: Process/Model
 
-The first version of this skill contained domain-specific examples drawn from the project that was active during authoring (domain terms, system names, file paths). These had to be scrubbed in a follow-up session after the user flagged them as a data protection violation.
+Skill files that contain examples drawn from a real project — even theoretical examples that mirror a real system — are a data protection violation and require a follow-up scrubbing session.
 
 - DO use completely invented, generic examples: payment gateways, schedulers, auth flows, queue systems.
-- DON'T use domain terms, system names, or concepts from any real project — even "theoretical" examples that happen to mirror a real system are a violation.
+- DON'T use domain terms, system names, or concepts from any real project.
 - When in doubt, ask: could a reader identify the project from this example? If yes, replace it.
 
 ---
 
-## Mermaid Node Labels Require `<br/>` Not `\n` for Line Breaks
-
-Category: Process/Model
-
-All Mermaid node labels generated during the initial documentation session used `\n` for line breaks (e.g., `["Design Engine\n(chooses geometry)"]`). These rendered as the literal characters `\n` instead of a line break in every renderer tested.
-
-- DO use `<br/>` inside Mermaid node label strings for line breaks.
-- DON'T use `\n` — it is not interpreted as a newline by Mermaid.
-- Applies to all node types: rectangular `[]`, round `()`, diamond `{}`, cylinder `[()]`, etc.
-
----
-
-## Mermaid Subgraph Arrows Should Target the Subgraph ID, Not Internal Nodes
-
-Category: Process/Model
-
-When a container node (e.g., a shared data model) was expanded into a `subgraph` with internal nodes, the arrows were rerouted to connect to those internal nodes. This scattered edge labels throughout the diagram interior and made the layout unreadable.
-
-- DO connect external arrows to the `subgraph` ID — they attach cleanly to the outer boundary.
-- DON'T route arrows to internal nodes inside a subgraph unless the diagram's explicit purpose is to show which internal part is accessed.
-- Internal nodes inside a subgraph should be a visual listing only — no edges of their own unless essential.
-
----
-
-## Knowledge Base Directory Structure Needs an Explicit Convention for Section Folders
-
-Category: Process/Model
-
-The initial skill specification described a flat numbered file scheme (`03.1-topic.md`, `03.2-topic.md`). When the user asked for directory cleanliness, the flat scheme was replaced with a proper hierarchy — but this required a retrofit conversation rather than being designed in from the start.
-
-- DO specify a directory-based hierarchy from the outset: each section is either a leaf file or a folder containing `00-overview.md` plus numbered children.
-- DON'T use dot-notation flat filenames (e.g., `03.1-topic.md`) — they don't scale and obscure the real structure.
-- The section overview file inside a folder must be named `00-overview.md`, not `README.md`. `README.md` is reserved for the single knowledge base root navigation index. Using `README.md` inside section folders causes ambiguity for agents doing `file_search` and loses the numbering signal.
-- `00` is reserved — never use it for a content sub-section.
-
----
-
-## Migration Steps Belong in the Skill, Not Just Discovered at Migration Time
-
-Category: Process/Model
-
-The migration procedure (flat file → section folder) was written into the knowledge base README rather than being part of the skill itself. Future uses of this skill should have the migration steps available without needing to find the project-specific README.
-
-- The skill should include the 5-step migration procedure as a standard section:
-  1. Create folder
-  2. Move flat file to `00-overview.md`
-  3. Add sub-section files
-  4. Update cross-references
-  5. Update the root README's Reading Order table
-
----
-
-## Skill Was Skipped During Update Sessions Due to Creation-Only Language
-
-Category: Process/Model
-
-The SKILL.md description used creation-only language ("Build", "creating", "Produces a set of layered markdown documents"). Agents correctly skipped this skill when adding content to existing docs because the trigger language didn't match "editing an existing file."
-
-Fix applied: SKILL.md description updated to say "Build or extend", "Produces or updates", explicitly states "Use when CREATING OR UPDATING", and adds: "This skill defines the structural conventions that must be followed any time you write to a knowledge-base-format document — not just when building from scratch."
-
-- DO load this skill any time you write to a knowledge-base-format document — new file, new section, or a paragraph addition to an existing file.
-- DON'T treat this as a creation-only skill. The writing conventions (YAML front matter, heading style, TODO format, cross-reference syntax) apply equally to edits.
-
----
-
 ## Onboarding Transcripts Are High-Generalization Sources — Treat Specific Claims as TODOs
+
 Category: Process/Model
 
 When the documentation source is a meeting transcript (especially an onboarding or teaching session), speakers routinely simplify. Specific numbers and categorical claims from a teaching conversation are often approximations, not authoritative facts. Writing them as stated facts into reference documentation creates incorrect docs that require a follow-up correction pass.
 
-Examples of what went wrong in one session:
-- "~70 load combinations" (actually varies per joist run) was written as `~70 defined` in a heading
-- `LoadCategoryKey = category + case + component` was written as a complete definition (the real structure has more fields)
-- Specific named examples from post-stiffness processing were listed without being verified against the codebase
+Examples of what went wrong:
+- A count stated conversationally (e.g., "~50 event types") was written as a fact in a heading, but the actual count varies by context
+- A simplified formula (e.g., `RecordKey = type + source + component`) was written as a complete definition, but the real structure has additional fields
+- Named examples of domain-specific processing steps were listed without being verified against the codebase
 
 Rule:
 - If the source is a meeting/onboarding transcript, **any specific number, count, or formula** stated conversationally should be written as `> 📝 TODO: Verify — taken from onboarding discussion, may be a simplification` rather than stated as fact.
 - Architectural descriptions (how things work conceptually) from onboarding transcripts are generally trustworthy. Specific quantities and exhaustive enumerations are not.
 - DO: capture the concept accurately. DON'T: promote the approximate number into a heading or authoritative statement.
-
----
-
-## The "Why Not How" Distinction Is Routinely Violated (2026-05-13)
-
-Category: Process/Model
-
-The most common mistake when producing architecture docs is writing a technical spec instead of a requirements-and-rationale document. The agent defaults to describing *what* each component does because that information is available from the code. The information the code doesn't provide — *why* a rule exists, *what requirement* it satisfies, *what breaks* if it's violated — is exactly what the docs should contain.
-
-**Concrete test:** Read a section you just wrote and ask: "Could a capable engineer infer this by reading the code for 10 minutes?" If yes, the section has low documentation value. The high-value content is the "why" behind design decisions, separation-of-concerns choices, and behavioral contracts.
-
-**Checklist for each section before finishing:**
-- [ ] The "Why does this exist?" question is answered with a domain requirement, not a technical explanation
-- [ ] At least one rule is expressed as a constraint with a consequence: "If X is bypassed, Y breaks because Z"
-- [ ] Any coding agent warning names both what NOT to do and what TO do instead, with a brief reason
-
----
-
-## The README "Read When..." Column Is Load-Bearing (2026-05-13)
-
-Category: Process/Model
-
-The reading order table in README.md must include a "Read When..." column. Without it, a future agent must read the title of every document to decide which one it needs — consuming tokens on irrelevant docs. With it, the agent scans one table row and opens exactly the right file.
-
-The "Read When..." column describes the trigger condition ("Before touching eligibility or QueuedForDispatch transitions"), not just the topic ("Eligibility model"). Always write it as a trigger.
-
----
-
-## Domain Organization vs. Step Organization (2026-05-13)
-
-Category: Process/Model
-
-When a system was built in numbered implementation steps, there is a strong pull to organize architecture docs around those steps. This is wrong. A future agent doesn't care that Machine was added in Step 7. It cares what a Machine *is* and why it's separate from a Workspace.
-
-**Rule:** Architecture docs describe the *finished system* organized by domain concept. Step files describe *how to build it* in implementation order. Never conflate the two.

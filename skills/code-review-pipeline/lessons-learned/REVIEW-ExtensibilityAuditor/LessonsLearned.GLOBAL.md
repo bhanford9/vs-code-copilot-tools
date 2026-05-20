@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-ExtensibilityAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -23,6 +38,36 @@
 ## When to Append an Entry
 
 Only append if the session revealed something surprising, a false positive pattern, or a finding worth noting for future extensibility reviews. If the review ran smoothly using existing knowledge, skip the update.
+
+---
+
+## 2026-05-19 — Positional Record as Event Payload: Severity Depends on Who Constructs It
+
+**Finding**: When a `sealed record` type uses positional syntax and serves as an event/notification payload (e.g., a toast notification record fired through a service event), the extensibility risk of adding optional fields is **lower than it appears** if the record is only ever constructed through a single factory method (e.g., a `private void Fire(string, Level)` helper). Adding an optional positional parameter at the end of the constructor (with a default value) is non-breaking for that one factory site. Rate this **Low** if construction is encapsulated behind a private factory; rate it **Medium** if callers construct the record directly across multiple projects or in test code.
+
+**Heuristic**: Before citing "breaking constructor change" for a positional record, check: (a) how many distinct call sites construct the record directly, and (b) whether all construction goes through a factory method. If all construction flows through one factory, the extension cost is ~1 line. The finding is still valid (init-based records are more ergonomic for optional-field growth), but the severity must reflect the actual blast radius, not the theoretical one.
+
+**Corollary**: The recommendation to convert to `init`-based properties is still sound for ergonomic reasons (enables `new T { Field = x }` object initializer syntax, which is more readable for records with many optional fields). But frame it as an ergonomics improvement rather than a blocking extensibility risk when the factory pattern already exists.
+
+---
+
+## 2026-05-19 — Dirty-Tracking via `ToModel()` Serialization: Silent Omission Is a Reliable Medium Finding
+
+**Finding**: When a ViewModel's dirty-tracking mechanism works by calling `ToModel()` (a projection to the data model type) and serializing the result, any data model field that is NOT mapped in `ToModel()` is silently excluded from change detection. The Save button stays disabled while the user edits the excluded field, and the change is lost on reload. There is no compiler error, no runtime exception, and no obvious test to write — the omission is invisible. This is a reliable **Medium** finding when: (a) the data model is expected to grow new fields, and (b) there is no test that asserts complete field coverage. Rate as **Low** only if the model is explicitly frozen (e.g., a DTO from an external API with no roadmap additions).
+
+**Heuristic**: When you see dirty-tracking via serialization of `ToModel()` output, always compare the set of `[ObservableProperty]` fields on the ViewModel against the set of serializable properties on the data model type. Any ViewModel field that does not appear in `ToModel()` is either transient UI state (correct — not a finding) or a missing field (incorrect — a finding). Distinguish between the two by asking: "Would a user expect changes to this field to be saved?"
+
+**Recommended fix pattern**: A reflection-based unit test that asserts `typeof(DataModel).GetProperties(BindingFlags.Public | BindingFlags.Instance).All(p => json.Contains(p.Name))` where `json` is the output of `viewModel.ToModel()` serialized with the same options as the dirty tracker. This turns silent omission into a CI failure.
+
+---
+
+## 2026-05-19 — Private Static Strategy Methods Inside Services: Reliable Medium for Testability+Extensibility
+
+**Finding**: When a service class contains a `private static bool SomeStrategy(T candidate, T existing)` method that implements a named, documented replacement rule (e.g., "timestamp-wins merge"), the method is both untestable in isolation and non-swappable without editing the service body. This is a reliable **Medium** finding when the strategy is documented as a deliberate policy choice (implying future policy variation is plausible). The fix is always the same: extract the strategy as a `Func<T, T, bool>` delegate parameter with a default value pointing to the private static — zero behavior change, full testability.
+
+**Heuristic**: In any service that has a private static method with a name like `IsMoreRecent*`, `ShouldReplace*`, `HasPriority*`, or `CompareFor*`, ask: (a) is this strategy documented as a specific named policy? (b) could the policy change based on context? If yes to both, flag as Medium. The delegate default pattern is the lowest-cost fix — it preserves backward compatibility and enables both unit testing and future injection.
+
+**Corollary**: `private static` is correct for helper methods that have no policy semantics (formatting, parsing, null-checks). Reserve the Medium finding for methods whose name implies a deliberate choice among alternatives.
 
 ---
 
@@ -54,7 +99,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-16 — Data Model Granularity Mismatch Is a Compounding Extensibility Risk
 
-**Finding**: When a data model carries a single instance of a type (e.g., `Review: ReviewEntry` on a package item) but the roadmap plans to expand it to multiple instances (e.g., one review entry per mark), this is not just a correctness defect — it's an extensibility risk that compounds. Every UI feature built on top of the single-instance model must be refactored when the model is corrected. The earlier the mismatch is caught, the lower the refactor cost. Always check: does the granularity of the data returned by the service match the granularity that planned features will need? If the answer is "planned features need finer granularity than the current model provides," flag as Medium and recommend the model change before UI build-out continues.
+**Finding**: When a data model carries a single instance of a type (e.g., `Result: ResultEntry` on an aggregate item) but the roadmap plans to expand it to multiple instances (e.g., one result entry per sub-item), this is not just a correctness defect — it's an extensibility risk that compounds. Every UI feature built on top of the single-instance model must be refactored when the model is corrected. The earlier the mismatch is caught, the lower the refactor cost. Always check: does the granularity of the data returned by the service match the granularity that planned features will need? If the answer is "planned features need finer granularity than the current model provides," flag as Medium and recommend the model change before UI build-out continues.
 
 **Heuristic**: Look for fields like `SomeItem Item { get; set; }` (singular) on a container where the requirements audit describes a future state of `List<SomeItem> Items { get; set; }` (plural). The singular field is the signal. The severity depends on how much UI is already built on top of it.
 
@@ -62,7 +107,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-18 — Enum-as-Gate-Registry Is a Reliable High Finding
 
-**Finding**: When an interface has a `Name` property typed as an enum (e.g., `IEligibilityGate.Name => EligibilityGateName`), that enum is a closed registry in the core library. Every new implementation of the interface requires a core library change, violating OCP. This is a reliable **High** finding. The fix is always the same: replace the enum type with `string` and provide a constants class for well-known values.
+**Finding**: When an interface has a `Name` (or `Kind`, or `Type`) property typed as an enum (e.g., `IExtensionPoint.Kind => ExtensionPointKind`), that enum is a closed registry in the core library. Every new implementation of the interface requires a core library change, violating OCP. This is a reliable **High** finding. The fix is always the same: replace the enum type with `string` and provide a constants class for well-known values.
 
 **Heuristic**: Any interface where a property returns an enum that represents "which kind am I" (registry pattern) is a candidate for this finding. Contrast with enums that represent *state* (valid) vs enums that represent *identity* (risky).
 
@@ -78,7 +123,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-18 — `Enum.TryParse` Is the Fix for Closed Switch-on-Status Patterns
 
-**Finding**: When a CLI command maps a string arg to an enum value via a `switch` (e.g., `"pending" => TaskItemStatus.Pending`), any new enum value is silently unhandled (falls through to default). This is always a Medium finding. The fix is always one line: `Enum.TryParse<TEnum>(value, ignoreCase: true, out var parsed)`. Flag every such pattern — it is a consistent one-line fix with high forward-extensibility value.
+**Finding**: When a CLI command maps a string arg to an enum value via a `switch` (e.g., `"pending" => EntityStatus.Pending`), any new enum value is silently unhandled (falls through to default). This is always a Medium finding. The fix is always one line: `Enum.TryParse<TEnum>(value, ignoreCase: true, out var parsed)`. Flag every such pattern — it is a consistent one-line fix with high forward-extensibility value.
 
 **Corollary**: The silent fallback to "return all" or "use default" is technically functional but behaviorally incorrect — callers expecting an empty result for an invalid filter get all results instead. Mention this behavioral inconsistency alongside the extensibility finding.
 
@@ -126,7 +171,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-12 — Request/DTO Record Field Comparison Is a Reliable Extensibility Check
 
-**Finding**: When an entity has a FK column (e.g., `BoardId`, `OwnerId`) but the corresponding request/DTO record does not include that field, new objects can never be assigned that relationship through the normal API surface. The service's `AddAsync` method will never set the field. The data arrives unassigned and must be backfilled externally. This is a Low-to-Medium extensibility finding (exact severity depends on how soon the FK is needed) that is easy to miss because the entity and the request look correct in isolation. Always compare FK fields between entity and request records as a checklist step.
+**Finding**: When an entity has a FK column (e.g., `OwnerId`, `WorkspaceId`) but the corresponding request/DTO record does not include that field, new objects can never be assigned that relationship through the normal API surface. The service's `AddAsync` method will never set the field. The data arrives unassigned and must be backfilled externally. This is a Low-to-Medium extensibility finding (exact severity depends on how soon the FK is needed) that is easy to miss because the entity and the request look correct in isolation. Always compare FK fields between entity and request records as a checklist step.
 
 ---
 
@@ -158,9 +203,9 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-14 — Domain-Constrained Binary Parameters Are Low Severity, Not Medium
 
-**Finding**: The existing lesson about `bool` parameters says "Medium when a method has exactly two states and a third variant is plausible in the domain context." The key qualifier is **domain context**. When a `bool` encodes a **physical or domain-structural concept** where exactly two values are legally possible (e.g., left end / right end of a physical member, left side / right side of a joist), rate it as **Low**, not Medium. The "plausibility of a third variant" test fails when the domain itself constrains the cardinality to two.
+**Finding**: The existing lesson about `bool` parameters says "Medium when a method has exactly two states and a third variant is plausible in the domain context." The key qualifier is **domain context**. When a `bool` encodes a **physical or domain-structural concept** where exactly two values are legally possible (e.g., left end / right end of a physical member, primary pass / secondary pass of an operation), rate it as **Low**, not Medium. The "plausibility of a third variant" test fails when the domain itself constrains the cardinality to two.
 
-**Contrast**: A `bool useW2Fallback` that selects between two calculation strategies IS plausibly extensible to three strategies — rate that Medium. A `bool isRightSeat` on a joist factory where a joist has exactly two ends by structural definition is NOT plausibly extensible — rate that Low, with a note that an enum would improve readability without changing the severity assessment.
+**Contrast**: A `bool useSecondaryStrategy` that selects between two calculation strategies IS plausibly extensible to three strategies — rate that Medium. A `bool isSecondSide` on a factory for a component that by definition has exactly two sides is NOT plausibly extensible — rate that Low, with a note that an enum would improve readability without changing the severity assessment.
 
 **Heuristic**: Before assigning Medium for a bool parameter, ask: "Is there a structural, physical, or contractual reason this can only ever be two values?" If yes, downgrade to Low.
 
@@ -169,7 +214,7 @@ Only append if the session revealed something surprising, a false positive patte
 **Date**: 2026-04-28
 **Category**: Process/Model
 
-When a private method on a resolver/calculator accepts a `bool` parameter that selects between two fundamentally different fallback or strategy paths (e.g., `bool useW2Fallback`), treat it as a Medium extensibility finding. The flag signals that the method is doing two different jobs unified by a boolean rather than by abstraction. The correct severity is Medium (not Low) when the method has exactly two states and a third variant is plausible in the domain context. The correct recommendation is a `Func<...>` strategy parameter or two separate methods, not an enum — enums require modification too. Only escalate to High if a third variant is explicitly planned or if the boolean selects between behaviors with different correctness consequences (not just different fallback values).
+When a private method on a resolver/calculator accepts a `bool` parameter that selects between two fundamentally different fallback or strategy paths (e.g., `bool useLegacyFallback`), treat it as a Medium extensibility finding. The flag signals that the method is doing two different jobs unified by a boolean rather than by abstraction. The correct severity is Medium (not Low) when the method has exactly two states and a third variant is plausible in the domain context. The correct recommendation is a `Func<...>` strategy parameter or two separate methods, not an enum — enums require modification too. Only escalate to High if a third variant is explicitly planned or if the boolean selects between behaviors with different correctness consequences (not just different fallback values).
 
 ---
 
@@ -184,7 +229,7 @@ When a C# 8+ interface uses default property/method implementations that `new` u
 
 ## 2026-04-22 — Feature Toggle Severity Depends on Toggle Lifetime
 
-**Finding**: When auditing toggle-duplicated dispatch logic, check `appsettings.shared.json` (or the equivalent default configuration file) to determine whether a feature toggle is a **temporary safe-release flag** or a **long-lived opt-in flag**. A toggle set to `"Off"` globally with no documented retirement plan is permanent. Permanent toggle duplication should be rated High severity; temporary safe-release toggles are Medium. The two look identical in code — only the config file reveals intent.
+**Finding**: When auditing toggle-duplicated dispatch logic, check the application's shared configuration file (or the equivalent default configuration file for the deployment environment) to determine whether a feature toggle is a **temporary safe-release flag** or a **long-lived opt-in flag**. A toggle set to `"Off"` globally with no documented retirement plan is permanent. Permanent toggle duplication should be rated High severity; temporary safe-release toggles are Medium. The two look identical in code — only the config file reveals intent.
 
 **Pattern**: Search for the toggle name in the app settings file early in the review. If the toggle is "Off" in shared/production settings, treat the duplication as long-lived.
 
@@ -210,7 +255,7 @@ When two flow steps must always appear in sequence (e.g., StepA followed immedia
 
 **Category**: Process/Model
 
-When a codebase uses an abstract `FlowDecision` base class with a `DecideStep(TContext)` override as the primary extension mechanism, concrete subclasses that read all state from the shared context object (no injected dependencies) are idiomatic — **do not flag them as tight-coupling**. The context object is the intentional single dependency for all decision steps. Similarly, `AddSingleton`-free registration of parameterless decision classes directly instantiated in a constructor is the correct pattern, not a DI violation.
+When a codebase uses an abstract template-method decision base class with a single `Decide(TContext)` override as the primary extension mechanism, concrete subclasses that read all state from the shared context object (no injected dependencies) are idiomatic — **do not flag them as tight-coupling**. The context object is the intentional single dependency for all decision steps. Similarly, registration of parameterless decision classes directly instantiated in a constructor (when the class has no service dependencies) is the correct pattern for this template-method design, not a DI violation.
 
 Also: when an `internal interface` gains a new property (the standard extensibility step in this pattern), the blast radius is bounded to one assembly. Do not report this as a "breaking API change" — it is specifically not that when the interface is internal.
 
@@ -220,7 +265,7 @@ Also: when an `internal interface` gains a new property (the standard extensibil
 
 **Category**: Process/Model
 
-When sibling classes (e.g., `TopChordDesignEngineFlow` and `BottomChordDesignEngineFlow`) have different capabilities — one has a guard, the other does not — verify the business reason before flagging as a DRY violation or extensibility gap. Domain context frequently justifies asymmetry: if the skip condition is driven by a concern that genuinely only applies to one chord, separate implementations are the correct design. Always check the requirements-audit for the business reason before rating asymmetry at Medium or above.
+When sibling classes (e.g., two processor variants for the two sides of a physical or logical pair) have different capabilities — one has a guard, the other does not — verify the business reason before flagging as a DRY violation or extensibility gap. Domain context frequently justifies asymmetry: if the skip condition is driven by a concern that genuinely only applies to one of the siblings, separate implementations are the correct design. Always check the requirements-audit for the business reason before rating asymmetry at Medium or above.
 
 ---
 
@@ -234,15 +279,6 @@ When sibling classes (e.g., `TopChordDesignEngineFlow` and `BottomChordDesignEng
 3. Is there a test that verifies the bypass?
 
 If (3) is missing, flag High. If (2) is present with no retirement comment, recommend adding a `// RETIREMENT NOTE` comment at the bypass site.
-
----
-## 2026-05-06 — Version-Specific Namespace Does Not Guarantee Version-Specific Routing
-
-**Finding**: When a calculator class lives in a namespace named after a specification version (e.g., `Sji45.PanelPointShearStressCalculator`), do NOT assume it is only used for that version. Check the provider's `BuildCalculators` method to see whether it is version-routed or shared. A common pattern: a base calculator in the `Sji45` namespace is instantiated unconditionally in the shared provider, and version-specific overrides are applied via a separate mutation mechanism. If the mutation interface for a given member type has no version-specific implementation, the Sji45 calculator runs for ALL versions.
-
-**Consequence for audits**: If a fix targets "the Sji45 path" but the calculator used is shared (no version-specific mutation override), the fix implicitly affects all versions. Check whether characterization test reference files were updated for ALL versions that use the calculator — not just the named version. If only one version's reference files were updated, flag a High finding: the toggle/fix applies to an untested code path.
-
-**Pattern**: Search for `IPanelPointMutations` (or the equivalent mutation interface for the member type). If no `*Sji46Mutations.cs` implementation exists for that interface, the behavior is shared. Do this check before concluding a fix is version-isolated.
 
 ---
 

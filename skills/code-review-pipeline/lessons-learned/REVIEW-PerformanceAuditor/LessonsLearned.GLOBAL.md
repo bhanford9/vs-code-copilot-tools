@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-PerformanceAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -34,7 +49,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-04-24 — When new code is inserted inside an existing inner loop, check hoistability before writing the finding
 
-**Observation**: A new `if` branch was added inside an existing nested loop. The branch introduced a LINQ query whose result depended only on the outer-loop context (the load combination key), not the inner-loop variable (the force output). Because it was inside the inner loop, it ran n_inner times with the same result every time — classic hoistable computation.
+**Observation**: A new `if` branch was added inside an existing nested loop. The branch introduced a LINQ query whose result depended only on the outer-loop context (the outer iteration key), not the inner-loop variable. Because it was inside the inner loop, it ran n_inner times with the same result every time — classic hoistable computation.
 
 **Rule**: When reviewing any new code added inside an `if` block or nested loop, immediately ask: "Does any sub-expression depend only on outer-scope variables?" If yes, flag as a Medium hoisting opportunity. This is especially common when a developer adds a feature branch inside an existing loop without considering that the branch condition or its sub-computations could be evaluated once before the loop.
 
@@ -130,13 +145,11 @@ When `ExecuteUpdateAsync` is used for optimistic concurrency, the code must alwa
 
 ---
 
-## 2026-04-22 — Small-n pre-existing framework patterns: do not escalate
+## Pre-existing small-n framework patterns: do not escalate
 
-**Context**: `SegmentedEdge.DistanceAlong` calls `_line.ToSegments()` multiple times without caching. `FitOuterLappedChordReinforcement` is created per-property-access in logic providers.
+**Observation**: Pre-existing framework helpers that perform multiple passes over small fixed-size collections (n = 2–5 items) without caching are often found in geometry, graph, or segment-processing libraries. Similarly, object-creation expressions in logic-provider properties may appear to allocate on every access but are memoized by the framework.
 
-**Observation**: Both are pre-existing patterns not introduced by the change under review. n = 2–5 segments makes the repeated enumeration immeasurable. The finding is Low/pre-existing and worth noting but not escalating.
-
-**Rule**: When raising a finding on a geometry framework helper, confirm whether it was introduced by the change or was already present. Pre-existing patterns at small fixed n should be Low at most, with a clear note that the change did not introduce them.
+**Rule**: Before raising any allocation or repeated-enumeration finding, confirm whether the pattern was introduced by the change under review, and establish the actual n at runtime. Pre-existing patterns at small fixed n (2–5) should be Low at most, with a clear note that the change did not introduce them.
 
 ---
 
@@ -174,7 +187,7 @@ When `ExecuteUpdateAsync` is used for optimistic concurrency, the code must alwa
 
 ## 2026-04-29 — Double-call pattern across adjacent pipeline steps: check for env-level result caching opportunity
 
-**Observation**: In a stepped pipeline, two adjacent steps called the same O(members × load_cases) operation on identical inputs — one step used a filtered subset of the result, the next step used the complementary subset. Neither step stored the full result for the other to consume. The correct Medium finding is "redundant computation on shared inputs" with the recommendation to cache the result on the shared environment/context object between steps.
+**Observation**: In a stepped pipeline, two adjacent steps called the same O(n × m) operation on identical inputs — one step used a filtered subset of the result, the next step used the complementary subset. Neither step stored the full result for the other to consume. The correct Medium finding is "redundant computation on shared inputs" with the recommendation to cache the result on the shared environment/context object between steps.
 
 **Rule**: When a bump/retry loop contains two consecutive steps that call the same expensive method with the same parameters, flag as Medium. The fix pattern is: (a) identify the shared environment/context object, (b) add a nullable result field for the intermediate value, (c) first step populates it, second step reads it. Only apply if the work is genuinely meaningful (O(N) with non-trivial N) — not for O(1) lookups.
 
@@ -201,3 +214,19 @@ When `ExecuteUpdateAsync` is used for optimistic concurrency, the code must alwa
 4. The fix is always a local hoist: `var cached = SomeClass.TheProperty;` before the loop
 
 This is distinct from the "struct vs class" lesson — even if allocation cost alone is small, a hidden lock in the constructor escalates severity. Read the constructor, not just the allocation type.
+
+---
+
+## 2026-05-19 — Blazor bool computed properties backed by non-trivial computation are evaluated once per razor reference per render
+
+**Observation**: A dirty-state property (`bool IsDirty => expensive()`) was referenced three times in a Razor template (class binding, `disabled` attribute, conditional label). On each render cycle, the expensive computation ran three times — not once. The template's multiple references were easy to miss because each reference looked cheap in isolation, and the property returned a simple `bool` (not a list or complex object).
+
+**Rule**: When reviewing a Blazor component that exposes a bool expression-bodied property backed by non-trivial computation (JSON serialization, full-object traversal, LINQ with materialization), count how many times the Razor template references that property. Multiply the per-call cost by that reference count to get the true per-render cost. The fix — cache in a backing field, recompute only on mutation — is the same as for LINQ double-enumeration. The "IEnumerable double-enumeration" rules already in this file apply equally to bool properties if their backing computation is expensive.
+
+---
+
+## 2026-05-19 — `Task.Delay` auto-expire timers fire a ghost StateHasChanged after early manual dismissal
+
+**Observation**: A toast notification component used `Task.Delay(N)` to auto-expire items from the visible list. The component also allowed manual dismissal via a click handler. When a user clicked dismiss, the toast was removed immediately — but the `Task.Delay` timer continued running and fired `StateHasChanged()` N milliseconds later as a ghost re-render against a list that no longer contained the item.
+
+**Rule**: When reviewing any UI component that combines (a) `Task.Delay`-based auto-expiry and (b) an early-dismiss action, verify that the delay is cancelled on early dismiss. The correct pattern is a `CancellationTokenSource` keyed per item: the dismiss handler cancels the token, and the timer path catches `TaskCanceledException` and returns without calling `StateHasChanged`. Ghost renders from orphaned timers are functionally harmless in most cases, but they indicate a missing cleanup path. Rate as Low unless the component is rendered at high frequency or the render cost is non-trivial.

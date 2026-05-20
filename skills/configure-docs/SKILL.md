@@ -64,6 +64,10 @@ This file is **gitignored** — it is unique to each machine and must never be c
 
 > **This is the canonical lookup.** Any skill or agent that needs a documentation directory must invoke this skill rather than duplicating this logic.
 
+> **Helper scripts** — prefer these over manual steps when possible. They apply normalization correctly and reduce token cost:
+> - `skills/configure-docs/scripts/Get-DocsPath.ps1 [-WorkspacePath <path>]` — performs steps 1–3 and outputs the configured value (a path, `DOCS_DISABLED`, or `NOT_CONFIGURED`).
+> - `skills/configure-docs/scripts/Set-DocsPath.ps1 -DocsPath <path|DOCS_DISABLED> [-WorkspacePath <path>] [-Remove]` — writes or removes a workspace entry.
+
 1. **Determine the workspace key.** Normalize `cwd` to lowercase, backslashes → forward slashes, no trailing slash.
 2. **Read** `~/Repos/vs-code-copilot-tools/workspace-docs.json`.
    - If the file does not exist: create it using the schema above with an empty `workspaces` object, then go to step 4.
@@ -72,6 +76,8 @@ This file is **gitignored** — it is unique to each machine and must never be c
    - Value is `"DOCS_DISABLED"` → **opted out** — go to Step 2 (Opt-Out Branch).
    - Key is missing → **unconfigured** — go to step 4.
 4. **Unconfigured.** Go to Step 2 (Unconfigured Branch).
+
+> **Normalization debug tip:** Windows paths are case-insensitive but JSON key lookup is case-sensitive. If a configured workspace is not being found, run `Get-DocsPath.ps1` or manually dump the `workspaces` keys from the JSON and compare against the normalized `cwd` character by character — a case or slash mismatch is the most common cause.
 
 ---
 

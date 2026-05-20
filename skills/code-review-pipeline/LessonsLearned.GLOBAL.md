@@ -23,7 +23,7 @@ When a private method is extracted out of a class into a factory, some construct
 1. Stored as a field to feed the now-removed private method
 2. Used directly inline in the constructor body to construct other objects (no field needed)
 
-After extraction, usage (1) disappears (the factory gets the service via its own DI injection), but usage (2) remains. The parameter must stay; only the field assignment goes. Check the full constructor body for inline usages before writing a "dead parameter" finding. Affected services in this pattern often include: `webEndAnalyzer`, `seatUpdater`, `toggles`, `tPlateSeatFitter`, `holdClearSeatFitter` — any service used both by the extracted method AND by other inline object construction.
+After extraction, usage (1) disappears (the factory gets the service via its own DI injection), but usage (2) remains. The parameter must stay; only the field assignment goes. Check the full constructor body for inline usages before writing a "dead parameter" finding. Typical examples: any service that is used both by the extracted method AND by other inline object construction within the same constructor — the field assignment disappears while the parameter remains because the latter usage survives.
 
 ---
 
@@ -44,24 +44,25 @@ Flag these as High severity when the scoring threshold is close to the overcount
 
 ---
 
+### Always invoke REVIEW-ParallelAuditCoordinator — never call specialist auditors directly
+Category: Process/Model
+
+When the orchestrator reaches the parallel phase of a code review, it must invoke `REVIEW-ParallelAuditCoordinator` as a single subagent call — **never** call each specialist auditor (`UnitTestCoverage`, `Maintainability`, `Performance`, `Security`, `Extensibility`, `RippleEffect`, `Testability`) individually and sequentially. The `runSubagent` tool blocks until the called agent finishes; looping through 7 sequential `runSubagent` calls produces a fully serial execution even though the agents are labeled "parallel." The `ParallelAuditCoordinator` exists precisely to solve this: it launches all 7 as concurrent subagents from within a single agent turn. Calling specialists directly one-by-one is always wrong at the orchestrator level.
+
+---
+
 ### Dead code claims require full-file verification
 Category: Process/Model
 
 Before including any "dead code" or "unreferenced symbol" finding, verify zero usages across the **entire file** — not just the sections that changed in the PR. Use `Select-String -Path <file> -Pattern <symbol>` or the `search/usages` tool. A symbol removed from one code path may still be referenced by other methods in the same file. An unverified dead-code claim produces a concrete, actionable-looking "remove before merge" finding that is wrong and damages report credibility.
 
----
-
-### Base branch detection: always strip the full ref prefix in one atomic step
-Category: Process/Model
-
-`git symbolic-ref refs/remotes/origin/HEAD` returns the **full ref path** (e.g., `refs/remotes/origin/master`), not just the branch name. If this raw value is written to a session config before stripping, all subsequent `git diff master...HEAD` commands fail or produce wrong results. Fix: either (a) strip inline with `-replace '.*/',''` in the same command that writes the config, or (b) use `git remote show origin | Select-String 'HEAD branch' | ForEach-Object { $_ -replace '.*: ','' }`. Never split the detection and the strip into two sequential commands — the intermediate wrong value can propagate.
 
 ---
 
-### Cross-load-category coverage: check for SW (self-weight) in test parametrization
+### Null/empty-sentinel coverage: verify the sentinel-triggering input is present in parametrized tests
 Category: Process/Model
 
-When reviewing toggle-gated fixes where the fix mechanism is `DefaultIfEmpty(0)` replacing `DefaultIfEmpty(NaN)`, verify that the self-weight (SW/null load category) is covered by at least one parametrized test case. SW is the only load category that can produce a genuinely empty `concentratedLoads` list in normal operation, making it the specific category that exercises the `DefaultIfEmpty` sentinel. If test `[TestCase]` attributes enumerate only `CL` and `DL`, the SW path is silently uncovered even when the method name says "when no loads."
+When reviewing a toggle-gated fix whose mechanism is replacing one sentinel value with another (e.g., `DefaultIfEmpty(safeDefault)` replacing `DefaultIfEmpty(badDefault)`), verify that at least one parametrized test case supplies the specific input that produces an empty or null collection — the only input that actually exercises the sentinel path. If the `[TestCase]` attributes enumerate only the typical non-empty inputs, the sentinel path is silently uncovered even when the method name says "when no items."
 
 ---
 
@@ -70,54 +71,22 @@ Category: Process/Model
 
 When the developer provides a same-day validation or characterization test run, scan its output (e.g., Differences.xlsx files, test logs) **before** writing any Critical finding into a report. Empirical evidence resolves ambiguities faster than code tracing and can demote a Critical to a Non-Issue before it is published. Requirements and Correctness auditors are prone to flagging a missing code change as Critical when the behavior is already delivered via an emergent side-effect of a different fix. Rule: if validation data is available, analyze it first; rate a finding Critical only when the data confirms the gap, or when no validation data is available.
 
----
-
-### Worktree-as-master: "all changes since master" requires fallback to explicit commit list
-Category: Process/Model
-
-When a repo uses git worktrees and the current worktree branch IS `master` (i.e., `HEAD -> master`), `git log master..HEAD` and `git diff master...HEAD` both return nothing — there is no divergence from master because the branch is master. The request "review all changes since master" has no answer as a branch comparison.
-
-Correct fallback:
-1. Detect the empty diff during setup (`git log master..HEAD --oneline` returns nothing)
-2. Fall back to the explicit commit(s) identified in the session config or user request
-3. Write `reviewMode = 'single-commit'` (or equivalent) to the session config so downstream auditors know the scope
-
-Do NOT silently use the empty diff as the review scope — that produces a review of nothing. Always surface the scope explicitly at the start of the review so the user can confirm.
 
 ---
 
 ### Toggle-ON test branch dead code: check ToggleBuilder state before trusting if/else test assertions
 Category: Process/Model
 
-When a test file declares `_toggles = ToggleBuilder.AllDisabled().Build()` and then branches with `if (_toggles.IsEnabled(SomeToggle)) { ... } else { ... }`, the `if` branch is permanently dead code. The assertions inside will never execute. This pattern appears when a developer updates existing tests for toggle-aware behavior but forgets that the toggle instance is hardcoded to AllDisabled. Before writing Requirements or Correctness findings about toggle-ON test coverage, always verify whether the toggle instance used in the test fixture is AllDisabled vs. explicitly enabled. If AllDisabled, every toggle-ON assertion in the file is dead and should be flagged as a Medium coverage gap.
+When a test file uses an all-features-disabled toggle fixture (e.g., built with a builder pattern that disables every flag by default) and then branches assertions with `if (toggles.IsEnabled(SomeFeature)) { ... } else { ... }`, the `if` branch is permanently dead code. The assertions inside will never execute. This pattern appears when a developer updates existing tests for toggle-aware behavior but forgets that the toggle instance is hardcoded to all-disabled. Before writing Requirements or Correctness findings about toggle-ON test coverage, always verify whether the toggle instance used in the test fixture is all-disabled vs. explicitly enabled. If all-disabled, every toggle-ON assertion in the file is dead and should be flagged as a Medium coverage gap.
+
 
 ---
 
-### `disable-model-invocation: true` blocks subagent invocation from trusted callers — use `user-invocable: false` instead
+### Special-case value guard: verify non-standard enum values before calling downstream mappers
 Category: Process/Model
 
-`disable-model-invocation: true` prevents ALL programmatic invocation of an agent, including by an Orchestrator that explicitly lists it in its `agents:` frontmatter array. If sequential pipeline stages are marked `disable-model-invocation: true`, no Orchestrator can ever run them as subagents — the only option left is manual handoff buttons.
+When reviewing a toggle-gated fix that calls a mapper or converter inside a helper that receives a typed enum parameter, always trace which enum values can reach that helper from the outermost callers. Some enum values may represent "special" or "sentinel" cases (e.g., test harness modes, placeholder values, non-numeric identifiers) that the downstream mapper does not handle and will throw on. Any helper called before a branch that filters those values, but that itself invokes the mapper without guarding for the special cases, will throw at runtime when those values arrive. The fix is a guard placed before the mapper call: `if (value is SpecialCaseA or SpecialCaseB) return fallback;`. Flag this pattern whenever a new toggle-gated helper performs enum-to-type mapping on a parameter whose full value range is not filtered upstream.
 
-The intended behavior in most cases is: hide from the user's agent picker, but still allow trusted caller invocation. That requires `user-invocable: false`, NOT `disable-model-invocation: true`.
-
-Rule: any agent that is meant to be called programmatically by a parent Orchestrator or Coordinator must use `user-invocable: false`. Reserve `disable-model-invocation: true` only for agents that must never be called by any agent under any circumstances.
-
----
-
-### Special-case load path guard: verify non-numeric load cases before calling MapToJedi2
-Category: Process/Model
-
-When reviewing a toggle-gated fix that calls a load-case mapper (e.g., `MapToJedi2`) inside a helper that receives an `AnalysisLoadCase` parameter, always trace which load cases can reach that helper from the outermost callers. In JEDI V2, `AvailableLoadCases` includes `AnalysisLoadCase.Kcs` for KCS-series joists, and those load cases are fed to `ToFactoredResults` via `GetMemberResultsPerLoadCase` — even though the KCS path branches away before consuming the result. Any helper called before that branch that invokes `MapToJedi2()` without guarding for `Kcs`/`Sw`/`TestHarness` will throw `ArgumentOutOfRangeException` when those special load cases arrive. The fix is a guard: `if (loadCase is Kcs or Sw or TestHarness) return false;` placed before the `MapToJedi2()` call. Flag this pattern whenever a new toggle-gated helper performs load-case mapping.
-
----
-
-### Auto-start lessons learned after the final review report — do not prompt
-Category: Process/Model
-
-The `lessons-learned` SKILL.md previously said to "always output a prompt to the user." The `general-agent-behavior` instructions override this: after a named workflow delivers its terminal output, proceed with lessons learned automatically without asking permission. For the code-review pipeline specifically: once `final-review.md` is written and presented, start lessons learned immediately in the same turn rather than prompting the user to type a trigger phrase.
-
-DO: Start the lessons learned session automatically after the final report is presented.
-DON'T: Print "type 'lessons learned session'" and wait — the user must not have to ask for this step.
 
 ---
 
@@ -137,19 +106,9 @@ When auditing a conditional skip (e.g., "skip this step if flag X is set"), alwa
 2. Find every call site that resets flag X to null/false
 3. Map those calls against the flow execution order: does reset happen **before** the guarded step on every path where it should not skip?
 
-This is particularly easy to overlook when the flag is set inside a nested sub-flow (e.g., seat selection) and the guarded step is in an outer loop that reruns (e.g., `SelectMaterials` iteration 2). A developer reading the conditional skip logic in isolation may not trace whether the flag is still set from the previous iteration's nested sub-flow. On the other hand, a framework-level Reset() at the start of the outer iteration (e.g., `InitializeJoist.Reset()`) may silently make the logic safe — but only if you verify it exists.
+This is particularly easy to overlook when the flag is set inside a nested sub-flow and the guarded step is in an outer loop that reruns. A developer reading the conditional skip logic in isolation may not trace whether the flag is still set from the previous iteration's nested sub-flow. On the other hand, a framework-level reset at the start of the outer iteration may silently make the logic safe — but only if you verify it exists.
 
 Rule: for any "is state X set?" check in a conditional gate, verify that X is cleared by a reliable mechanism before the gate is re-evaluated in any subsequent pass.
 
----
-
-### Static keyword array audits must check substring relationships, not just literal duplicates
-Category: Process/Model
-
-When any auditor reviews a classifier, scorer, or categorizer that uses a static string array for `text.Contains(keyword)` matching, both the following defect classes must be checked before reporting confidence:
-1. **Literal duplicates** — same string appears at two indices (e.g., `"improve"` at index 5 and 24)
-2. **Substring relationships** — keyword A is a proper substring of keyword B, both in the array (`"test"` ⊆ `"testing"`, `"automate"` ⊆ `"automation"`)
-
-Class 2 is more insidious than class 1: the duplicate is visible to a careful reader, but the substring collision is only detectable by systematically testing `B.Contains(A)` for each pair. Both produce inflation in count-based importance scorers where the threshold is close to the inflation delta. The severity is High when the inflation causes misclassification of common task titles — verify against the scoring threshold before rating.
 
 

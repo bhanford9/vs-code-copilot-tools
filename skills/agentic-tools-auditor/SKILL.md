@@ -126,7 +126,8 @@ Typical finding: Skills frequently contain 30–50% of content that should be in
 How precisely is behavior specified? Identify every point where an agent could interpret rules differently on two separate runs.
 
 Patterns to flag:
-- Subjective thresholds: "small," "medium," "simple," "complex," "appropriate," "if needed"
+- Subjective thresholds: "small," "medium," "simple," "complex," "appropriate," "if needed," "trivial," "reasonable," "some," "medium or larger"
+- Personality descriptors with no behavioral specification: "research-driven," "thorough," "methodical" — flag unless accompanied by concrete criteria
 - Decision branches with no tiebreaker rule or decision tree
 - Rules that say "prefer X" without defining when X is mandatory vs. optional
 - Missing concrete examples for non-obvious patterns
@@ -193,20 +194,32 @@ For **Skills** (`SKILL.md`):
 For **Custom Agents** (`.agent.md`):
 - `name`: matches intended invocation name
 - `description`: clear purpose statement
-- `tools`: minimal necessary set (principle of least privilege)
-- `agents`: lists sub-agents that can be spawned
+- `tools:` list: do NOT add one or flag a missing one as a defect — tool names change frequently and restricted lists break silently on renames. If a list already exists and is causing breakage, recommend removing it.
+- `agents`: must be present if the agent uses the `agent` tool to spawn sub-agents
 - `hooks`: scoped Stop hook for LessonsLearned if this agent handles complex workflows
-- `user-invocable: false` for sub-agents
+- `user-invocable` / `disable-model-invocation` flag matrix — wrong combinations cause silent failures:
+
+| Agent role | `user-invocable` | `disable-model-invocation` | Notes |
+|---|---|---|---|
+| Entry point / orchestrator | default (true) | optional | Semantic cold-start acceptable |
+| Sequential handoff targets | default (true) | safe to add | Prevents unintended semantic invocation; handoff buttons still work |
+| Parallel sub-agents (invoked via `agent` tool) | `false` | **must be absent** | This flag silently blocks all agent-tool invocations |
+| Both flags combined | — | — | **Always a defect** — makes agent completely unreachable |
 
 For **Instructions** (`.instructions.md`):
 - `applyTo`: glob pattern that correctly and precisely matches the intended files
 - `name` and `description`: informative for the UI
+
+For **Prompt Files** (`.prompt.md`):
+- `mode: agent`: required if the prompt body contains "read", "edit", "write", or "run" instructions — without it, file operations silently fail with no error
 
 For **Hooks** (`.json`):
 - `type: "command"` present on all entries
 - OS-specific `windows`/`linux`/`osx` commands where needed
 - `timeout` set for slow operations
 - Scripts referenced by hooks use relative paths and exist in the repo
+- Hook exit code: verify the exit code in the actual violation branch of any hook script — a comment claiming "exits 2 (blocking)" does not guarantee the code exits 2
+- Windows tilde paths: flag any `command` or `windows` value that passes a `~`-prefixed path to `powershell -File` — use `$env:USERPROFILE` instead (tilde is not expanded by `-File`)
 
 ### 7. Cross-Skill / Cross-Config Concerns
 

@@ -1,12 +1,27 @@
 # Lessons Learned: REVIEW-RippleEffectAuditor
 
-> Findings specific to this auditor. Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -18,15 +33,15 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-16 — Event Log / Status Enum Split: History Types Outgrow Entity Status
 
-**Pattern**: When a domain layer has both a `TaskHistoryChangeType`-style event log enum and a `TaskItemStatus`-style entity status enum, these two often diverge incrementally. Developers add new history events (e.g., `QueuedForDispatch`, `ApprovedForDispatch`, `ClaimedForDispatch`) to the event log first — because that requires only a new enum value — and defer the corresponding `TaskItemStatus` addition because it requires migration, service changes, and notification propagation. Over time the history log describes states the entity cannot represent.
+**Pattern**: When a domain layer has both a change-event log enum and an entity status enum, these two often diverge incrementally. Developers add new history events (e.g., `QueuedForProcessing`, `ApprovedForProcessing`, `ClaimedByProcessor`) to the event log first — because that requires only a new enum value — and defer the corresponding entity status addition because it requires migration, service changes, and notification propagation. Over time the history log describes states the entity cannot represent.
 
-**Heuristic**: When auditing a domain layer that has both a "what happened" enum (change type / event type) and a "current state" enum (status), always cross-reference them exhaustively. For every event-log value that implies a discrete entity state (e.g., `QueuedForDispatch` = the task is in a queue), check whether that state is representable by the status enum. Any gap is a Critical finding: the entity's current state is invisible to the query and notification layer.
+**Heuristic**: When auditing a domain layer that has both a "what happened" enum (change type / event type) and a "current state" enum (status), always cross-reference them exhaustively. For every event-log value that implies a discrete entity state (e.g., `QueuedForProcessing` = the item is in a queue), check whether that state is representable by the status enum. Any gap is a Critical finding: the entity's current state is invisible to the query and notification layer.
 
 ## 2026-05-16 — Service Method Without Backing Entity Field: The Orphaned Setter
 
 **Pattern**: When a service interface has a method like `SetXxxAsync(Guid id, bool value)` — a named toggle on an entity — the expected companion is a `bool Xxx` field on the entity class. If that field is absent, the method's implementation either cannot exist, writes to a wrong field, or relies on an undocumented convention. This is one of the cleanest Critical ripple signals because the contract literally cannot be honored without the field.
 
-**Heuristic**: For every `SetXxxAsync` or `UpdateXxxAsync` single-field setter on a service interface, verify the target entity has a `Xxx` field. If not, flag as Critical. The method is an orphaned setter. Correlate with event-log types: if there is a matching history event (e.g., `XxxChanged`, `ApprovedForDispatch`), the orphaned setter pattern is confirmed.
+**Heuristic**: For every `SetXxxAsync` or `UpdateXxxAsync` single-field setter on a service interface, verify the target entity has a `Xxx` field. If not, flag as Critical. The method is an orphaned setter. Correlate with event-log types: if there is a matching history event (e.g., `XxxChanged`, `StatusTransitioned`), the orphaned setter pattern is confirmed.
 
 ## 2026-05-16 — Orphaned Enum: Types Declared Without Any Entity Reference
 
@@ -44,7 +59,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-16 — Dual Authority Schema Pattern: Two Files Claiming the Same Relationship
 
-**Pattern**: When two JSON schema files both claim to represent the same relationship (e.g., "which marks are assigned to which tester"), one is often the real authority and the other is a historical or decorative copy. The decisive signal is which file the data-loading code actually reads. If the assignment check only reads one field of the "authority" file (e.g., username presence) without reading the relationship array stored in it, the array in that file is silently dead weight.
+**Pattern**: When two JSON schema files both claim to represent the same relationship (e.g., "which items are assigned to which owner"), one is often the real authority and the other is a historical or decorative copy. The decisive signal is which file the data-loading code actually reads. If the assignment check only reads one field of the "authority" file (e.g., username presence) without reading the relationship array stored in it, the array in that file is silently dead weight.
 
 **Heuristic**: For any schema file whose name implies ownership of a relationship (e.g., "assignments", "mapping", "ownership"), search for all read sites and verify each field is actually read — not just the file. The file being loaded (deserialization succeeds) does NOT mean all its fields are consumed. Enumerate field-level read sites explicitly when two files both model the same domain relationship.
 
@@ -68,11 +83,9 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-08 — Flat-Parameter Interface as Blast-Radius Amplifier
 
-**Pattern**: When a service interface method enumerates an entity's mutable fields as individual parameters (e.g., `Add(string title, string desc, Enum horizon, Enum effort, bool flag, int score, Enum? override)`), every entity field addition requires: interface signature change + implementation change + every caller change. The interface acts as a blast-radius multiplier, not an abstraction. **Always check** whether callers use named arguments; positional-only calls are an additional silent-failure risk when parameters are reordered or inserted.
+**Pattern**: When a service interface method enumerates an entity's mutable fields as individual parameters (e.g., `Add(string name, string description, Enum category, Enum priority, bool isActive, int score, Enum? assignment)`), every entity field addition requires: interface signature change + implementation change + every caller change. The interface acts as a blast-radius multiplier, not an abstraction. **Always check** whether callers use named arguments; positional-only calls are an additional silent-failure risk when parameters are reordered or inserted.
 
 **Heuristic**: Count the parameters on service interface methods. More than 4–5 parameters that map directly to entity properties is a signal to recommend a request/command object.
-
-## 2026-05-18 — UpdateCard() + Computed Property Notification: Four-Caller Asymmetry
 
 **Pattern**: When a `UpdateCard()` or `SyncFrom()` method is called by multiple callers (factory-refresh, status-advance, save, approve, message-receive), the `OnPropertyChanged` notifications for computed properties depending on the updated fields are often added only to the first caller that needed them. Subsequent callers silently omit the notification. The root fix is to push all `OnPropertyChanged` calls for computed dependencies into `UpdateCard()` itself rather than leaving them as caller responsibilities.
 
@@ -82,7 +95,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 **Pattern**: When a strongly-typed message payload carries N fields but the handler only reads 1, the remaining N-1 fields form a misleading API contract. The fields were added for a reason (scoping, optimization, future use), but if the handler never reads them, that intent is silently abandoned. This is particularly common in MVVM messenger patterns where payloads are defined in one project and handlers in another — the structural coupling is low, so the mismatch is easy to miss.
 
-**Heuristic**: For every message type defined in a ViewModel project, enumerate all its payload fields and verify at least one handler reads each field. A field that is set by the sender and never read by any receiver is a dead payload field. Cross-check: if the field was clearly added for scoping (e.g., `BoardId`), verify the handler actually uses it to filter.
+**Heuristic**: For every message type defined in a ViewModel project, enumerate all its payload fields and verify at least one handler reads each field. A field that is set by the sender and never read by any receiver is a dead payload field. Cross-check: if the field was clearly added for scoping (e.g., `ScopeId` or `OwnerId`), verify the handler actually uses it to filter.
 
 ## 2026-05-08 — Hardcoded Enum Enumeration in UI Components
 
@@ -102,6 +115,14 @@ Only append if the session revealed something surprising, a false positive patte
 
 **Heuristic**: When analyzing ripple effects of an entity field addition, always check: (1) request record ✅, (2) service implementation ✅, (3) ViewModel ⚠️, and (4) edit draft / form model ⚠️. Steps 3 and 4 are the most commonly missed and have different impact profiles — step 3 is visibility loss, step 4 is data loss.
 
+## 2026-05-19 — Global DI Registration Is Not an Implicit Migration Claim
+
+**Pattern**: When a new cross-cutting service (e.g., a notification service, a logging sink, an error reporter) is introduced and registered in the application's root DI container, developers often intend it to replace an existing per-component pattern (e.g., inline message fields). The global registration makes the service *available* to all components, but it does not enforce that all components *use* it. The result: one or two pages are migrated; the rest retain the old pattern. The compiler does not flag the gap.
+
+**Heuristic**: When a service is registered globally and its stated purpose is to *replace* an existing pattern, treat it as a symmetric-path trigger. Search for all sites where the old pattern is still used. For each unmigrated site, evaluate whether the omission is intentional (scope decision, documented exception) or a silent gap. Rate intentional deferrals as Medium (symmetric path gap) to capture the future migration debt; do not escalate to High unless the inconsistency causes correctness issues.
+
+**Signal to look for**: The old pattern (e.g., `string? ErrorMessage` observable property + inline alert div) coexists with the new one on peer pages that share the same structural form (wizard → async operation → feedback). The pages are structurally identical except for the feedback mechanism.
+
 ## 2026-05-08 — "Critical" Severity for Blast-Radius Findings Gets Resolved Down to High in Synthesis
 
 **Pattern**: The Ripple Effect Auditor appropriately uses "Critical" to signal "the blast radius of this common change scenario is dangerously wide with silent failure modes." However, the Final Synthesizer uses "Critical" to mean "current data corruption or confirmed runtime bug." These scales do not align, and the mismatch causes final-report inflation.
@@ -116,7 +137,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-12 — Sub-Flow Test Architecture Insulates Lower-Level Interface Mocks
 
-**Pattern**: In codebases where tests mock a "logic provider" interface that contains both step actions and sub-flows, tests at the outer flow level mock the outer interface (e.g., `IReinforcedSeatSelectionLogicProvider`) and return `MockSubFlow(...)` for any inner sub-flows. This means the inner flow's own logic provider interface (e.g., `IBottomChordDesignEngineLogicProvider`) is never directly mocked in those outer tests. Consequently, adding a member to the inner interface creates no new mock gap in outer tests — only the direct mock of the inner interface (the inner flow's own test file) needs updating.
+**Pattern**: In codebases where tests mock a "logic provider" interface that contains both step actions and sub-flows, tests at the outer flow level mock the outer interface (e.g., `IOuterFlowLogicProvider`) and return `MockSubFlow(...)` for any inner sub-flows. This means the inner flow's own logic provider interface (e.g., `IInnerFlowLogicProvider`) is never directly mocked in those outer tests. Consequently, adding a member to the inner interface creates no new mock gap in outer tests — only the direct mock of the inner interface (the inner flow's own test file) needs updating.
 
 **Heuristic**: When an interface change affects an interface that is consumed exclusively inside a named sub-flow class, check: (1) does the sub-flow's own test file mock the interface directly? (2) do any outer tests mock it directly? The answers narrow the mock gap to only the sub-flow's test file, not every test that transitively uses the flow.
 
@@ -128,7 +149,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-13 — Optional DI Parameter as Zero-Blast-Radius Companion Pattern
 
-**Pattern**: When a constructor adds an optional parameter with `= null` as its last argument (especially with a `?` nullable type), the blast radius is exactly zero for DI-managed consumers — the DI container simply omits the argument when the type is not registered. Direct instantiation sites would be affected, but framework-layer classes with internal sealed access modifiers typically have no direct `new ClassName(...)` call sites. In these cases, the ripple analysis for "DesignEngineFlowRunner constructor change" correctly resolves to a single finding: confirm no direct instantiation exists.
+**Pattern**: When a constructor adds an optional parameter with `= null` as its last argument (especially with a `?` nullable type), the blast radius is exactly zero for DI-managed consumers — the DI container simply omits the argument when the type is not registered. Direct instantiation sites would be affected, but framework-layer classes with internal sealed access modifiers typically have no direct `new ClassName(...)` call sites. In these cases, the ripple analysis for an optional-parameter constructor change correctly resolves to a single finding: confirm no direct instantiation exists.
 
 **Heuristic**: When a constructor gains an optional nullable parameter, search for `new ClassName(` before analyzing DI call sites. If no direct instantiation exists (internal/sealed class), the finding is trivially closed. If direct instantiation exists, those are the only call sites to verify.
 
@@ -152,7 +173,7 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-19 — Parallel Write Paths to Protected State Are the Highest-Risk Ripple Pattern
 
-**Pattern**: In domain layers where a state machine has a "canonical path" protected by validation (eligibility gates, guards, authorization), there is often a parallel path that arrives at the same terminal state but bypasses some or all of those protections. The parallel path is typically a CLI service, a background job, or a raw DB call introduced as a "simpler" implementation. Because both paths compile and produce the correct final state (task ends up in `QueuedForDispatch`), the bypass is invisible at first.
+**Pattern**: In domain layers where a state machine has a "canonical path" protected by validation (eligibility gates, guards, authorization), there is often a parallel path that arrives at the same terminal state but bypasses some or all of those protections. The parallel path is typically a CLI service, a background job, or a raw DB call introduced as a "simpler" implementation. Because both paths compile and produce the correct final state (entity arrives in the terminal status), the bypass is invisible at first.
 
 **Heuristic**: For every state transition that is protected by multiple companions (eligibility check → history write → notification), search for ALL writers of that state, not just the canonical one. Explicitly ask: "Are there other classes that write `Status = X` directly?" and "Are there any `ExecuteUpdateAsync` or `ExecuteSqlAsync` calls that set this field?" These are the most reliable indicators of an uncontrolled parallel path.
 
@@ -164,6 +185,6 @@ Only append if the session revealed something surprising, a false positive patte
 
 ## 2026-05-19 — Dual-Maintenance of the Same Concept Across Entity + Config Is Always Suspicious
 
-**Pattern**: When both a domain entity and a config entity have a field of the same name and type (e.g., `MaxRetries` on both `TaskItem` and `CategoryDispatchConfig`), one of four situations holds: (1) the config is an initial value copied to the entity on create, (2) they are independent values with different semantics, (3) only one is used and the other is dead, or (4) the author intended synchronization that was never implemented. Situation (4) is the most common and produces a subtle, difficult-to-debug discrepancy.
+**Pattern**: When both a domain entity and a config entity have a field of the same name and type (e.g., `MaxRetries` on both a task entity and a category config entity), one of four situations holds: (1) the config is an initial value copied to the entity on create, (2) they are independent values with different semantics, (3) only one is used and the other is dead, or (4) the author intended synchronization that was never implemented. Situation (4) is the most common and produces a subtle, difficult-to-debug discrepancy.
 
 **Heuristic**: Find all fields that appear on both a domain entity and a config entity with the same name. For each pair: (a) find the write site for the config field, (b) trace whether that write path updates the entity field, (c) find the read site and determine which source it reads. If the read site only reads the entity field and the config field is never propagated, flag as Medium (silent no-op configuration).

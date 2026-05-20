@@ -20,7 +20,7 @@ When in doubt, err toward discarding. A knowledge base that grows with low-value
 
 Category: Process/Model
 
-The most useful thing this skill can produce is a specific, actionable warning callout in the right place. Generic warnings ("be careful with equality") have low value. Specific warnings ("do not use hash-code comparison as the final Equals answer; always follow with field comparison — see sibling classes LoadCategoryKey and ControllingLoadCombinationKey for the correct pattern") are what prevent future agent mistakes.
+The most useful thing this skill can produce is a specific, actionable warning callout in the right place. Generic warnings ("be careful with equality") have low value. Specific warnings ("do not use hash-code comparison as the final Equals answer; always follow with field comparison — see sibling classes implementing the same pattern for the correct form") are what prevent future agent mistakes.
 
 Evaluate each ⚠️ callout: could an agent read it and immediately know what NOT to do and what to do instead? If not, make it more specific.
 
@@ -34,8 +34,8 @@ Category: Process/Model
 
 The reliable way to make harvest happen more consistently across sessions is two layers:
 
-1. **Always-on instructions** — add the harvest rule to `general-agent-behavior.instructions.md` (`applyTo: "**"`). This file is in-context on every turn, giving the agent persistent awareness of the expectation throughout the session, not just at the end.
-2. **Prompt file** — `prompts/harvest.prompt.md` gives the user a zero-friction one-click trigger when they want to run the skill explicitly.
+1. **Always-on instructions** — add the harvest rule to an always-on instructions file (one with `applyTo: "**"`). This file is in-context on every turn, giving the agent persistent awareness of the expectation throughout the session, not just at the end.
+2. **Prompt file** — a `harvest.prompt.md` prompt file gives the user a zero-friction one-click trigger when they want to run the skill explicitly.
 
 ### VS Code Stop Hook Was Tried and Rejected
 
@@ -46,23 +46,11 @@ A `Stop` lifecycle hook was implemented to post a `systemMessage` reminder at se
 
 ---
 
-## Partial replace_string_in_file at file head leaves orphan tail (2026-05-16)
-
-Category: Process/Model
-
-When using `replace_string_in_file` to replace only the header portion of a code file (e.g., the class declaration and injected fields), the tool replaces exactly the matched `oldString` and leaves everything after the match untouched.
-If the replacement adds a complete, self-closing class body, the original methods from the tail of the file become orphan code **outside the class** — causing `CS1022`/`CS0116` build errors.
-
-DO NOT use partial-head replacements to transform a class — replace the entire class, or use targeted method-level replacements.
-If this happens, use `Set-Content` via terminal to rewrite the entire file cleanly rather than making chained incremental repairs, which risk matching the wrong occurrence.
-
----
-
 ## Instructions File Loading Does Not Guarantee Compliance (2026-04-23)
 
 Category: Process/Model
 
-Confirmed via session debug log: `general-agent-behavior.instructions.md` loaded successfully as "General Agent Behavior" (`Resolved 3 instructions in 76.6ms | loaded: [CSharp Diagnostics, CSharp Test Conventions, General Agent Behavior]`). The rule "MUST invoke session-knowledge-harvest at the end of any session where architectural knowledge was discovered" was in-context throughout the session. The agent still did not proactively trigger the harvest — the user had to ask for it.
+Confirmed via session observation: an always-on instructions file can load and be in-context throughout an entire session, and the agent will still not proactively trigger the harvest at the end. The rule was present; the model deprioritized it at session end — the user had to ask.
 
 - Loading ≠ compliance. The instruction was present; the model deprioritized it at session end.
 - The two-layer pattern (instructions + prompt file) remains the best available mitigation — but it is not a guarantee.
@@ -77,41 +65,9 @@ Category: Process/Model
 
 When a session is pure planning-doc authorship (no codebase search, no debugging), the standard extraction prompts ("counterintuitive code," "high search-cost discoveries") yield nothing — but the session still produces high-value knowledge. The value comes from design decisions crystallized while writing step-by-step checklists: behavioral contracts, service layer boundaries, deferred migrations, and ephemeral token patterns.
 
-**Observation:** Writing a detailed checklist forces resolution of design ambiguities. Those resolutions (e.g., "derived status — never stored," "MachineToken is ephemeral, nulled after use," "CopilotAgentDispatchStrategy lives in CLI not Core") are precisely the coding agent traps that belong in the architecture docs.
+**Observation:** Writing a detailed checklist forces resolution of design ambiguities. Those resolutions (e.g., "derived property — never stored," "TokenX is ephemeral, nulled after use," "ServiceA belongs in LayerX not LayerY") are precisely the coding agent traps that belong in the architecture docs.
 
 **Lesson:** For planning sessions, the extraction prompt to use is: "What design decisions were made while writing these step files that a future coding agent would get wrong without documentation?" Apply the scope gate to those items.
-
-## Knowledge Document Style: "Why" Not "How" (2026-05-13)
-
-Category: Process/Model
-
-The first attempt at a TaskTracker architecture document was rejected because it was organized around implementation steps (1–11) and described *how* each component works mechanically. The correct form is different:
-
-**Wrong:** Organized by step / component. Describes what each thing does. Technical spec feel.
-
-**Correct:** Organized by domain concept. Explains *why* the system is designed the way it is. Requirements-rationale feel. A future agent reads it to understand the intent so it can make decisions that preserve that intent — not just to understand the code.
-
-### The Document Structure That Works
-
-Each document in the knowledge base should answer these questions, in order:
-1. **What is this concept?** — Domain definition, not code description
-2. **Why does it exist?** — The requirement or domain problem it solves
-3. **What are the rules?** — Behavioral constraints expressed as requirements, not code
-4. **What must a coding agent know?** — The non-obvious constraints not derivable from reading the code
-
-### The Folder/File Structure That Works (from JEDI V2 reference)
-
-- `README.md` at root with a **reading order table** that includes a **"Read When..."** column — this is critical for token efficiency; an agent can scan it and open only the doc it needs
-- Numbered files (`01-`, `02-`) for navigation order
-- Topic with sub-topics becomes a folder with `00-overview.md` and numbered children
-- `glossary.md` at root, linked from every doc
-- YAML front matter: `tags`, `category`, `related` — enables lookup without full-file reads
-- Abstract blockquote immediately under H1: one sentence of "what this is and why it matters"
-- `📝 TODO` for documented gaps rather than omitting them
-
-### The ⚠️ Callout Still Belongs — But Inside "Why" Docs
-
-The `⚠️ Coding agent note:` callout from the previous pattern remains valid and valuable. The difference is context: in the old approach they appeared in a tech-spec doc; in the new approach they appear inside a "why does this rule exist?" section, which makes them more trustworthy and actionable.
 
 ---
 
@@ -121,4 +77,4 @@ Category: Process/Model
 
 An agent wrote harvest session findings to `/memories/repo/session-knowledge-harvest-lessons.md` (a repo memory file) instead of the skill's own `LessonsLearned.md`. This defeats the feedback loop entirely — the file is invisible to the skill's "read before starting" step and doesn't benefit future sessions.
 
-**Rule**: All lessons for this skill go to `c:\Users\bmhanford\Repos\copilot-configs\skills\session-knowledge-harvest\LessonsLearned.md` (codebase-specific) or `LessonsLearned.GLOBAL.md` (process/model). Never use a memory file as a substitute. The lessons-learned SKILL.md already defines this — the agent must not improvise an alternative location.
+**Rule**: All lessons for this skill go to the skill's own `LessonsLearned.md` (codebase-specific) or `LessonsLearned.GLOBAL.md` (process/model), both located in the skill directory. Never use a memory file as a substitute. The lessons-learned SKILL.md already defines this — the agent must not improvise an alternative location.

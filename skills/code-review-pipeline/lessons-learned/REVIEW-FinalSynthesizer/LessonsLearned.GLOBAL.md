@@ -1,13 +1,27 @@
 # Lessons Learned: REVIEW-FinalSynthesizer
 
-> Findings specific to synthesis — conflict resolution patterns, cross-auditor themes, false positives in the synthesis step.
-> Updated automatically at the end of each code review session.
-> Read this file at the start of each review to apply accumulated knowledge.
+> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
 >
-> ⚠️ **GLOBAL FILE — NO CODEBASE-SPECIFIC CONTENT ALLOWED**
-> Do NOT write: work item IDs, class names, method names, file names, test names, or any reference to a specific repo or project.
-> Write ONLY: abstract synthesis patterns, conflict-resolution heuristics, and model-behavior observations that apply to any codebase.
-> When in doubt → write to `LessonsLearned.md` (gitignored, local) instead.
+> **This file is committed to a public shared repository and read across all projects and codebases.**
+>
+> **BANNED — do NOT write any of the following:**
+> - Class names, interface names, method names, type names, field names
+> - File paths, namespace names, project names, solution names
+> - Work item IDs, ticket numbers, branch names, version identifiers
+> - Domain-specific abbreviations or industry jargon unique to one team or product
+> - Any identifier specific to one repository, team, or system
+>
+> **Write ONLY:** abstract synthesis patterns, conflict-resolution heuristics, and model-behavior observations that apply to any codebase.
+>
+> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
+>
+> **MANDATORY SANITIZATION GATE — run before every append:**
+> 1. List every capitalized identifier and domain abbreviation in the proposed text.
+> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
+> 3. Replace all project-specific items with generic placeholders before writing.
+> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
+>
+> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
 
 ---
 
@@ -33,7 +47,7 @@ When a save/restore commit arrives, expect all four of these findings to appear 
 ### Correctness audit may miss behavioral divergence when requirements are inferred from code
 Category: Process/Model
 
-When the Correctness audit derives a requirement by reading the new code ("SW goes to DL only") rather than verifying it against the original work item and the pre-existing code path's behavior, it can miss behavioral differences between old and new mechanisms that coexist during a toggle-transition period. Always cross-check: if an old path handles categories {A, B} and the new path handles only {A}, ask whether the omission of {B} was intentional. This type of divergence is invisible inside any single audit but surfaces when the Extensibility auditor's claim about the old path is verified against source. Add this cross-check to synthesis: when a Correctness finding says "✅ Pass" on a category restriction, verify the old code path's category coverage matches.
+When the Correctness audit derives a requirement by reading the new code (e.g., inferring "new path handles only category A") rather than verifying it against the original work item and the pre-existing code path's behavior, it can miss behavioral differences between old and new mechanisms that coexist during a toggle-transition period. Always cross-check: if an old path handles categories {A, B} and the new path handles only {A}, ask whether the omission of {B} was intentional. This type of divergence is invisible inside any single audit but surfaces when the Extensibility auditor's claim about the old path is verified against source. Add this cross-check to synthesis: when a Correctness finding says "✅ Pass" on a category restriction, verify the old code path's category coverage matches.
 
 ---
 
@@ -58,7 +72,7 @@ When Maintainability, Testability, Extensibility, and Correctness all independen
 ### Symmetric-path ripple-effect findings form their own cluster: collect before the synthesis step
 Category: Process/Model
 
-When the Ripple Effect audit flags asymmetric paths (e.g., "every mutation method calls X except DeleteAsync"), enumerate ALL asymmetric mutations in the synthesis — don't just report the one the auditor found. Check the Ripple Effect audit's own "Symmetric Path Analysis" table if one is present: it often lists additional missing cases (e.g., UpdateHorizonAsync, BackfillScoresAsync) beyond the auditor's primary High finding. These are Medium findings in the synthesis; the auditor's primary finding is High. Failing to include the table entries makes the synthesis incomplete.
+When the Ripple Effect audit flags asymmetric paths (e.g., "every mutation method calls X except DeleteAsync"), enumerate ALL asymmetric mutations in the synthesis — don't just report the one the auditor found. Check the Ripple Effect audit's own "Symmetric Path Analysis" table if one is present: it often lists additional missing cases beyond the auditor's primary High finding — enumerate all of them, not just the one the auditor named. These are Medium findings in the synthesis; the auditor's primary finding is High. Failing to include the table entries makes the synthesis incomplete.
 
 ---
 
@@ -104,6 +118,51 @@ In MVVM projects using CommunityToolkit.Mvvm, a "singleton coupling cluster" —
 - **Testability**: flags all three as High (no injection seam → cross-test contamination + clock instability)
 - **Extensibility**: flags `IsActive` in constructor as High (side-effect at construction) and `WeakReferenceMessenger.Default` as Medium (no scoped messenger)
 - **Performance**: may flag the fire-and-forget message handler as High (constructor-registered listener on global messenger receives messages from any thread)
+
+---
+
+### Pre-existing zero-test gap does not block merge — but the merge verdict must say so explicitly
+Category: Process/Model
+
+When a subsystem has zero test coverage as a pre-existing condition (i.e., no test project existed before this PR) and the changeset does not worsen it, the "Critical — no test project" finding should NOT be classified as a merge blocker in the final report. The verdict should be "Approved with Suggestions," not "Changes Required." The synthesis MUST state explicitly:
+1. The gap is pre-existing (not introduced by this changeset)
+2. The changeset's new logic is the highest-value test target (name the specific methods)
+3. The merge verdict is clear and not ambiguously blocked
+
+Failure mode to avoid: letting the "Critical" severity label from one auditor cause the synthesizer to block a merge when the code is correct, the gap is structural-and-pre-existing, and the team is aware of it. Critical severity = critical priority to address, not necessarily critical blocker to merge.
+
+---
+
+### Three-auditor convergence on the same Medium finding: consolidate, not escalate
+Category: Process/Model
+
+When three different auditors (e.g., Performance, Maintainability, and Correctness) independently flag the same code element at Medium severity from different angles, the correct synthesis action is to consolidate them into one finding that cites all source auditors — NOT to escalate to High on the basis of convergence. Convergence signals importance, not increased severity. Each auditor's angle (performance cost, maintenance trap, correctness concern) should be included as supporting evidence in the consolidated finding.
+
+The escalation rule applies only when multiple auditors disagree on severity (e.g., one says High, one says Medium) — then resolve to the higher.
+
+---
+
+### Partial infrastructure migration is Medium (not Low) in synthesis even when each page is individually Low
+Category: Process/Model
+
+When a new service/pattern is introduced and applied to some sibling pages/components but not others, the Ripple Effect auditor correctly flags the asymmetry. In synthesis, this finding should be rated Medium (not Low) if:
+1. The infrastructure is globally registered and immediately available to all consumers at zero additional cost
+2. The unmigrated sibling pages share the identical structural pattern as the migrated page
+3. The asymmetry creates a split user experience that is visible and persistent (not just an internal detail)
+
+The "partially applied migration" finding rates higher in synthesis than in the Ripple Effect audit alone because the synthesis view includes the UX regression angle (users of the unmigrated pages see a different behavior) that the Ripple Effect audit may not emphasize.
+
+---
+
+### Zero-test subsystems: the three highest-value test targets form a predictable cluster
+Category: Process/Model
+
+When auditing a zero-test subsystem and prioritizing the first tests to write after infrastructure creation, the highest-value targets follow this sequence:
+1. **Core behavioral fix methods with multiple edge-case branches** — these are pure computation, have clear expected outputs per branch, and are the most regression-prone (any future refactor can silently invert the fix). Flag as Critical in the coverage audit; minimum fix is access-modifier change.
+2. **ViewModel toast/feedback trigger paths** — these are the primary user-visible signals. They require mocking service interfaces. Flag as High; effort is Small once the test project exists.
+3. **Computed property invariants with non-obvious snapshot semantics** — these guard UX behaviors (dirty state, save button) that break in subtle ways. Flag as High; the test setup exposes whether the snapshot mechanism works for both model-relevant and UI-only mutations.
+
+This cluster (behavioral fix → feedback triggers → computed invariants) is the recommended "phase 1 test backfill" sequence for any zero-test UI subsystem with a clean MVVM architecture.
 
 These three appear together. Synthesize as a single root-cause finding (H-level) with a single coordinated fix recommendation: inject `IMessenger` and `TimeProvider`, forward messenger to base class, move `IsActive` to `Activate()` or `OnNavigatedTo`. Do not list them as six separate auditor findings — collapse them into one cluster finding with a list of sub-impacts.
 
@@ -282,7 +341,7 @@ When the same string vocabulary is scattered as magic literals across 6+ files A
 ### "Stored but never read" cluster requires a deliberate decision, not individual findings
 Category: Process/Model
 
-Full-codebase reviews consistently surface a cluster of schema fields that are deserialized but have no read sites — `DisplayName`, `Email`, `PackageId`, `Marks list`, `SchemaVersion`, `LastUpdated`, etc. In synthesis, do NOT list each dead field as a separate finding. Group them as a single "Dead Schema Fields" theme under Ripple Effect. The synthesis recommendation is always the same: require a deliberate per-field decision of "remove it or document when it will be used." The risk is false confidence — maintainers who see a field in the schema assume it is actively used and act on it, expecting behavior that never occurs.
+Full-codebase reviews consistently surface a cluster of schema fields that are deserialized but have no read sites — `DisplayName`, `Email`, `PackageId`, `SchemaVersion`, `LastUpdated`, etc. In synthesis, do NOT list each dead field as a separate finding. Group them as a single "Dead Schema Fields" theme under Ripple Effect. The synthesis recommendation is always the same: require a deliberate per-field decision of "remove it or document when it will be used." The risk is false confidence — maintainers who see a field in the schema assume it is actively used and act on it, expecting behavior that never occurs.
 
 ---
 
