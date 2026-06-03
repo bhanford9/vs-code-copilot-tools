@@ -130,6 +130,12 @@ Categorize issues by severity:
 
 Write findings to `/code-review/code-correctness-audit.md` following <audit_report_template>.
 
+After writing the correctness report, also write `/code-review/parallel-brief.md` — a concise summary for the 8 parallel auditors (max ~300 words). Include:
+- **Intent**: 1-2 sentences — what is this changeset trying to accomplish?
+- **Key requirements**: bullet points, no prose
+- **Implementation**: key files changed, patterns used, notable decisions
+- **Auditor flags**: anything that might look suspicious but is intentional (confirmed-correct behaviors, documented deferrals, phased delivery)
+
 ## 6. Present Findings and Gate Decision
 
 **⛔ STOP POINT — YOUR TURN ENDS HERE**
@@ -158,166 +164,21 @@ Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`.
 
 <audit_report_template>
 
-```markdown
-# Code Correctness Audit Report
+# Code Correctness Audit — {PASS | MERGE WITH CONDITIONS | FAIL}
+**Requirements reviewed**: {N} | **🔴**: {N} | **🟠**: {N} | **🟡**: {N} | **🟢**: {N}
 
-## Summary
+## Findings
 
-**Requirements Reviewed**: {number} requirements from requirements-audit.md
-**Overall Assessment**: {Correct and Ready | Correct with Minor Issues | Has Significant Issues | Has Critical Flaws}
-**Critical Issues**: {number}
-**High Priority Issues**: {number}
+### 🔴 {Title}
+**Where**: [file.cs](file.cs#L10-20)
+**Requirement**: {Which AC or requirement this violates}
+**Issue**: {1-3 sentences — what is wrong with the implementation}
+**Fix**: {1-3 sentences or short code snippet if essential}
 
-{2-3 sentence overview: Does the code correctly implement the requirements?}
+{Repeat block for each finding, grouped by severity: 🔴 🟠 🟡 🟢}
 
----
-
-## Correctness by Requirement
-
-{For each major requirement from the requirements audit:}
-
-### ✅ Requirement: {Requirement Title}
-
-**Implementation**: [file.cs](file.cs#L10-L50)
-
-**Correctness Assessment**: {Pass | Fail | Partial}
-
-**Analysis**:
-- {What the code does}
-- {How it meets (or doesn't meet) the requirement}
-- {Edge cases considered}
-- {Any concerns}
-
----
-
-### ❌ Requirement: {Failing Requirement Title}
-
-**Implementation**: [file.cs](file.cs#L100-L150)
-
-**Correctness Assessment**: Fail
-
-**Issue**: {What's wrong}
-
-**Impact**: {Why this matters}
-
-**Recommendation**: {How to fix}
-
----
-
-## Issues & Recommendations
-
-### 🔴 Critical Issues
-
-**{Issue Title}**
-- **Location**: [file.cs](file.cs#L10-L20)
-- **Problem**: {Clear description of the correctness issue}
-- **Impact**: {What fails, data corruption, crashes, etc.}
-- **Example Scenario**: {Specific case where this breaks}
-- **Recommendation**: {Exact steps to fix}
-
-```csharp
-// Current problematic code
-{code snippet}
-
-// Suggested fix
-{corrected code}
-```
-
-### 🟠 High Priority Issues
-
-{Same structure...}
-
-### 🟡 Medium Priority Issues
-
-**{Issue Title}**
-- **Location**: [file.cs](file.cs#L30)
-- **Problem**: {Description}
-- **Recommendation**: {How to improve}
-
-### 🟢 Low Priority Suggestions
-
-- {Brief suggestion with location}
-- {Another suggestion}
-
----
-
-## Edge Cases Analysis
-
-### Missing Edge Case Handling ⚠️
-
-**{Edge Case}**
-- **Scenario**: {When this occurs}
-- **Current Behavior**: {What happens now}
-- **Expected Behavior**: {What should happen}
-- **Severity**: {Critical/High/Medium/Low}
-- **Location**: [file.cs](file.cs#L40)
-- **Recommendation**: {How to add handling}
-
----
-
-## Error Handling Assessment
-
-### Error Handling Issues ⚠️
-
-**{Issue}**
-- **Location**: [file.cs](file.cs#L50)
-- **Problem**: {What's wrong}
-- **Impact**: {User experience, debugging difficulty, etc.}
-- **Recommendation**: {Improve error handling}
-
----
-
-## Integration & Dependencies
-
-### Integration Issues ⚠️
-
-**{Integration Point}**
-- **Issue**: {What might go wrong}
-- **Recommendation**: {How to fix}
-
----
-
-## Data Flow Correctness
-
-{Trace critical data flows through the system:}
-
-**{Data Flow Description}**
-- **Entry Point**: [file.cs](file.cs#L10)
-- **Transformations**: {How data changes}
-- **Exit Point**: [file.cs](file.cs#L50)
-- **Correctness**: {Is data transformed correctly? Any issues?}
-
----
-
-## Acceptance Criteria Status
-
-{For each AC from requirements audit:}
-
-1. **{AC 1}**: ✅ Met | ⚠️ Partially Met | ❌ Not Met
-   - {Brief explanation}
-
-2. **{AC 2}**: {Status}
-   - {Explanation}
-
----
-
-## Conclusion
-
-{1-2 paragraph assessment:}
-- Does the code correctly implement requirements?
-- Are there blocking correctness issues?
-- Is the implementation robust and reliable?
-- Overall confidence in code correctness
-
-**Recommendation**: 
-- ✅ **Proceed to Parallel Audits** - Code is functionally correct
-- ⚠️ **Fix High Priority Issues Then Proceed** - Code mostly works but has important gaps
-- ❌ **Fix Critical Issues Before Proceeding** - Fundamental correctness problems must be addressed
-
----
-
-*This audit focused on functional correctness. Code quality, testing, performance, and extensibility will be evaluated in subsequent parallel audits.*
-```
+## AC Status
+{One line per AC: "AC-1 ✅ | AC-2 ❌ (see finding above) | AC-3 ⚠️ partial"}
 
 </audit_report_template>
 
@@ -377,20 +238,14 @@ For each changed function/method, verify:
 <interaction_style>
 
 **When presenting findings:**
-- Be direct about critical issues - don't sugarcoat
+- Be direct about critical issues — don't sugarcoat
 - Provide context for why issues matter
-- Make it easy to understand what's wrong and how to fix
+- Make it clear what's wrong and exactly how to fix it
 
 **Gate decision guidance:**
 - If 0 critical issues → Proceed
 - If 1-2 critical issues → Recommend fix first, but user decides
 - If 3+ critical issues → Strongly recommend fixing before proceeding
-- Always respect user's decision to proceed anyway
-
-**Remember:**
-- You're checking correctness, not judging the developer
-- Everyone makes mistakes - bugs are normal
-- Your job is to find them before users do
-- Be helpful and constructive
 
 </interaction_style>
+

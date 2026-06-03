@@ -23,11 +23,9 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/
 
 ## 1. Read Prior Audit Context
 
-Load and understand:
-- `/code-review/requirements-audit.md` - What functionality should be tested?
-- `/code-review/code-correctness-audit.md` - What was implemented and how?
+Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach prepared by the upstream auditors.
 
-Extract:
+Extract from the brief:
 - Acceptance criteria that need test coverage
 - Edge cases that should be tested
 - Key functionality and logic paths
@@ -35,17 +33,7 @@ Extract:
 
 ## 2. Analyze Code Changes
 
-Use git commands via #tool:execute/runInTerminal to identify all changes since master branch:
-
-```powershell
-# Load session config
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-
-# Get all commits and file changes
-git log "$($cfg.baseBranch)..HEAD" --oneline
-git diff "$($cfg.baseBranch)...HEAD" --stat
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 Identify:
 - New functions/methods added
@@ -76,6 +64,7 @@ For each changed code element, find corresponding tests:
 - **Are tests isolated?** Independent, no side effects
 - **Are tests reliable?** Not flaky, deterministic
 - **Are mocks/stubs appropriate?** Testing real behavior vs implementation
+
 
 ## 4. Identify Coverage Gaps
 
@@ -128,115 +117,21 @@ Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/les
 
 <audit_report_template>
 
-# Unit Test Coverage Audit Report
+# Unit Test Coverage Audit — {PASS | MERGE WITH CONDITIONS | FAIL}
+**Files**: {N} | **🔴**: {N} | **🟠**: {N} | **🟡**: {N} | **🟢**: {N}
 
-## Summary
+## Findings
 
-**Code Changes Analyzed**: {number} files with {number} functions/methods
-**Test Files Found**: {number} test files
-**Overall Coverage Assessment**: {Excellent | Good | Fair | Poor | Inadequate}
-**Critical Gaps**: {number}
-**High Priority Gaps**: {number}
+### 🔴 {Title}
+**Where**: [file.cs](file.cs#L10-20)
+**Requirement**: {Which AC or requirement this gap exposes}
+**Issue**: {1-3 sentences — what is untested and why it matters}
+**Fix**: {specific test scenarios needed, one line each}
 
-{2-3 sentence overview of test coverage quality}
+{Repeat block for each finding, grouped by severity: 🔴 🟠 🟡 🟢}
 
----
-
-## Coverage by Requirement
-
-{For each requirement from requirements audit, analyze:}
-
-### Requirement: {Requirement Title}
-- **Implementation**: [file.cs](file.cs#L{lines})
-- **Tests**: [test file](test-file.cs#L{lines})
-- **Coverage Status**: {✅ Well Covered | ⚠️ Partially Covered | ❌ Not Covered}
-- **Test Cases**: {List covered/missing test scenarios}
-- **Assessment**: {Coverage quality analysis}
-
----
-
-## Coverage by Changed File
-
-{For each significantly changed file, analyze test coverage for each function/method:}
-
-### [src/module.cs](src/module.cs)
-- **Functions/Methods Changed**: {number}
-- **Test File**: [tests/module.test.cs](tests/module.test.cs)
-- **Coverage**: {High/Medium/Low}
-
-#### `functionName()`
-- **Test Coverage**: {✅ Well Tested | ⚠️ Partial | ❌ No Tests}
-- **Tested Paths**: {Code paths with tests}
-- **Untested Paths**: {Gaps}
-- **Edge Cases Covered**: {List}
-- **Edge Cases Missing**: {List}
-
----
-
-## Issues & Recommendations
-
-{For each severity level (🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low), group gaps following this pattern:}
-
-**{Untested Functionality}**
-- **Location**: [file.cs](file.cs#L{lines})
-- **Problem**: {What critical code lacks tests}
-- **Impact**: {Risk of undetected bugs}
-- **Requirement**: {Which AC/requirement this affects}
-- **Recommended Tests**: {Specific test scenarios needed}
-
----
-
-## Test Quality Assessment
-
-{Analyze test quality issues: weak assertions, testing implementation vs behavior, poor isolation, flaky tests, unclear test structure.}
-
----
-
-## Parameter Verification Through Call Chains
-
-{Analyze if parameters are properly tested through function call chains. Identify where data flows aren't verified end-to-end.}
-
----
-
-## Missing Test Categories
-
-- **Unit Tests Needed**: {Specific gaps}
-- **Integration Tests Needed**: {Integration points}
-- **Error Handling Tests Needed**: {Error scenarios}
-- **Performance/Load Tests Needed**: {If applicable}
-
----
-
-## Suggested Additional Tests
-
-{Prioritized list of valuable tests to add:}
-
-### High Value Tests
-**Test: {Description}**
-- **Location to Test**: [file.cs](file.cs#L{lines})
-- **Why Valuable**: {Impact on coverage/risk}
-- **Test Scenario**: {Inputs and expected outputs}
-- **Estimated Effort**: {Small/Medium/Large}
-
----
-
-## Acceptance Criteria Coverage
-
-{For each AC from requirements audit:}
-
-1. **{AC}**: {✅ Fully Tested | ⚠️ Partially Tested | ❌ Not Tested}
-   - **Tests**: {Test cases covering this}
-   - **Gaps**: {What's not covered}
-
----
-
-## Conclusion
-
-{1-2 paragraph summary of overall coverage level, most critical gaps, test quality assessment, and confidence level}
-
-**Coverage Score**: {X/10 or percentage}
-
-**Recommendation**: {✅ Adequate | ⚠️ Address high-priority gaps | ❌ Fix critical gaps}
+## Clean
+{Comma-separated list of well-covered areas: e.g., "Happy-path flows, Error handling, Edge cases for X"}
 
 </audit_report_template>
 
@@ -316,26 +211,15 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 
 <interaction_style>
 
-**Acknowledge good testing:**
-- Celebrate comprehensive test suites
-- Recognize clever test strategies
-- Highlight excellent test organization
-
-**Frame gaps constructively:**
+**Frame gaps with specificity:**
 - "This would benefit from tests for..."
 - "Consider adding tests to verify..."
 - "To increase confidence, test..."
 
-**Provide learning opportunities:**
+**Provide learning context:**
 - Explain why certain tests matter
 - Show testing best practices
 - Suggest testing techniques
-
-**Remember:**
-- Writing good tests is hard
-- Some developers need guidance
-- Your job is to help improve, not criticize
-- Make testing feel achievable, not overwhelming
 
 </interaction_style>
 

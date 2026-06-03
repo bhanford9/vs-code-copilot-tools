@@ -31,6 +31,86 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-31 — ILogger Audit-Logging Requirements Are Invisible to Exception-Only Tests
+
+**Pattern**: When a security requirement includes "log every access attempt at Warning severity," standard integration tests that assert only on thrown exceptions cannot detect if the log call is silently removed. The injectable `ILogger<T>` design technically supports capture-sink testing, but tests written as `act.Should().ThrowAsync<KeyNotFoundException>()` exercise only the exception path — not the log statement that precedes it.
+
+**Why this matters**: The log call and the throw often appear in the same `if` block. A reviewer scanning the code sees both. But the test sees only the exception. Deleting the `LogWarning(...)` line leaves all tests green while silently removing the audit trail.
+
+**Testability signal**: When a feature requirement names an audit log, warning, or security event as a distinct deliverable (not a side effect), check whether any test asserts on the log output. If not, flag Medium — even if the logging behavior is visibly correct in the code.
+
+**Recommendation**: Directly construct the service with a captured logger (`ILogger<T>` implementation backed by a `List<(LogLevel, string)>`). This requires no new test infrastructure class if the service has a clean constructor: just `new TheService(existingDb, timeProvider, capturedLogger, otherDep)`. The audit trail requirement becomes a tested contract rather than a reviewed assertion.
+
+---
+
+## 2026-05-31 — Wildcard Message Assertions Do Not Pin Non-Disclosure Requirements
+
+**Pattern**: When two code paths are required to produce **identical** exception messages (a common non-disclosure / non-leaking design), assertions of the form `.WithMessage("*{id}*")` verify that both messages contain the ID — but do NOT verify they are textually identical. A future change that adds " — access denied." to one path satisfies the wildcard while breaking the non-disclosure requirement.
+
+**Severity guidance**:
+- **Low**: The two paths use the same format-string literal in the source — the code is correct; the test is just imprecise. Flag Low and recommend adding one exact-string assertion.
+- **Medium**: There is no shared constant or obvious structural protection against the messages diverging — the only safeguard is test precision.
+
+**Action**: For requirements stated as "path A and path B must produce the same exception message," at least one test must assert the exact string — not a wildcard containing a variable portion. A good pattern: assert the exact message on the mismatch path, and separately assert the exact message on the not-found path, then compare as strings if a DRY assertion helper is available.
+
+---
+
+## 2026-05-29 — ASP.NET Core OAuth `OnCreatingTicket` Lambdas Are a Recurring Service Locator Trap
+
+**Pattern**: In ASP.NET Core OAuth provider registrations, `options.Events.OnCreatingTicket = async ctx => { ... }` callbacks are anonymous lambdas that cannot receive constructor-injected dependencies. The only way to access scoped services (e.g., a user management service) is `ctx.HttpContext.RequestServices.GetRequiredService<T>()` — the service locator pattern. When this callback contains more than one or two lines of business logic (claim extraction, service call, result branching), the entire logic block is untestable without standing up the full OAuth middleware stack.
+
+**Severity guidance**:
+- **High**: The lambda contains multiple operations (claim extraction + service call + conditional failure handling + three provider copies). Extracting to an `IOAuthCallbackService` is the right mitigation.
+- **Low/skip**: The lambda is a thin pass-through (one service call, one conditional). The E2E tests cover it adequately.
+
+**Testability signal**: Count the distinct operations in each `OnCreatingTicket` lambda. If it's > 2 and duplicated across providers, flag High and recommend extraction to an injectable service.
+
+---
+
+## 2026-05-31 — `null!` Constructor Argument as a Structural Invariant Enforcer
+
+**Pattern**: Passing `null!` for a dependency in a unit test is a deliberate structural invariant — it encodes: "this code path must never touch this dependency." A `NullReferenceException` means a code change violated the invariant, not that the test is broken. Rate **Low** when the intent is documented and the method under test is a guard path; rate **Medium** if the comment is absent and the test is load-bearing for a security invariant.
+
+**Recommended documentation comment** (drop into the SetUp or construction site):
+> `// NULL DB INVARIANT: passing null! enforces that the deny/guard path never touches the DbContext.`
+> `// If this test fails with NullReferenceException, the guard no longer fires before a DB access — fix the guard, not the test.`
+
+---
+
+## 2026-06-02 — Blazor `NavigationManager` Redirect Components Are bUnit-Testable But Routinely Covered Only by E2E
+
+**Pattern**: A Blazor component that injects only `NavigationManager` and calls `NavigateTo(...)` from `OnInitialized()` is trivially testable with bUnit — the framework's `FakeNavigationManager` is registered automatically, and `ctx.NavigationManager.History` exposes every `NavigateTo` call including options like `ReplaceHistoryEntry`. Despite this, these components are frequently covered only by E2E tests, leaving the redirect URI format, encoding correctness, and navigation options (e.g. `replace: true`) as reviewed assertions rather than tested contracts.
+
+**Why this matters**: E2E tests for redirect behavior require a running browser, add seconds per test, and cannot directly assert `NavigationOptions.ReplaceHistoryEntry`. Negative-assertion tests ("no redirect should occur") in E2E are especially problematic — they use `Task.Delay` as a timing proxy, adding arbitrary wait time and creating flakiness under CI load. The same assertions take milliseconds in bUnit and require no timing.
+
+**Testability signal**: When a Blazor component's only injectable is `NavigationManager`, flag any absence of bUnit component tests as **Medium** — the component is testable today, the infrastructure is available, and the gap means redirect contracts are not mechanically enforced. The severity drops to **Low** if the component's guard predicate is a pure static method that IS unit-tested (the redirect encoding and options are still missing but the path classification is covered).
+
+**Recommended bUnit pattern** (drop into any `TestContext`-based test):
+```csharp
+ctx.NavigationManager.NavigateTo("http://localhost/protected-path");
+ctx.RenderComponent<TheRedirectComponent>();
+ctx.NavigationManager.History.Should().ContainSingle()
+    .Which.NavigationOptions.ReplaceHistoryEntry.Should().BeTrue();
+```
+The `FakeNavigationManager` is registered for free — no mock setup needed.
+
+**Negative assertion pattern** (replaces `Task.Delay`):
+```csharp
+ctx.NavigationManager.NavigateTo("http://localhost/auth");
+ctx.RenderComponent<TheRedirectComponent>();
+ctx.NavigationManager.History.Should().BeEmpty(
+    because: "navigating to an auth path must not trigger a redirect");
+```
+
+**Pattern**: A `static class` housing a pure transformation function may be highly testable in isolation (call the method directly in unit tests). The real testability concern is whether any **caller** hard-codes a static method call to it. If so, the caller cannot be tested independently of the concrete implementation, and any future dependency the pure function acquires forces a non-trivial refactor.
+
+**DO**: Rate the static class itself as testable if it has no external dependencies and is a pure function. Rate the caller as having a missing seam.
+**DON'T**: Mark the static class as "untestable" merely because it is static — the severity lives at the call site.
+
+**Trigger**: When you see a static class call inside a non-static method that has other responsibilities (e.g., database access + projection), flag the call site as Medium — "no seam between X and its caller."
+
+---
+
 ## 2026-05-19 — EF Core Bulk Operations (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) Are In-Memory Provider Killers
 
 **Pattern**: In EF Core projects, `ExecuteUpdateAsync` and `ExecuteDeleteAsync` (EF Core 7+ bulk-update APIs) translate directly to SQL `UPDATE`/`DELETE` statements. The EF Core in-memory database provider does **not** support these methods and throws `InvalidOperationException` at runtime. Any service that uses them cannot be unit-tested with the standard in-memory provider.
@@ -38,6 +118,16 @@ Only append if the session revealed something surprising, a false positive patte
 **Testability signal**: When auditing EF Core codebases, search for `ExecuteUpdateAsync` and `ExecuteDeleteAsync` calls — they are Critical testability blockers if unit testing is a goal. The affected methods require either a SQLite provider or a real database engine to test at any layer.
 
 **Recommendation**: Flag as Critical. The mitigation options are: (1) accept integration-test-only for those methods and document it explicitly; (2) extract the bulk operation into an injectable repository method that can be mocked; (3) switch to EF Core tracked-entity updates for the testable path (at some performance cost).
+
+---
+
+## 2026-05-23 — Optional Messenger Parameter Defaulting to Global Singleton Is a Recurring Unit-Test Trap
+
+**Pattern**: In CommunityToolkit.Mvvm and similar MVVM frameworks, ViewModel constructors often accept `IMessenger? messenger = null` and resolve `null` to the framework's global singleton (e.g., `WeakReferenceMessenger.Default`). This is safe in production but creates latent cross-test interference in unit test suites: if two ViewModel instances are constructed without injecting a fresh messenger, they both register with the same singleton. Messages sent by one ViewModel can unexpectedly trigger handlers in another.
+
+**Testability signal**: When auditing MVVM codebases, check the messenger constructor parameter — specifically whether the default resolves to a *process-wide singleton* rather than a *new instance*. Flag as Medium if so, because test authors can easily forget to inject a fresh messenger.
+
+**Recommendation**: Add a code comment on the messenger parameter noting that unit tests must inject `new WeakReferenceMessenger()`. If stricter enforcement is needed, provide an internal factory method that always passes a fresh messenger.
 
 ---
 
@@ -63,6 +153,31 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## 2026-05-30 — Static Pure-Function Helpers Are Not a Testability Issue — Severity Calibration
+
+**Pattern**: A `public static` class whose methods take only value/collection inputs, produce outputs, and perform no IO, no time access, and no mutation of shared state is fully unit-testable via direct invocation. It cannot be mocked, but it does not need to be. Flagging such a class as High or Critical because it is "not injectable" is a false positive.
+
+**Correct severity assignment**:
+- Static helper with no external dependencies → Low (or no finding if the method is trivially testable)
+- Static helper that calls IO, clock, network, or global state → Critical/High (same as any hard-coded external dependency)
+- Static helper called from a service where callers legitimately need to swap the behavior for error injection → Low/Medium (lack of injection seam limits test flexibility, but basic correctness is testable)
+
+**Testability signal**: Before flagging a static method call, ask: "Does this method have any path that reaches outside the process boundary (IO, network, time, environment)?" If no, the testability concern is seam-flexibility only, not correctness. Calibrate accordingly.
+
+---
+
+## 2026-05-30 — Entity Initializer Defaults Using `DateTime.UtcNow` Are a Low-Visibility Clock Dependency
+
+**Pattern**: In ORM-backed entity classes, property initializers of the form `public DateTime CreatedAt { get; set; } = DateTime.UtcNow;` create a non-deterministic default. If a service injects `TimeProvider` and overwrites these fields before saving, the initializer default is harmless in production. But tests that construct the entity directly (e.g., to set up projector or evaluator test data) will receive the real clock as the default value — making timestamp assertions flaky.
+
+**Why this is subtle**: The `TimeProvider` injection looks correct at the service level. The entity looks fine in isolation. The problem only surfaces when a test builds an entity directly, asserts on a timestamp, and forgets to supply an explicit value.
+
+**Testability signal**: In any codebase that uses injected `TimeProvider`, check whether entity classes have `= DateTime.UtcNow` or `= DateTime.Now` initializer defaults. Flag as Low if the service layer always overwrites them. Flag as Medium if there are paths where the entity is saved without the timestamp being set by the service.
+
+**Recommendation**: Prefer `= default` (or `DateTime.MinValue`) as the initializer for audit timestamp fields on entity classes. This makes the non-default requirement visible at construction time and eliminates a class of flaky test assertion.
+
+---
+
 ## 2026-05-16 — Environment property bypassing an injectable settings object is a hidden dependency masquerading as correct design
 
 **Pattern**: A class correctly accepts a settings object via injection (e.g., `ISettingsService`). The settings object has a property (e.g., `WindowsUsername`) that callers set and rely on. But inside the class, one method calls `Environment.UserName` directly instead of reading from the settings object — effectively ignoring the injectable value.
@@ -72,6 +187,110 @@ Only append if the session revealed something surprising, a false positive patte
 **Testability signal**: When a class has an injectable settings/config object with a user-identity field, check every method body for direct `Environment.UserName`, `Environment.MachineName`, `WindowsIdentity.GetCurrent()`, or similar calls. Flag any that shadow an already-injectable alternative.
 
 **Recommendation**: Replace the direct environment call with the settings property. This is a one-line fix that (a) improves testability, (b) improves correctness (the injectable value is the source of truth), and (c) eliminates the inconsistency.
+
+---
+
+## 2026-05-20 — Blazor Components with an Injectable ViewModel Layer Are Much More Testable Than the Default Pattern
+
+**Pattern**: In Blazor codebases that separate rendering from business logic via an injectable ViewModel (MVVM), the testability story splits cleanly. The ViewModel is fully testable with standard unit tests — no Blazor infrastructure needed. The component itself becomes a thin renderer and rarely requires bUnit coverage. The naive "Blazor is hard to test" heuristic overstates the difficulty in MVVM-structured codebases.
+
+**Testability signal**: When auditing Blazor testability, the first question should be "is there an injectable ViewModel layer, and is all state-mutation logic in it?" If yes, most of the perceived complexity disappears. If no — if logic is inline in code-behind methods that access `IJSRuntime`, `NavigationManager`, or other Blazor services directly — then component testing becomes genuinely hard.
+
+**Recommendation**: Do not flag `[Inject]` property injection in Blazor components as a High or Critical issue. It is normal Blazor idiom and bUnit handles it natively. Flag inline business logic in components that lacks a testable ViewModel extraction — that is the real problem.
+
+---
+
+## 2026-05-28 — Catch-Block Property Accesses Create Latent NPE Re-Throw in "Never Throws" Methods
+
+**Pattern**: A method with a `try/catch(Exception)` wrapper promises it never throws — a common pattern in engine entry points (authorization evaluators, event dispatchers, validators). The catch block logs the error using properties from the method's input object (e.g., `context.Permission`, `context.PrincipalId`). If the input object itself is `null`, the `catch` block catches the initial `NullReferenceException` but immediately throws a *second* `NullReferenceException` when it accesses the null input's properties. The outer method then propagates the exception — violating its own contract.
+
+**Testability signal**: When reviewing any method whose XML doc or interface contract says "never throws" or "always returns a result", check the catch block. If it accesses properties on the method's primary input parameter, ask: "Can this input be null?" If yes, the never-throws guarantee has a gap. The fix is a one-line null guard before the `try` block.
+
+**Recommendation**: Flag as Medium. The fix is: `if (inputParam is null) return FailClosed("null input — fail closed");` placed before the `try`. This makes the null-input case testable (a test can now call with `null!` and assert the fail-closed result instead of observing an exception) and closes the contract gap.
+
+---
+
+## 2026-05-28 — `virtual` Property on an Input Object Is a Deliberate Testability Seam — Recognize and Preserve It
+
+**Pattern**: In C# codebases with complex domain-logic engines, input data objects (POCOs, contexts, parameters) sometimes have one or more properties marked `virtual`. This is almost always intentional — it creates a testability seam that allows test subclasses to override the property getter to throw exceptions, simulate lazy-load failures, or inject controlled state. These `virtual` declarations are easily overlooked in code review and can be accidentally removed during "cleanup" refactors.
+
+**Testability signal**: When reviewing input/context objects in a domain-logic or evaluation engine, note any `virtual` property declarations. If the codebase has test-double subclasses that override those properties, this is a deliberate design decision. If not all analogous properties are virtual, check whether future error-path tests could benefit from the same treatment.
+
+**Recommendation**: Do not treat `virtual` on a DTO property as a design smell. Flag it as ℹ️ Info with a note that it is a testability seam. Recommend extending the same pattern (`virtual`) to sibling properties where the engine reads them later in the same evaluation flow, to allow future error-path tests to target those steps.
+
+---
+
+## 2026-05-28 — Private Static Security-Guard Methods in Blazor Partial Classes Are Silently Untestable
+
+**Pattern**: In Blazor component code-behind (`partial class` files), pure-logic helper methods like URL validators or input sanitizers are commonly written as `private static`. Because the Blazor component host is required to instantiate the class, and bUnit is often absent from Web test projects, these methods end up with zero unit-test coverage — even when they contain security-critical logic (open-redirect guards, input validators).
+
+**Why this matters beyond normal `private` concerns**: A `private static` method in a standard class can be tested indirectly through the class's public API. In a Blazor component, the "public API" is the rendered DOM — which requires a browser, a Blazor test host (bUnit), or a full Playwright E2E run. The method may be four lines with cyclomatic complexity of 2, and still be completely unreachable by fast unit tests.
+
+**Testability signal**: When auditing Blazor components with `private static` methods that perform security-sensitive validation (URL safety, input sanitization, auth checks), flag the method as Critical if bUnit is absent from the test project *and* the method contains any security logic. The combination of "no bUnit" + "private security method" creates a gap where bugs survive code review and CI.
+
+**Recommendation**: Extract the security-guard method to an `internal static` helper class (e.g., `UrlSafetyGuard`). Add `InternalsVisibleTo` on the web project. Write parametrized unit tests directly against the extracted class. The component calls the extracted method — same behavior, full coverage without bUnit.
+
+---
+
+## 2026-05-28 — Stringly-Typed Configuration Overrides in Test Setup Are Silent Rename Traps
+
+**Pattern**: When test fixtures override strongly-typed options classes using raw `IConfiguration` string keys (e.g., `builder.Configuration["Auth:EmailEnabled"] = "false"`), the override is invisible to the compiler. If the bound options class is refactored — a property rename, a section rename, a nested-class restructure — the test setup silently stops working. The affected scenario passes for the wrong reason (default values are used instead of the intended override), producing a false-passing test.
+
+**Testability signal**: In test setup delegates that configure `WebApplicationBuilder` or `IConfigurationBuilder`, search for `builder.Configuration["..."]` string-key assignments that correspond to a known strongly-typed options class. Each one is a potential silent-failure trap. Flag as Medium.
+
+**Recommendation**: Replace string-key assignments with `PostConfigure<TOptions>` delegates. `PostConfigure` runs after the production `Configure` call, so it correctly overrides production values. It is fully type-safe: property renames are compile errors in the test setup, not silent misconfigurations.
+
+---
+
+## 2026-05-20 — SignalR Hub Subclasses Are Integration-Test-Only By Construction
+
+**Pattern**: Any class that inherits from the SignalR `Hub` base class has `Context`, `Groups`, and `Clients` set by the framework at connection time. These cannot be injected, swapped, or mocked from outside the class. Any business logic in hub overrides (`OnConnectedAsync`, etc.) is only reachable via a real SignalR connection or the framework's test harness — there is no seam for unit testing.
+
+**Testability signal**: When a hub method does more than call one or two injected service methods, flag it as High priority. The logic should be extracted to an injectable helper class that the hub calls. The hub itself stays as a thin orchestrator — the injectable helper is fully unit-testable.
+
+**Recommendation**: Flag as High (not Critical) because the fix is straightforward: extract the logic, keep the hub thin. It is not a fundamental design flaw, just a placement error.
+
+---
+
+## 2026-05-20 — Browser Confirmation Dialogs via JS Interop Are a Recurring Blazor Test Friction Point
+
+**Pattern**: Calling `IJSRuntime.InvokeAsync<bool>("confirm", message)` for confirmation prompts in Blazor components (common on delete/destructive-action buttons) creates a testing obstacle. Tests must mock `IJSRuntime`, match the string argument `"confirm"`, and return a controlled boolean. The string matching is fragile and non-obvious to first-time test writers.
+
+---
+
+## 2026-05-26 — Public Interface Expansion with Struct-Type Properties Creates Silent Moq Default-Value Trap
+
+**Pattern**: When a public interface gains new properties whose type is a struct (e.g., a units-of-measure value type, `decimal`, `int`, `bool`), all existing `Mock<TInterface>` usages that do not configure the new property will return the struct's zero value (`default(T)`). Moq's loose mock behavior does not warn about this. If the zero value is numerically valid in the calculation context (e.g., a length of zero), the test passes silently but produces a wrong result.
+
+**Why this is insidious**: The scenario where this is hardest to catch is when zero is a plausible answer — e.g., a centroid at zero, a zero-length offset, or a zero probability. There is no exception thrown, no test failure, and no Moq warning. The test appears correct but asserts against a wrong intermediate value.
+
+**Testability signal**: When auditing a change set that adds struct-type properties to an existing public interface, count the mock sites for that interface across the test suite. If there are many (>10), flag as Medium: the new property will silently return zero in all unupdated tests. The risk scales with (a) how many mock sites exist and (b) whether zero is arithmetically meaningful in the affected code paths.
+
+**Recommendation**: Flag as Medium severity. The mitigation options are: (1) add XML doc comments to the new interface property noting that mocks must supply explicit values and zero is numerically valid; (2) provide a test builder that defaults the new properties to a sentinel non-zero value; (3) use `MockBehavior.Strict` in the affected tests so any unexpected property call throws. Options 1 and 2 are lower friction for existing test suites.
+
+---
+
+## 2026-05-20 — Dual-Hosting Blazor Libraries (Web + Native) May Use Static Mutable Flags — Flag for Test Isolation Risk
+
+**Pattern**: Blazor component libraries that target both a web hosting model (Blazor Server / WebAssembly) and a native hybrid model (e.g., MAUI BlazorWebView) sometimes use `public static` settable properties as a configuration mechanism. The native host calls a startup method that nulls out these properties to suppress web-specific behavior (e.g., render mode directives that throw in MAUI). This is a pragmatic cross-hosting solution.
+
+**Testability signal**: When auditing a Blazor shared component library that supports multiple hosting models, search for `static` classes or fields initialized from `RenderMode.*` constants that also expose public setters or a `ConfigureXxx()` method. If the method modifies static state permanently and provides no reset, it is a test isolation risk — calling it in one test poisons all subsequent tests in the same process.
+
+**Recommendation**: Flag as Medium. The minimal fix is adding a `Reset()` method that restores the original values — a three-line change. The flag is genuinely optional for production (MAUI always calls it before any component renders) but essential for parallel test execution. Do not flag as Low just because the workaround is simple; the blast radius across the entire test suite is non-trivial.
+
+---
+
+## 2026-05-20 — CommunityToolkit.Mvvm Source-Generated Commands Are Non-Mockable Without an Interface
+
+**Pattern**: When a ViewModel uses `[RelayCommand]` from CommunityToolkit.Mvvm, the source generator emits the command as a non-virtual property. If the ViewModel class is injected as a concrete type (no interface), Moq cannot create a proxy for it — the command property cannot be swapped out. This is distinct from a virtual method override situation; it is a structural limitation of source-generated code.
+
+**Testability signal**: In any Blazor or MVVM codebase using CommunityToolkit.Mvvm, scan for components that inject a concrete ViewModel class rather than an interface. If the class has `[RelayCommand]`-decorated methods, the component is not independently mockable — tests must use a real ViewModel instance with mocked service dependencies, which forces the full load path to execute.
+
+**Recommendation**: Flag as High when an interface is absent. Extracting an interface is a low-effort, high-value change. The interface only needs to expose the properties and commands that the component uses — it does not need to replicate the full `ObservableObject` surface. Tests then mock the interface normally.
+
+**Testability signal**: Search for `InvokeAsync<bool>("confirm"` in component code-behind files. Any occurrence is a test friction point.
+
+**Recommendation**: Extract to a small `IConfirmationService` abstraction with a JS-backed production implementation. Tests inject a mock that returns `true` or `false` without string matching. This is a 10–15 line change that eliminates the friction entirely.
 
 ---
 
@@ -115,16 +334,6 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
-## 2026-04-23 — Fallthrough tests that assert `Is.False` cannot distinguish fell-through from prematurely-returned
-
-**Pattern**: When a test's stated intent is "verify that code falls through block X to reach block Y," but the test arranges block Y to return `false` and asserts `Is.False`, the assertion is satisfied by two structurally different outcomes: (a) correctly fell through and Y returned false; or (b) X returned false prematurely before reaching Y. The test's structural validity depends on the code having no false-returning path inside block X — a future refactor could silently break the contract without failing the test.
-
-**Testability signal**: Look for fallthrough-intent tests that only assert `Is.False` with a non-discriminating downstream scenario. The fix is always to add a companion case where block Y returns `true` (i.e., arrange Y's preconditions for a true result) and assert `Is.True` — this result is unreachable unless block X fell through.
-
-**Recommendation**: Flag as medium-priority. The code may be logically sound today, but the test does not serve as a long-term regression guard for the fallthrough contract.
-
----
-
 ## 2026-04-28 — Passthrough constructor parameters in DI-heavy logic-provider trees are Low, not Medium
 
 **Pattern**: In codebases that use layered "logic provider" objects (classes that hold injected services and propagate them to nested providers), a new injectable service added at a leaf class will thread its way up through several provider constructors that never directly use the parameter. This is a structural smell but not a testability blocker.
@@ -162,6 +371,26 @@ Only append if the session revealed something surprising, a false positive patte
 **Pattern**: When a class extracts complex logic into `private static` helper methods (no captured state, all inputs as parameters), those methods are tested through the public API. This is correct — private methods are implementation details and should not be directly accessible. They have no hidden dependencies, so test setup for the public API exercises them fully.
 
 **False positive risk**: Do NOT flag `private static` helpers as an "untestable" concern. The correct observation is: "tested through public API, which is the intended design." Only flag if the private method is so complex it warrants extraction into a separate testable class — cyclomatic > 10 or multiple external calls.
+
+---
+
+## 2026-05-23 — Mock Wrappers Discarded as Locals in `[SetUp]` Block Future Interaction-Based Verification
+
+**Pattern**: In NUnit + Moq test fixtures, `[SetUp]` methods that create mock wrappers as local variables and pass only `.Object` to the system under test discard the wrappers when `SetUp` returns. The test class has no reference to the `Mock<T>` object and cannot call `Verify(...)` on it. Tests that only assert observable state (output collection contents, computed properties) work fine — but any future test requiring interaction verification (`DidCallX`, `WasCalledWithY`) needs to refactor `SetUp` before the test can be written, not just add a test method.
+
+**Testability signal**: When reviewing a test fixture's `[SetUp]`, check whether any `Mock<T>` is declared as a `var` local rather than a private field. If the SUT's constructor receives `.Object` but the wrapper is not stored, flag as Medium. Look at sibling test fixtures in the same project for comparison — if they correctly store mock wrappers as fields, the inconsistency is clear evidence of a gap.
+
+**Recommendation**: Promote all mock wrappers to private fields (`private Mock<IFoo> _foo = null!;`) and initialize them in `[SetUp]`. This is a mechanical 2–3 line change per mock. The SUT constructor call changes from `new Sut(foo.Object)` to `new Sut(_foo.Object)`. No logic changes.
+
+---
+
+## 2026-05-23 — C# `file`-Scoped Test Helpers Are Invisible Across Project Boundaries — Leads to Silent Duplication
+
+**Pattern**: C# 11's `file` access modifier scopes a type to its declaring file. When a test helper (e.g., a `TimeProvider` subclass, a fake clock, a stub implementation) is declared as `file sealed class FakeX` inside a test method file, it is invisible to: (a) other test files in the same project, and (b) all files in all other test projects. The helper exists in the codebase, but a developer in a different project who needs the same capability cannot find it. They will either write a non-deterministic test or silently redeclare the helper locally — creating undiscoverable duplication.
+
+**Testability signal**: When a test helper (clock, time provider, fake service) is `file`-scoped and the codebase has multiple test projects that exercise time-dependent code, flag as Medium. The signal is strongest when a shared test utilities project already exists (e.g., `Tests.Common`) — the helper belongs there.
+
+**Recommendation**: Move the helper to the shared test utilities project as `internal` (or `public` if cross-assembly references are configured). Delete the `file`-scoped declaration. Add project references from consumer test projects to the utilities project. This is a 3-file change.
 
 ---
 
@@ -224,16 +453,6 @@ Only append if the session revealed something surprising, a false positive patte
 **Pattern**: Pure, stateless calculator classes appear to score 10/10 on testability until `DateTime.UtcNow` is found inline inside a calculation method (typically for age or elapsed-time formulas). These classes have no injected dependencies, no side effects, and clear return values — yet any test that asserts on a time-variant output will be non-deterministic unless the clock is controlled.
 
 **Recommendation**: Always scan `DateTime.UtcNow` / `DateTime.Now` usage as a dedicated testability check even in classes labeled "pure" or "stateless." In .NET 8+, `TimeProvider` injection with a default `TimeProvider.System` fallback is the zero-friction fix — no production call sites change. Flag as Critical when the time dependency feeds a scoring or classification path that tests need to assert on precisely.
-
----
-
-## 2026-05-12 — Entity property initializers with DateTime.UtcNow are Low, not Medium/High
-
-**Pattern**: Entity/model classes commonly use `public DateTime CreatedAt { get; set; } = DateTime.UtcNow;` as a default value. This is evaluated once at object construction and remains stable — it is NOT a recurring clock dependency. It is Low severity because test setup can always override the value: `new DomainEntity { CreatedAt = specificDate }`. Do not conflate these initializers with `DateTime.UtcNow` calls inside method bodies (which re-evaluate on every invocation).
-
-**False positive risk**: Flagging entity initializers at Medium or High overstates the testability impact. The only realistic friction is: forgetting to set `CreatedAt` in a test that cares about age-dependent behavior. The fix is a one-line override in test setup, not an architecture change.
-
-**Recommendation**: Flag as Low. Note in findings that tests should explicitly set timestamp properties when age-dependent behavior is under test. Do not recommend removing the initializer defaults — they are the correct production default.
 
 ---
 
@@ -305,4 +524,59 @@ Only append if the session revealed something surprising, a false positive patte
 **Testability signal**: When you see a file-system-sounding interface in a project, check its methods immediately. If they are UI/navigation operations, flag the naming mismatch and look for raw `System.IO` calls in data services as a separate High priority item.
 
 **Recommendation**: Rename the UI-scoped interface to reflect its actual purpose (`IFileNavigationService`, `IShellFileService`). Add a separate interface for data-layer I/O when it is needed. The naming gap is Medium — but it masks a potentially High gap in the data layer.
+
+
+---
+
+## 2026-05-22 — Test Seed Helpers Are a Hidden Source of Clock Divergence When `FakeTimeProvider` Is Active
+
+**Pattern**: Integration test base classes often include seed helper methods (e.g., `SeedEntity(...)`) that hardcode `DateTime.UtcNow` for time-sensitive fields (heartbeat timestamps, expiry windows, last-seen times). When the DI container under test uses an injected `FakeTimeProvider`, the seeded entity data is stamped with real wall-clock time while the container's services observe fake clock time. The two clocks diverge from the moment the seed runs.
+
+**Why this is subtle**: The `TimeProvider` injection in the DI container looks correct. The test infrastructure appears to support deterministic time. But the seed helper bypasses the injected clock entirely, producing entity timestamps that cannot be controlled from the test.
+
+**Testability signal**: When a codebase uses `FakeTimeProvider` and has an integration test base class with seed helpers, inspect every seed helper for `DateTime.UtcNow`, `DateTime.Now`, or `DateTimeOffset.UtcNow` direct calls on time-sensitive fields. Any such field that a test might later assert against (e.g., "this entity should be stale because its timestamp is X minutes in the past") is a latent test-nondeterminism bug.
+
+**Recommendation**: Seed helpers that set time-sensitive fields should accept an optional `DateTime?` or `DateTimeOffset?` parameter with a default of `DateTime.UtcNow` / the wall clock. This lets tests that care about time control the seeded timestamp while existing callers get the current behavior unchanged. The fix is low-cost and unlocks the full value of the injected `FakeTimeProvider`.
+
+---
+
+## 2026-05-30 — Pre-Evaluated Boolean Flags in a Context Object: The Optimal DI Boundary for Pure Evaluators
+
+**Pattern**: A service that evaluates authorization or business rules sometimes needs the results of external queries (e.g., "does this principal hold permission X?"). One design routes those queries through injected dependencies inside the evaluator — but this forces tests to mock those dependencies. A better design pre-evaluates all external lookups at the call site and passes the boolean results in a purpose-built context object. The evaluator receives only plain data and performs only logic.
+
+**Why it is optimal for testability**: (1) The evaluator has zero constructor parameters, so tests instantiate it with `new` — no DI setup required. (2) The context object is a simple record with `init`-only properties; tests construct scenario-specific instances inline without factories. (3) The service is pure — identical inputs always produce identical outputs — which makes parametric test cases trivially expressible.
+
+**How to recognize the opportunity**: When an evaluator's dependencies are exclusively read-only lookups that produce a boolean answer (e.g., "does the user hold role X?", "is this entity in state Y?"), the lookup can be pushed to the caller and the result passed as a flag. The evaluator's job is then solely to combine those flags under the domain rules — no I/O required.
+
+**Assessment signal**: When auditing an authorization or rule-evaluation service, check whether its injected dependencies exist purely to produce `bool` answers. If so, the service is a candidate for the context-object pattern. Conversely, if the service needs to query mutable state or perform I/O as part of evaluation (not just for lookup), injection remains the correct approach.
+
+**False positive avoidance**: Do not apply this pattern when the evaluation itself must query a changing store (e.g., "count how many times this user has acted today" — a query that cannot be pre-evaluated without reading the full execution context at call time).
+
+
+
+
+## Sole `virtual` member in a namespace is a test-infrastructure-bleed diagnostic
+**Category**: Process/Model
+
+When scanning a namespace where every type is `sealed` or non-`virtual` except for exactly one property on a plain data model class, treat that lone `virtual` as a test-infrastructure smell and investigate before rating it Low. The pattern arises when a test subclasses a domain model to inject failure behavior (e.g., throwing from a property to simulate an engine error), and the `virtual` modifier is the only structural concession made to that test. Severity is **Medium**, not Low, because:
+- The `virtual` declaration opens the class to unintended extension in production contexts
+- It creates asymmetry within the type that future maintainers must explain
+- Each new property added to the class will face a "should this also be virtual?" question, and the precedent pulls toward yes
+- **Resolution rule:** check whether the `virtual` exists solely for test subclassing; if so, it's Medium with a recommendation to use mocking or a factory instead
+
+---
+
+## In-process test harness DI preamble: severity scales with extension-method delegation depth
+
+**Date**: 2026-05-24
+**Category**: Process/Model
+
+When a test harness builds a service container by inlining registrations copied from the production entry point (e.g., a `Program.cs` startup sequence), rate the DRY violation based on how much of the sequence the harness delegates through the same extension methods versus hardcodes inline:
+
+- **High** — if the harness hardcodes all registrations inline with no link to the production entry point and no enforcement mechanism (comment, shared method, or test that would fail on drift).
+- **High, mitigated** — if the harness calls the same extension methods as production for the bulk of registrations, but hardcodes the "preamble" (e.g., `AddDbContext`, `AddSingleton<TimeProvider>`) directly. The drift scope is narrower (only new top-level calls would be missed), but still unguarded. **Recommend:** a prominent sync comment or a shared registration helper that both the entry point and the harness call.
+
+The recommendation in both cases is the same: add a `// ⚠️ Keep in sync with [entry point file]` comment above the preamble, or extract the shared portion to a static helper that eliminates the copy. The failure mode is that a new extension call is added to the entry point and the harness silently tests a different container — tests pass, production fails.
+
+---
 

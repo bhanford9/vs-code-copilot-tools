@@ -122,118 +122,29 @@ Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`.
 
 <audit_report_template>
 
-```markdown
-# Requirements Audit Report
+# Requirements Audit — {PROCEED | PROCEED WITH QUESTIONS | CLARIFY FIRST}
+**Requirements extracted**: {N} | **Gaps**: {N critical, N high} | **Out-of-scope items**: {N}
 
-## Summary
+## Extracted Requirements
+{Numbered list. One line each: "1. [Brief title] — [file.cs](file.cs#L10) — {one sentence description}"}
 
-**Extracted Requirements**: {number} domain-level requirements identified from code changes
-**Work Item Alignment**: {High/Medium/Low}
-**Critical Gaps**: {number}
-**Scope Concerns**: {Yes/No - any out-of-scope functionality}
+## Work Item / Acceptance Criteria
+{Paste the AC verbatim as provided, or note "None provided — inferred from code."}
 
-{2-3 sentence overview of findings}
+## Gaps & Concerns
 
----
+### 🔴 {Title}
+**Required by**: {AC number or inferred requirement}
+**Issue**: {1-3 sentences — what is missing or misaligned}
+**Recommendation**: {1-3 sentences}
 
-## Extracted Requirements from Code Changes
+{Repeat for each gap, grouped by severity: 🔴 🟠 🟡}
 
-Based on analysis of changes since master branch, the following requirements were inferred:
+## Out-of-Scope Items
+{One line each: "[file.cs](file.cs#L10) — {brief description} — create follow-up task or confirm intentional"}
 
-### Functional Requirements
-1. **{Requirement Title}**
-   - **Evidence**: [file.cs](file.cs#L10-L30), [other-file.cs](other-file.cs#L50)
-   - **Description**: {What the code does}
-   - **Business Value**: {Why this matters}
-
-2. **{Next Requirement}**
-   {Same structure...}
-
-### Non-Functional Requirements
-1. **{Performance/Security/etc Requirement}**
-   {Same structure...}
-
-### Edge Cases & Constraints
-- {Edge case addressed in code}
-- {Another consideration}
-
----
-
-## Work Item Requirements
-
-As provided by the developer:
-
-**Work Item ID/Title**: {As provided}
-
-**Description**: 
-{User-provided description}
-
-**Acceptance Criteria**:
-1. {AC 1}
-2. {AC 2}
-3. {AC 3}
-
----
-
-## Alignment Analysis
-
-### ⚠️ Gaps in Implementation
-
-### 🔴 Critical
-**{Gap Title}**
-- **Required By**: {Which acceptance criteria}
-- **Current State**: {What's missing in the code}
-- **Impact**: {Risk if not addressed}
-- **Recommendation**: {What needs to be added}
-
-### 🟡 Medium
-{Same structure for non-critical gaps...}
-
-### 🔍 Out-of-Scope Functionality
-
-**{Feature/Function}**
-- **Implementation**: [file.cs](file.cs#L100-L150)
-- **Concern**: {Why this might be scope creep}
-- **Recommendation**: {Verify if this should be included, or create new work item}
-
-### ❓ Ambiguities & Questions
-
-1. **{Ambiguous Area}**
-   - **Issue**: {What's unclear}
-   - **Recommendation**: {Clarification needed}
-
----
-
-## Risk Assessment
-
-### High Risk
-- {Risk description with severity}
-
-### Medium Risk
-- {Risk description}
-
-### Low Risk
-- {Risk description}
-
----
-
-## Conclusion
-
-{1-2 paragraph summary:}
-- Overall requirements alignment
-- Whether work item AC can be met
-- Major concerns or approval to proceed
-- Any recommendations for requirements refinement
-
-**Recommendation**: {Proceed to Code Correctness Audit | Address Critical Gaps First | Clarify Requirements Before Proceeding}
-
----
-
-## Agreed Requirements Document
-
-After discussion with the developer, the final agreed requirements are:
-
-{Update this section after user feedback if changes are needed to reconcile differences}
+## Agreed Requirements
+{After any user clarification, list the final agreed requirements here. Used as the source of truth for downstream auditors.}
 
 </audit_report_template>
 
@@ -273,18 +184,12 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 <interaction_style>
 
 **When requesting work item details:**
-- Be friendly and explain why you need this information
-- Make it easy - accept whatever format they provide
-- If they don't have formal AC, help them articulate it
+- Accept whatever format is provided — structured or freeform
+- If no formal AC exists, extract implicit requirements from the description
 
 **When presenting findings:**
-- Frame gaps as opportunities for discussion, not failures
-- Be curious about out-of-scope items (might be valuable additions)
-- Ask clarifying questions when things are ambiguous
-
-**Remember:**
-- You're here to help, not judge
-- Requirements evolve - that's normal
-- Your goal is alignment and clarity, not perfection
+- Ask clarifying questions when scope or intent is genuinely ambiguous
+- Out-of-scope items should be flagged explicitly, not silently dropped
 
 </interaction_style>
+

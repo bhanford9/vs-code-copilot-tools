@@ -19,7 +19,7 @@ flowchart TD
     ShowScope --> UserConfirm{USER CONFIRMS<br/>One reply to begin}
     UserConfirm --> Requirements[Requirements Auditor<br/>- Extract domain requirements<br/>- Compare with work item<br/>- Identify gaps and risks]
     Requirements --> Correctness[Code Correctness Auditor<br/>- Verify functional correctness<br/>- Check edge case handling<br/>- Validate against requirements]
-    Correctness --> Coordinator[Parallel Audit Coordinator<br/>Spawns 7 parallel auditors]
+    Correctness --> Coordinator[Parallel Audit Coordinator<br/>Spawns 8 parallel auditors]
     
     Coordinator --> UnitTest[Unit Test<br/>Coverage<br/>Auditor]
     Coordinator --> Maintainability[Maintainability<br/>Auditor]
@@ -28,6 +28,7 @@ flowchart TD
     Coordinator --> Extensibility[Extensibility<br/>Auditor]
     Coordinator --> Security[Security<br/>Auditor]
     Coordinator --> RippleEffect[Ripple Effect<br/>Auditor]
+    Coordinator --> StructuralPatterns[Structural<br/>Patterns<br/>Auditor]
     
     UnitTest --> FinalSynth[REVIEW-FinalSynthesizer<br/>Synthesize Final Review]
     Maintainability --> FinalSynth
@@ -36,6 +37,7 @@ flowchart TD
     Extensibility --> FinalSynth
     Security --> FinalSynth
     RippleEffect --> FinalSynth
+    StructuralPatterns --> FinalSynth
     
     FinalSynth --> Done([DONE — final-review.md])
     
@@ -53,6 +55,7 @@ flowchart TD
     style Extensibility fill:#98FB98
     style Security fill:#98FB98
     style RippleEffect fill:#98FB98
+    style StructuralPatterns fill:#98FB98
     style FinalSynth fill:#87CEEB
     style Done fill:#90EE90
 ```
@@ -69,7 +72,7 @@ Entry point for all reviews. Shows the changeset summary, waits for a single use
 ### REVIEW-FinalSynthesizer
 **File**: `REVIEW-FinalSynthesizer.agent.md`
 
-Reads all 9 audit reports, applies patterns from LessonsLearned, and synthesizes a unified final review with merge recommendation.
+Reads all 10 audit reports, applies patterns from LessonsLearned, and synthesizes a unified final review with merge recommendation.
 
 **Outputs**: `/code-review/final-review.md`  
 **Invoked by**: Orchestrator as a subagent after all parallel audits complete
@@ -91,14 +94,14 @@ Verifies the implementation correctly achieves requirements, validates edge case
 ### Parallel Audit Coordinator
 **File**: `REVIEW-ParallelAuditCoordinator.agent.md`
 
-Orchestrates simultaneous execution of all seven parallel auditors by launching them as parallel subagents within the editor session.
+Orchestrates simultaneous execution of all eight parallel auditors by launching them as parallel subagents within the editor session.
 
 **How it works**:
 - Launches each auditor as a named subagent using the `agent` tool
-- All 7 run as parallel subagents in isolated context windows
-- Waits for all 7 to complete and return their results
+- All 8 run as parallel subagents in isolated context windows
+- Waits for all 8 to complete and return their results
 - Reports results and returns to the Orchestrator
-- Uses the `agents` frontmatter property to restrict available subagents to the 7 auditors
+- Uses the `agents` frontmatter property to restrict available subagents to the 8 auditors
 
 **Invoked by**: Orchestrator as a subagent after Correctness Audit completes
 
@@ -202,6 +205,20 @@ Finds what *wasn't* in the diff but should have been — call sites with stale a
 - Implicit contracts between components only partially honored
 - Dead activation paths introduced by the change
 
+### Structural Patterns Auditor
+**File**: `REVIEW-StructuralPatternsAuditor.agent.md`
+
+Detects structural design smells using an explicit, extensible pattern catalog. Each pattern has a named signal and a review question. Reports matched patterns and suggests new catalog entries for smells not yet catalogued.
+
+**Outputs**: `/code-review/structural-patterns-audit.md`
+
+**Focus**:
+- Pattern-catalog-driven analysis (SP-001 through all entries in `STRUCTURAL-PATTERN-CATALOG.md`)
+- Classes doing too much, hiding too much, or coordinating incorrectly
+- Feature envy and caller-owned state machines
+- Side-channel state sharing between components
+- Suggestions for new catalog entries when novel structural smells are observed
+
 ## Usage
 
 ### Review Mode 1: Local Branch Review
@@ -260,13 +277,13 @@ The pipeline runs fully automatically after a single user confirmation. No hando
 - Verifies functional correctness and edge cases
 - Creates `/code-review/code-correctness-audit.md`
 
-**Stage 3 — Parallel Audits (automatic, 7 auditors run simultaneously)**
-- Parallel Audit Coordinator launches all 7 auditors at once
+**Stage 3 — Parallel Audits (automatic, 8 auditors run simultaneously)**
+- Parallel Audit Coordinator launches all 8 auditors at once
 - Each runs in an isolated context window
-- Creates 7 reports in `/code-review/`
+- Creates 8 reports in `/code-review/`
 
 **Stage 4 — Final Synthesis (automatic)**
-- Reads all 9 audit reports
+- Reads all 10 audit reports
 - Synthesizes findings, resolves conflicts between auditors
 - Creates `/code-review/final-review.md` with merge verdict
 
@@ -287,6 +304,7 @@ This directory is created automatically if it doesn't exist. Files are overwritt
 - `extensibility-audit.md` - Future adaptability
 - `security-audit.md` - Security vulnerabilities
 - `ripple-effect-audit.md` - Incomplete propagation and missing companion logic
+- `structural-patterns-audit.md` - Structural design pattern smells
 - `final-review.md` - Synthesized comprehensive review
 
 ## Severity Levels
@@ -330,11 +348,13 @@ skills/code-review-pipeline/
       LessonsLearned.GLOBAL.md
     REVIEW-RippleEffectAuditor/
       LessonsLearned.GLOBAL.md
+    REVIEW-StructuralPatternsAuditor/
+      LessonsLearned.GLOBAL.md
     REVIEW-FinalSynthesizer/
       LessonsLearned.GLOBAL.md      ← Synthesis-specific findings
 ```
 
-Each parallel auditor reads and writes only its own directory. The FinalSynthesizer reads all 8 per-auditor files plus the pipeline-level file, and promotes broadly applicable findings to the pipeline level.
+Each parallel auditor reads and writes only its own directory. The FinalSynthesizer reads all 9 per-auditor files plus the pipeline-level file, and promotes broadly applicable findings to the pipeline level.
 
 ## Conventions
 
@@ -422,7 +442,7 @@ handoffs:
 - Review `/code-review/` directory to see which reports exist
 
 **Final review missing content**
-- Ensure all 7 audit files exist in `/code-review/`
+- Ensure all 8 parallel audit files exist in `/code-review/`
 - Check that audits completed (files aren't empty)
 - Re-run Orchestrator synthesis if needed
 
@@ -456,7 +476,6 @@ Append a new entry after each significant review session using the template alre
 
 Potential additions to the pipeline:
 
-- **Security Auditor** - Vulnerability scanning, auth/authz checks
 - **Accessibility Auditor** - UI accessibility compliance
 - **Documentation Auditor** - API docs, code comments, README updates
 - **Dependency Auditor** - License compliance, vulnerability scanning

@@ -9,7 +9,7 @@ Before beginning any review work, read [LessonsLearned.GLOBAL.md](./LessonsLearn
 
 ## Overview
 
-The code review pipeline is an 8-agent system that audits code changes across seven quality dimensions. Sequential audits establish requirements and correctness context; five specialist auditors then run in parallel as subagents. A dedicated synthesizer produces the final report.
+The code review pipeline is a 13-agent system that audits code changes across eight quality dimensions. Sequential audits establish requirements and correctness context; eight specialist auditors then run in parallel as subagents. A dedicated synthesizer produces the final report.
 
 For full architecture and usage details, see [feature-overviews/code-review-pipeline/code-review-pipeline.md](../../feature-overviews/code-review-pipeline/code-review-pipeline.md).
 
@@ -24,7 +24,7 @@ The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor
 | `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
 | `REVIEW-RequirementsAuditor` | Extracts requirements; auto-fetches work item via API or prompts user | Sequential phase, first |
 | `REVIEW-CodeCorrectnessAuditor` | Verifies functional correctness against requirements | Sequential phase, second |
-| `REVIEW-ParallelAuditCoordinator` | Spawns the 5 parallel auditors as subagents | After user approves parallel phase |
+| `REVIEW-ParallelAuditCoordinator` | Spawns the 8 parallel auditors as subagents | After user approves parallel phase |
 | `REVIEW-UnitTestCoverageAuditor` | Test completeness and quality | Parallel phase |
 | `REVIEW-MaintainabilityAuditor` | Readability, SRP, coupling | Parallel phase |
 | `REVIEW-TestabilityAuditor` | DI boundaries, complexity, observability | Parallel phase |
@@ -32,7 +32,8 @@ The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor
 | `REVIEW-ExtensibilityAuditor` | OCP, extension points, future adaptability | Parallel phase |
 | `REVIEW-SecurityAuditor` | OWASP Top 10, injection, access control, sensitive data | Parallel phase |
 | `REVIEW-RippleEffectAuditor` | Incomplete propagation, missing companion logic, asymmetric paths | Parallel phase |
-| `REVIEW-FinalSynthesizer` | Reads all 9 audit reports, applies LessonsLearned, writes final-review.md | After parallel phase completes |
+| `REVIEW-StructuralPatternsAuditor` | Structural design patterns — over-coordination, hidden coupling, SRP violations | Parallel phase |
+| `REVIEW-FinalSynthesizer` | Reads all 10 audit reports, applies LessonsLearned, writes final-review.md | After parallel phase completes |
 
 ## Conventions
 
@@ -62,21 +63,22 @@ This skill uses a per-auditor LessonsLearned structure. Each parallel auditor ma
 
 ```
 skills/code-review-pipeline/lessons-learned/
-  REVIEW-MaintainabilityAuditor/   LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-TestabilityAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-PerformanceAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-ExtensibilityAuditor/     LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-UnitTestCoverageAuditor/  LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-SecurityAuditor/          LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-RippleEffectAuditor/      LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-FinalSynthesizer/         LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-MaintainabilityAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-TestabilityAuditor/           LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-PerformanceAuditor/           LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-ExtensibilityAuditor/         LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-UnitTestCoverageAuditor/      LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-SecurityAuditor/              LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-RippleEffectAuditor/          LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-StructuralPatternsAuditor/    LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-FinalSynthesizer/             LessonsLearned.GLOBAL.md + LessonsLearned.md
 ```
 
 The pipeline-level `LessonsLearned.GLOBAL.md` / `LessonsLearned.md` (this directory) are shared by the Orchestrator, Coordinator, RequirementsAuditor, and CorrectnessAuditor.
 
 **Rules:**
 - Each parallel auditor reads and writes only its own directory — auditors do not read each other's LL files
-- `REVIEW-FinalSynthesizer` reads all 6 per-auditor LL files for cross-auditor context, writes findings to its own directory, and promotes to the pipeline-level LL only when a finding applies to the entire pipeline
+- `REVIEW-FinalSynthesizer` reads all 8 per-auditor LL files for cross-auditor context, writes findings to its own directory, and promotes to the pipeline-level LL only when a finding applies to the entire pipeline
 - Per-auditor LL entries may conflict — FinalSynthesizer is expected to reconcile them
 - `*.md` (gitignored) — codebase-specific patterns; `*.GLOBAL.md` (tracked) — cross-codebase process/model patterns
 - **`*.GLOBAL.md` files are committed to a public shared repo. NEVER write class names, method names, type names, project names, domain abbreviations, or any codebase-specific content to them.** Strip all workspace context before writing. If uncertain which file to use, write to `*.md` (local) instead.

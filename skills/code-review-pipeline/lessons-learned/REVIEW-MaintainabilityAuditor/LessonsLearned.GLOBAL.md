@@ -31,6 +31,168 @@ Only append if the session revealed something surprising, a false positive patte
 
 ---
 
+## Bare `Task.Delay` for absence-of-X E2E assertions is Medium when no named constant or rationale comment exists
+
+**Date**: 2026-06-02
+**Category**: Process/Model
+
+When an E2E test asserts that a navigation or state change does *not* occur by issuing a hard sleep (`Task.Delay(N)`) and then checking that the URL/state is unchanged, rate the finding as **Medium** (not Low) when all three of the following are true: (1) the wait duration is a bare integer literal with no named constant, (2) there is no inline comment explaining why the specific duration was chosen, and (3) the pattern appears in two or more test methods in the same class. The severity is Medium because E2E test suites treat visible patterns as conventions — the next author writing a similar "no redirect" assertion will copy the pattern including the magic number and the rationale vacuum. A named constant with a comment explaining the assertion strategy is the minimum viable fix; migrating to a declarative wait API is the recommended eventual fix but should not gate the Medium finding. Do NOT downgrade to Low just because the sleep duration appears to be "short" — the severity comes from the missing rationale and the pattern's propagation risk, not the duration itself.
+
+---
+
+## Parallel ordered-array + keyed-dictionary over same domain objects is High when a bug confirms the sync failure
+
+**Date**: 2026-05-20
+**Category**: Process/Model
+
+When a class exposes two static data structures that represent the same ordered domain concept — e.g., an `ItemType[]` array for iteration order plus a `Dictionary<ItemType, ...>` for attribute lookup — and a known production bug exists whose direct cause is that one structure was updated without the other, rate the DRY violation as **High** (not Medium). The bug IS the DRY failure manifesting in production. The finding should include: (a) the crash mode (e.g., `KeyNotFoundException` when the array contains a key absent from the dictionary), (b) that any partial fix is dangerous (updating one but not both can crash), and (c) the recommended refactor (a single ordered array of tuples from which the dictionary is derived). Do NOT downgrade to Medium because the bug is already documented in a correctness audit — the maintainability severity is elevated BY the confirmed correctness failure.
+
+---
+
+## Documentation "Test-Verified" claims require type and property name spot-checks against source
+
+**Date**: 2026-05-23
+**Category**: Process/Model
+
+When a documentation section is labelled as "test-verified" or claims to reflect what the test suite asserts, always spot-check at least one type name and one property name against the actual source files before accepting the doc as accurate. A type name used in documentation can silently diverge from the implementation type name — especially when the doc was written near (but not after) the tests. Without the spot-check, a naming discrepancy is a High-severity finding that would be silently skipped. **Rule:** For any "test-verified" doc section, grep the source for the primary domain type referenced. A name mismatch is High severity, not Low.
+
+---
+
+## `file`-scoped C# helpers in test files are a reuse-hazard flag
+
+**Date**: 2026-05-23
+**Category**: Process/Model
+
+When a test file defines a `file`-scoped helper class that implements or extends a framework type (time provider, logger, random source, etc.), flag it for extraction to a shared test helpers folder — even if no other test in the project currently needs it. The `file` modifier optimizes for isolation at the cost of reuse. As the test project grows, each time-dependent test will either duplicate the helper or be blocked from using it. **Rule:** `file sealed class Fake*` that wraps a standard framework extension type = Low finding recommending extraction to `internal` in a shared location.
+
+---
+
+## Multi-class single-file test patterns against a project-wide one-class-per-file convention are Medium
+
+**Date**: 2026-05-23
+**Category**: Process/Model
+
+When every test project in a codebase uses one `[TestFixture]` class per file, a single test file that packs multiple fixture classes is a Medium structural finding — regardless of whether each individual fixture is clean. The severity comes not from any single file being wrong, but from the pattern divergence: the file is the outlier and will grow linearly with the class count. **Check:** Compare the largest test file's class count against the project-wide norm. If it's the sole multi-class outlier, it's Medium.
+
+---
+
+## Document item-count claims should be verified against source arrays
+
+**Date**: 2026-05-23
+**Category**: Process/Model
+
+When documentation states a count of items (keyword lists, enum values, configuration keys, feature flags), verify by counting the actual source structure. Off-by-one errors in count claims are systematically under-caught because readers accept the documented number at face value. When the documentation section cites test coverage as authority, a wrong count implies the tests may also be incomplete. **Rule:** For any doc line that says "(N items)" or "the following 8 rules", count the actual source array. If the count differs, it's at minimum a Low finding; if tests depend on the count, it may be Medium.
+
+---
+
+## Free-text descriptor fields on append-only entities require a documented naming convention before the second callsite
+
+**Date**: 2026-05-31
+**Category**: Process/Model
+
+When an append-only audit or event entity has a free-form string descriptor field (e.g., `Outcome`, `Reason`, `Description`) and that field has no enumeration, no constants file, and documentation examples that do not match the actual values used at existing callsites, rate the finding as **Medium** (not Low) if two or more additional callsites are planned within the near-term roadmap. Rationale: the first callsite establishes the de facto convention by example; when the second and third callsites are implemented, their authors will either (a) grep the existing callsite and copy its style, or (b) read the documentation examples (which are wrong) and invent a different style. The longer the convention divergence persists before being documented or centralized, the more expensive the cleanup. **Rule:** For any new audit entity with a free-text descriptor, if the XML doc examples for that field do not match the actual string values written at existing callsites, flag the doc-reality mismatch AND recommend either (a) a constants class or (b) updated remarks with the actual naming convention, before the next planned callsite is implemented. The finding should explicitly name how many additional callsites are planned so the reviewer can judge urgency.
+
+---
+
+## When a unifying private helper is added, scan the same file for pre-existing inline occurrences and convert them
+
+**Date**: 2026-05-31
+**Category**: Process/Model
+
+When a private helper is introduced to unify a repeated pattern, pre-existing inline occurrences not refactored to use it are the primary drift risk — the helper will receive future changes while the old inline copy will not. **Rule:** When unconverted inline occurrences remain, rate the DRY gap **Medium** (not Low). Note how many write paths in the same class use the helper vs. how many still use the inline form.
+
+---
+
+## An enum value whose documented semantics require a missing context field is Medium, not Low
+
+**Date**: 2026-05-30
+**Category**: Process/Model
+
+When an enum value's XML documentation describes behavior that is physically unimplementable because the required context or field does not yet exist in the calling model, rate the finding as **Medium** even if the code itself is safe (i.e., the unimplemented value falls through to a safe default). The documentation IS the defect in two specific ways: (1) a caller who sets this value gets undocumented behavior silently (the doc says X, the runtime does Y); (2) a future implementor reading the doc will assume the feature already works and may skip the code changes required to actually implement it. This is distinct from a simple documentation error — the misleading doc actively obscures a coordination dependency between a future context change and a future service change. **Rule:** For any enum used as a configuration API (users select values that control runtime behavior), when a value's documented behavior requires a field or state that the current model does not carry, the finding is Medium with a mandatory "update to say 'reserved/not yet implemented'" recommendation. The safe-default behavior does NOT reduce severity — it only confirms no security gap; the documentation trap is the finding.
+
+---
+
+## A DRY violation that replicates an already-known bug upgrades from Low to Medium
+
+**Date**: 2026-05-30
+**Category**: Process/Model
+
+When a new code block is a copy of an existing block that is already known to contain a documented bug (e.g., a correctness audit note or a comment in the same PR), the DRY violation should be rated **Medium**, not Low, even if the duplicated code is otherwise correct and the duplication is "just following the pattern." Rationale: (1) the known bug now lives in two places, requiring two coordinated fixes instead of one; (2) a partial fix that patches one copy but not the other introduces silent behavioral divergence; (3) the fix surface for both the bug AND the DRY issue expands with every additional copy. **Rule:** Before rating a copy-paste DRY finding, grep the existing (pre-copy) source block for any nearby TODO, bug note, or correctness-audit finding. If one exists, escalate the DRY severity by one level and include both the duplication and the bug-doubling in the finding description.
+
+---
+
+## Framework-required public property with private naming convention is a false-positive trap, not a naming violation
+
+**Date**: 2026-05-29
+**Category**: Process/Model
+
+Some UI component frameworks require component parameters to have public setters so the framework's binding mechanism can inject values at runtime (e.g., query-parameter binding, cascading parameter binding). In these frameworks, a developer may name the public property using a private-field convention (underscore prefix) because the property feels internal to the component — the public modifier is a framework-imposed detail, not a design intent. When reviewing component code, before flagging a public property as a naming convention violation, check whether a framework-binding attribute on the property forces the public accessor. If it does, the correct finding is the asymmetry with the private-field naming convention (Medium), not the access level itself. Contrast with other components in the same file or project that achieve the same binding pattern without the naming mismatch — that contrast is the finding. **Rule:** For any `public` property on a component that is named like a private field, check for a binding attribute before concluding it is a naming error.
+
+---
+
+## Tripled copy-paste blocks require an active divergence scan as a separate step from the DRY finding
+
+**Date**: 2026-05-29
+**Category**: Process/Model
+
+When the same ~10-20-line logic block is copy-pasted three or more times with only one or two string literals changing per copy, assume divergence has already occurred and perform an explicit diff inspection of each copy before writing the DRY finding. Look for: lines present in some copies but absent in others (usually a fallback or additional logic added to one copy after the initial paste), subtle expression differences, and comment drift. Report the DRY finding AND the specific divergence as a compound observation — the divergence is the strongest evidence that the duplication is not "harmless boilerplate" but a live source of behavioral inconsistency. **Rule:** For N identical blocks, compare N−1 pairs of consecutive blocks line by line. Any difference is a separate finding within the DRY entry.
+
+---
+
+## Sole `virtual` member in a namespace is a test-infrastructure-bleed diagnostic
+
+**Date**: 2026-05-28
+**Category**: Process/Model
+
+When scanning a namespace where every type is `sealed` or non-`virtual` except for exactly one property on a plain data model class, treat that lone `virtual` as a test-infrastructure smell and investigate before rating it Low. The pattern arises when a test subclasses a domain model to inject failure behavior (e.g., throwing from a property to simulate an engine error), and the `virtual` modifier is the only structural concession made to that test. Severity is **Medium**, not Low, because:
+- The `virtual` declaration opens the class to unintended extension in production contexts
+- It creates asymmetry within the type that future maintainers must explain
+- Each new property added to the class will face a "should this also be virtual?" question, and the precedent pulls toward yes
+- **Resolution rule:** check whether the `virtual` exists solely for test subclassing; if so, it's Medium with a recommendation to use mocking or a factory instead
+
+---
+
+## Inline literal strings in an algorithm + test assertions = DRY violation rated by test coverage of that string
+
+**Date**: 2026-05-28
+**Category**: Process/Model
+
+When an algorithm class produces string output (e.g., trace labels, status messages, resolution step names) as inline literals, and tests assert on those exact strings as inline literals in a separate file, the severity of the DRY violation scales with how many of the strings have no test coverage:
+- If every string has a test asserting it exactly: **Low** — the test will fail on any unintended rename
+- If some strings have no test coverage: **Medium** — a misspelling in production produces no test failure AND no compile error
+- If the string count is projected to grow (e.g., placeholder steps exist that will add more strings): escalate one level, because the un-enforced pattern will compound
+- **Recommendation:** extract to `const string` or a static constants class so production code and test assertions share the same reference. The escalation-on-growth rule is particularly important for state machine / pipeline / precedence-engine patterns where each step adds a new label.
+
+---
+
+## Aggregate-boolean service interface hiding per-item granularity is High when the consumer renders items conditionally
+
+**Date**: 2026-05-28
+**Category**: Process/Model
+
+When a service interface exposes only an aggregate boolean (`IsAvailable`, `IsEnabled`, `HasAny`) but the backing options/config class has per-item availability flags, and the consumer renders a list of items *without* checking per-item availability, rate the interface-coverage gap as **High**. The severity comes from two compounding factors: (1) dead/broken items are shown to users in any partial configuration, and (2) the fix requires extending the interface — not just patching the template — which touches multiple call sites. **Rule:** For any service that wraps a collection-like config (N providers, N features, N strategies), check whether the interface exposes enough surface area for consumers to render conditionally. An interface that answers "are any available?" but not "which ones are available?" is High when conditional rendering is the consumer's job.
+
+---
+
+## Multi-view descriptor record redundancy (lists + dictionary of same items) is Medium unless constructors enforce sync
+
+**Date**: 2026-05-26
+**Category**: Process/Model
+
+When a parameter record carries multiple structural views of the same domain objects — e.g., two `IReadOnlyList<T>` (by role) and one `IReadOnlyDictionary<K, T>` (by key) where the two lists are a partition of the dictionary — rate the DRY violation as **Medium** (not Low). The existing "parallel array + dictionary" lesson covers static class fields; this lesson covers *parameter types*. Key differences:
+- Each new caller must populate all three structures in sync; there is no central enforcement point.
+- The dictionary and lists often serve different downstream consumers (one for iteration, one for keyed lookup), so the redundancy isn't immediately obvious as removable.
+- Callers tend to grow independently over time — each new section type or variant must get the sync right.
+
+Recommended severity escalation: upgrade to **High** if any of the following apply:
+- The record is mutable (callers can modify one view without updating the other)
+- The redundancy is across a class hierarchy (base and subclass each hold one view)
+- A concrete callsite already fails to sync them
+
+Recommended finding: note the specific sync constraint, show that the two lists are a partition of the dictionary, and recommend either deriving one structure from the other or adding a factory method that enforces the invariant at construction time.
+
+---
+
 ## Entry: Toggle-transitional step-list duplication is intentional, not a DRY violation
 
 **Date**: 2026-04-22
@@ -100,6 +262,24 @@ Step-list duplication within toggle branches (where both branches share surround
 **Category**: Process/Model
 
 In systems where `FlowDecision` or similar base classes accept a name string that appears verbatim in execution logs (e.g., `base(nameof(CheckIfShouldSkipSomePhaseForSomeCondition))`), long class names are diagnostic features, not style liabilities. A 56-character class name that produces a self-documenting log entry is preferable to a shortened name that requires source lookup during debugging. Do NOT flag these as a readability issue. Check whether the class name is used as a trace label before assigning any severity.
+
+---
+
+## Misleading "Use the service/API" comment on a direct-DB helper is a reliable Medium finding
+
+**Date**: 2026-05-23
+**Category**: Process/Model
+
+In test code, when a private helper method carries a comment like "Use the API/service to advance state" but the implementation directly accesses the data store — bypassing the service layer entirely — the mismatch between the comment and the implementation is a reliable **Medium** finding (not Low). The comment misleads future test authors about which abstraction layer is being used and, more importantly, which side effects (e.g., audit log/history entries) occur. The fix is a comment correction that names the bypassed boundary and explains why it is bypassed. Do NOT require a code refactoring if the bypass is intentional (e.g., to suppress history events for unrelated tests); the comment is the defect, not the bypass itself.
+
+---
+
+## Inline polling expressions in E2E tests that duplicate a base-class method are Medium DRY, not High
+
+**Date**: 2026-05-23
+**Category**: Process/Model
+
+When an E2E test base class encapsulates a polling/wait expression (e.g., waiting for a DOM attribute to reach a specific value) inside a navigation helper, and a single test class inlines the same expression because its navigation is triggered by a button click (not a direct URL load), rate this as **Medium** DRY — not High. The duplication is narrow (one call site), clearly understandable, and exists because the base method does not expose a standalone "wait only" variant. The recommended fix is a one-liner extracted helper on the base class. Do not escalate to High unless the expression is duplicated in three or more places, or unless the expression contains a magic string/timeout that is likely to change.
 
 ---
 
@@ -338,6 +518,37 @@ When a class's public API takes a single "env" or "context" object and all its p
 
 ---
 
+## SignalR Event-Name Magic Strings Spanning Multiple Assemblies Are a Reliable Medium Finding
+
+**Date**: 2026-05-20
+**Category**: Process/Model
+
+When a SignalR event name string (e.g., the first argument to `SendAsync`/`.On`) appears as a hardcoded literal in both a server hub/publisher AND a client handler registered in a separate project, rate it as **Medium** — not Low. The key risk is that a rename or typo produces a runtime-silent failure: the server broadcasts and the client never receives the event; no compiler error, no exception, no log. The failure is invisible until an integration test covers the full send-to-receive path.
+
+Reliable finding criteria:
+- The string appears in `SendAsync("EventName", ...)` in one file
+- The same string appears in `.On<T>("EventName", ...)` or an equivalent registration in a different project
+- No shared constant, interface, or typed hub contract binds them
+
+Recommendation: define the event name as a `public const string` in the shared core/contracts assembly. Alternatively, use a typed hub interface where the event name is encoded in the method signature — making mismatches a compile error.
+
+Do not rate this Low just because "they can always grep for it." The risk is proportional to how many assemblies and teams share the string, and how often the event contract is likely to evolve.
+
+---
+
+## Multi-Interface Single-Concrete Registration in DI Is a Self-Documenting-Code Finding, Not a Design Smell
+
+**Date**: 2026-05-20
+**Category**: Process/Model
+
+When a DI container registers a single concrete service as five registrations — one concrete, four interface facades each resolving the concrete via `sp.GetRequiredService<ConcreteType>()` — this is the correct pattern for sharing a single scoped instance across multiple interfaces. It is NOT an SRP violation or a code smell.
+
+However, the pattern is non-obvious to contributors unfamiliar with it, and the wrong variation (`AddScoped<IFoo, ConcreteType>()` instead of the factory lambda) creates a second instance per scope, silently breaking the shared-instance guarantee.
+
+The correct finding: **Medium self-documenting-code gap** — recommend a single inline comment explaining the pattern and what NOT to do. Do not recommend refactoring the pattern itself. Do not flag the five-registration block as a design issue. The block is intentional and correct; the gap is just the missing explanation.
+
+---
+
 ## Graphics renderer line count driven by domain element breadth is not an SRP violation
 
 **Date**: 2026-05-13
@@ -448,3 +659,40 @@ When reviewing Blazor components that register a RegisterLocationChangingHandler
 **Category**: Process/Model
 
 In Blazor components, one-line code-behind wrapper methods of the form private async Task Foo() => await ViewModel.Foo() are unnecessary: Blazor's @onclick directive accepts Task-returning no-parameter method references directly (e.g., @onclick="ViewModel.Foo"). When these wrappers appear, flag as **Low YAGNI** — they add one layer of indirection with no benefit. Do not confuse with wrappers that add pre/post logic, which are legitimate.
+
+---
+
+## Hardcoded SQL table lists in test teardown are a reliable Medium finding
+
+**Date**: 2026-05-22
+**Category**: Process/Model
+
+When a test base class truncates the database using a raw SQL string that explicitly names each table (e.g., `TRUNCATE TABLE "TableA", "TableB", ... CASCADE`), flag this as **Medium** — not Low. The failure mode is schema drift: a developer adds a new entity and migration but forgets to add the table to the hardcoded list. Tests pass individually but fail non-deterministically when run in sequence (leftover rows persist between tests), which is the hardest type of test failure to diagnose. The standard fix is to derive the table list from the ORM model at runtime (e.g., `db.Model.GetEntityTypes().Select(e => e.GetTableName())`), making the teardown self-maintaining. Until that fix lands, recommend adding an explicit "SCHEMA SYNC REQUIRED" comment at the truncation site so future migration authors know to update it.
+
+---
+
+## DI module XML "caller responsibilities" lists should be cross-checked against the method body
+
+**Date**: 2026-05-22
+**Category**: Process/Model
+
+When reviewing DI extension methods that include an XML `<remarks>` block listing services as "caller responsibilities" (i.e., intentionally omitted so the host can provide context-appropriate implementations), always verify each listed service against the method body. If a listed service is actually registered inside the method unconditionally, flag it as **Medium**: a developer adding a new host context reads the docs, concludes they must supply that service, and either double-registers it with a wrong implementation or wastes time creating a no-op implementation. In frameworks where last-registration-wins semantics apply (e.g., ASP.NET Core DI), a wrong over-registration silently replaces the correct one with no diagnostic. The fix is a one-line doc correction, but the severity is Medium because the misleading doc actively increases the risk of a future silent regression.
+
+---
+
+## Immutable-record domain aggregate + mutable UI working copy creates a structurally-forced DRY violation on derived predicates
+
+**Date**: 2026-05-30
+**Category**: Process/Model
+
+When a domain aggregate is an immutable record (e.g., a C# `record`) that computes a derived boolean predicate (`AllItemsDecided`, `IsComplete`, `HasErrors`) over a list it owns, and a UI component must maintain a mutable copy of that same list (to support two-way binding), the component will re-implement the same predicate over the mutable copy. This is not a bad-faith DRY violation — it is a structural consequence of the immutability constraint. However, rate it **Medium** because: (a) the two implementations have no compiler or test linkage, so a future change to the domain predicate's semantics (e.g., a new "skipped" state that should also satisfy the gate) must be applied in both places independently; (b) reviewers reading one side won't know to check the other. **Rule:** For any immutable-record aggregate that exposes a derived gate predicate, check whether any UI consumer maintains a mutable copy of the list and re-implements the predicate. If so: Medium, with a recommendation to add a comment explicitly linking the two and warning that they must stay in sync.
+
+---
+
+## Service method `newPermissions`-style parameters are a YAGNI / Least Surprise trap when callers can't supply them at call time
+
+**Date**: 2026-05-30
+**Category**: Process/Model
+
+When a "prepare session" service method accepts a parameter representing the proposed final state (e.g., `newPermissions`, `proposedValues`) but the caller hasn't determined that state yet (because the user must interact first), the parameter creates a false contract. Callers will pass the *current* state as a placeholder, making `session.NewValues == session.CurrentValues` on creation — semantically wrong and unused. This pattern is a **Medium YAGNI / Principle of Least Surprise violation**: (a) the parameter implies the caller knows the future state, which the prepare-session-first workflow precludes; (b) any derived field (e.g., `TemplateEditSession.NewPermissions`) is populated with wrong data and will mislead future readers who assume it represents the proposed change. **Rule:** If a "prepare/initialize session" method takes a future-state parameter, verify that every current caller can actually supply that value at prepare time. If any caller must pass a placeholder, recommend removing the parameter and receiving it only at the "apply/commit" step where the caller does know the final state.
+

@@ -39,6 +39,20 @@ Always prefer `tt session-start --task-id <id>` over `tt start --id <id>`. Both 
 
 ---
 
+### Rule 3 — Always Target Production
+
+This skill tracks **real agent work** on the live board. Always set `ASPNETCORE_ENVIRONMENT` to `Production` before each `tt` command and clear it afterward:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = 'Production'
+$raw = tt add --title "Agent: ..." | Out-String
+$env:ASPNETCORE_ENVIRONMENT = ''
+```
+
+Never use the Development database for task tracking — tasks created there do not appear on the live board and will not be visible in any human-facing review.
+
+---
+
 ## Standard Workflow
 
 | Step | Command |

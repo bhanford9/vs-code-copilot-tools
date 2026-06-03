@@ -35,24 +35,14 @@ You will apply each pattern independently in step 4.
 
 ## 2. Read Prior Audit Context
 
-Load and understand:
-- `/code-review/requirements-audit.md` — What is the code trying to accomplish?
-- `/code-review/code-correctness-audit.md` — How was it implemented?
-
-These provide context that affects severity scoring (e.g., a correctness auditor finding that coincides with a structural smell should be rated higher).
+Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach. Context that affects severity scoring (e.g., a correctness auditor finding that coincides with a structural smell should be rated higher).
 
 ## 3. Analyze Code Changes
 
-Use git commands via terminal to identify all changed files (read base branch from `code-review/session-config.json`):
-
-```powershell
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-git log "$($cfg.baseBranch)..HEAD" --oneline
-git diff "$($cfg.baseBranch)...HEAD" --stat
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 For each changed file, read its current full content. Understand the class's role (domain, application, infrastructure, composition root) — this affects false-positive handling.
+
 
 ## 4. Apply Each Pattern to Changed Files
 
@@ -83,16 +73,21 @@ Categorize by severity:
 - SP-002: >6 constructor dependencies spanning separable domains with a clear refactoring seam
 - SP-003: Concrete infrastructure type injected into a business/domain-layer class
 - SP-004: Tell-Don't-Ask bridge duplicated at multiple call sites
+- SP-008: Excessive test arrangement complexity caused by multiple unrelated domains coupled in one class
+- SP-009: Untestable business rules, conditional routing, or validation logic mixed with infrastructure calls
 
 ### 🟡 Medium — Structural smell worth addressing this sprint or the next
 - SP-001: Numbered step comments in a method body
 - SP-002: 5–6 constructor parameters with moderate mixing
 - SP-004: Single clean Tell-Don't-Ask pass-through (not yet duplicated)
 - SP-005: Gate misplacement with a reversible side effect but no compensation path
+- SP-008: Arrangement complexity caused by missing abstraction interfaces over infrastructure
+- SP-009: Untestable transformation/mapping logic mixed with infrastructure calls
 
 ### 🟢 Low — Minor structural observation
 - Signal partially applies but the context makes refactoring premature
 - Naming that obscures a pattern without fully instantiating it
+- SP-009: Untestable path contains only pure plumbing (logging, metrics, retry telemetry) with no business behavior
 
 ## 6. Catalog Gap Assessment
 
@@ -120,68 +115,25 @@ Both files at: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lesson
 
 <audit_report_template>
 
-# Structural Patterns Audit Report
+# Structural Patterns Audit — {PASS | MERGE WITH CONDITIONS | FAIL}
+**Files**: {N} | **🔴**: {N} | **🟠**: {N} | **🟡**: {N} | **🟢**: {N}
+**Patterns applied**: {comma-separated list, e.g., SP-001, SP-002, SP-003, SP-004, SP-005}
 
-## Summary
+## Findings
 
-**Code Changes Analyzed**: {number} files  
-**Patterns Applied**: {comma-separated list, e.g., SP-001, SP-002, SP-003, SP-004, SP-005}  
-**Overall Structural Health**: {Clean | Minor Issues | Notable Issues | Significant Issues}  
-**Critical Issues**: {number}  
-**High Priority Issues**: {number}
+### 🔴 {Title}
+**Where**: [file.cs](file.cs#L10-20)
+**Pattern**: {SP-XXX — pattern name}
+**Issue**: {1-3 sentences — what the review question reveals about this code}
+**Fix**: {1-3 sentences or short before/after snippet if essential}
 
-{2–3 sentence overview of structural pattern findings}
+{Repeat block for each finding, grouped by severity: 🔴 🟠 🟡 🟢}
 
----
-
-## Issues & Recommendations
-
-### 🔴 Critical
-
-**[SP-XXX] {Issue Title}**
-- **Location**: [file.cs](file.cs#L10-L20)
-- **Pattern**: {Pattern name from catalog}
-- **Signal Detected**: {Exact code construct that triggered the pattern}
-- **Review Question**: "{The review question from the catalog}"
-- **Finding**: {What the answer to the review question reveals about this specific code}
-- **Impact**: {Why this matters in practice — what can go wrong}
-- **Recommendation**: {Specific, actionable steps — include before/after code where helpful}
-
-### 🟠 High
-
-{Same structure...}
-
-### 🟡 Medium
-
-{Same structure...}
-
-### 🟢 Low
-
-{Same structure...}
-
----
-
-## Patterns Applied — No Issues Found
-
-| Pattern | Status |
-|---------|--------|
-| SP-001 Numbered Step Comments | {No matches / Matches dismissed — reason} |
-| SP-002 Domain Count SRP Violation | ... |
-| SP-003 Concrete Infrastructure Injection | ... |
-| SP-004 Tell-Don't-Ask on Strategy/Policy | ... |
-| SP-005 Gate Misplacement | ... |
-
----
+## Clean Patterns
+{Comma-separated list of applied patterns with no issues: e.g., "SP-001, SP-003"}
 
 ## Suggested New Catalog Entries
-
-{Draft any new pattern entries you observed that are not in the catalog, using the template from STRUCTURAL-PATTERN-CATALOG.md. Leave this section blank if none.}
-
----
-
-## Conclusion
-
-{1–2 sentence summary of overall structural pattern health and the most important action item, if any.}
+{Draft any new pattern entries observed that are not in the catalog. Leave blank if none.}
 
 </audit_report_template>
 

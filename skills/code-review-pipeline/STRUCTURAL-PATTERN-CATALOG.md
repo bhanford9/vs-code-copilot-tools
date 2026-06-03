@@ -231,6 +231,114 @@ The string-vs-enum distinction is intentional only when keys originate outside t
 
 ---
 
+## SP-008 — Excessive Test Arrangement Complexity
+
+**Signal**: The arrange phase of a test for a single behavior requires constructing or mocking 5 or more collaborators, or involves multi-step orchestration (seeding state into one fake, wiring a fake to another, arranging lifecycle transitions) before the single act under test can execute. The setup lines outnumber or dwarf the assertion lines.
+
+**Review Question**: "Is the test arrangement complex because the behavior is genuinely complex, or because the production class does not expose a seam that isolates this behavior from unrelated concerns? Would splitting the class along its natural responsibility boundaries reduce the mock count to 1–2 for any single test?"
+
+**Severity Guidance**:
+- **High** if the arrangement complexity is caused by multiple unrelated domains being coupled in a single class — the test is reflecting a real SRP violation that makes each concern hard to exercise independently
+- **Medium** if the complexity is caused by missing abstraction interfaces over infrastructure — concrete dependencies that cannot be faked without real I/O, where adding interfaces would unlock direct isolation
+- **Low** if the behavior under test is a genuine integration point that coordinates several collaborators by documented design, and a narrower unit-scope test cannot reasonably be extracted
+
+**What to Look For**:
+```csharp
+// SMELL: 6 mocks required to verify a single email confirmation behavior
+[Test]
+public async Task ProcessOrder_SendsConfirmationEmail()
+{
+    var mockRepo      = new Mock<IOrderRepository>();
+    var mockInventory = new Mock<IInventoryService>();
+    var mockPricing   = new Mock<IPricingEngine>();
+    var mockAudit     = new Mock<IAuditLog>();
+    var mockEmail     = new Mock<IEmailService>();
+    var mockNotify    = new Mock<INotificationGateway>();
+
+    mockRepo.Setup(...).ReturnsAsync(order);
+    mockInventory.Setup(...).ReturnsAsync(true);
+    mockPricing.Setup(...).Returns(price);
+    // ... more setup ...
+
+    var sut = new OrderProcessor(mockRepo.Object, mockInventory.Object,
+                                  mockPricing.Object, mockAudit.Object,
+                                  mockEmail.Object, mockNotify.Object);
+    await sut.ProcessAsync(orderId);
+
+    mockEmail.Verify(e => e.SendConfirmationAsync(It.IsAny<Order>()), Times.Once);
+}
+```
+```csharp
+// CORRECT: after extracting a focused notification step class:
+[Test]
+public async Task SendConfirmation_InvokesEmailGateway()
+{
+    var mockEmail = new Mock<IEmailService>();
+    var sut = new EmailConfirmationStep(mockEmail.Object);
+    await sut.ExecuteAsync(order);
+    mockEmail.Verify(e => e.SendConfirmationAsync(order), Times.Once);
+}
+```
+When the mock count in a test's arrange phase is high, read the number as the class's dependency count reflected back — not a testing problem, but a structural one. Each additional mock that is irrelevant to the assertion is evidence of a concern the class should have delegated.
+
+**Origin**: Identified in test suites where the majority of mocked collaborators in an arrange phase were not referenced by any assertion. The excessive setup was a mirror of the production class carrying responsibilities it should have delegated to focused collaborators. Splitting the class along its natural responsibility boundaries reduced mock counts per test and made each resulting test describe a single clear behavior.
+
+---
+
+## SP-009 — Untestable Logic Path
+
+**Signal**: A block of business logic, conditional branching, or validation lives inside a method that also directly invokes infrastructure (database reads/writes, HTTP calls, file system operations, system clock, message dispatch). No injection point exists that would allow the decision-making logic to be exercised by a unit test without standing up the full infrastructure.
+
+**Review Question**: "Can the decision-making logic in this method be reached by a unit test without real infrastructure? If not, what is the smallest extraction that would create a testable seam — an extracted method taking its inputs as parameters, a collaborator interface, or a separated decision object?"
+
+**Severity Guidance**:
+- **High** if the untestable path contains business rules, conditional routing, or validation logic that is subject to business change and regression — these are precisely the paths most worth testing, and the structure is preventing it
+- **Medium** if the path contains transformation or mapping logic that is unlikely to be a frequent source of bugs, but extracting it would still improve maintainability and enable focused assertions
+- **Low** if the path is pure plumbing with no business behavior (logging, metrics emission, retry telemetry) — a test of that specific line provides limited value and the structural smell is minor
+
+**What to Look For**:
+```csharp
+// SMELL: business rule is untestable without real DB and real clock
+public async Task SubmitAsync(Order order)
+{
+    var existing = await _db.Orders.FindAsync(order.Id);  // real DB required
+    if (existing == null)
+        throw new NotFoundException();
+
+    // Business rule buried here — cannot be tested without real infrastructure
+    if (DateTime.UtcNow > existing.CutoffTime)            // real clock required
+        throw new SubmissionClosedException();
+
+    await _messageBus.PublishAsync(new OrderSubmitted(order)); // real bus required
+}
+```
+```csharp
+// CORRECT: business rule extracted to a pure, directly unit-testable decision object
+public class SubmissionPolicy
+{
+    public void ThrowIfClosed(Order order, DateTimeOffset now)
+    {
+        if (now > order.CutoffTime)
+            throw new SubmissionClosedException();
+    }
+}
+
+// No infrastructure needed:
+[Test]
+public void ThrowIfClosed_PastCutoff_Throws()
+{
+    var policy = new SubmissionPolicy();
+    var order  = new Order { CutoffTime = DateTimeOffset.UtcNow.AddHours(-1) };
+    Assert.Throws<SubmissionClosedException>(
+        () => policy.ThrowIfClosed(order, DateTimeOffset.UtcNow));
+}
+```
+When a line of code cannot be reached directly by a unit test, ask whether the difficulty is accidental (a concrete dependency blocking substitution) or structural (the logic itself is entangled with I/O). In either case the fix is a seam — an extracted interface, a clock abstraction, a decision object — that lets the logic and the infrastructure be exercised independently.
+
+**Origin**: Identified in service methods where decision logic and infrastructure coordination were mixed in the same method body. The business rules — the most change-prone parts of the system — could only be verified through slow, fragile integration tests that required real databases, clocks, or message brokers. Extracting each rule into a parameter-driven decision class made it directly reachable by fast, isolated unit tests, while the infrastructure coordination method remained responsible only for wiring.
+
+---
+
 ## Pattern Template
 
 Copy this template and append above this line to add a new pattern.

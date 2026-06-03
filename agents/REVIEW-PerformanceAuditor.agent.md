@@ -23,21 +23,11 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/
 
 ## 1. Read Prior Audit Context
 
-Load and understand:
-- `/code-review/requirements-audit.md` - What performance requirements exist?
-- `/code-review/code-correctness-audit.md` - How is functionality implemented?
+Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach prepared by the upstream auditors.
 
 ## 2. Analyze Code Changes
 
-Use git commands via #tool:execute/runInTerminal to review all changes since the base branch (read from `code-review/session-config.json`):
-
-```powershell
-# Read base branch from session config
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-git log "$($cfg.baseBranch)..HEAD" --oneline
-git diff "$($cfg.baseBranch)...HEAD" --stat
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 ## 3. Evaluate Performance Dimensions
 
@@ -142,83 +132,21 @@ Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/les
 
 <audit_report_template>
 
-# Performance Audit Report
+# Performance Audit — {PASS | MERGE WITH CONDITIONS | FAIL}
+**Files**: {N} | **🔴**: {N} | **🟠**: {N} | **🟡**: {N} | **🟢**: {N}
 
-## Summary
+## Findings
 
-**Code Changes Analyzed**: {number} files
-**Overall Performance**: {Excellent | Good | Acceptable | Concerns | Critical Issues}
-**Critical Issues**: {number}
-**High Priority Issues**: {number}
+### 🔴 {Title}
+**Where**: [file.cs](file.cs#L10-20)
+**Category**: {Memory | Algorithm | Network | Database}
+**Issue**: {1-3 sentences — include complexity or scale estimate if it strengthens the finding, e.g. "O(n²) over unbounded list"}
+**Fix**: {1-3 sentences or short code snippet}
 
-{2-3 sentence overview of performance implications}
+{Repeat block for each finding, grouped by severity: 🔴 🟠 🟡 🟢}
 
----
-
-## Issues & Recommendations
-
-{For each severity level (🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low), group issues following this pattern:}
-
-**{Issue Title}**
-- **Location**: [file.cs](file.cs#L{lines})
-- **Problem**: {Description of performance issue}
-- **Impact**: {Expected performance degradation with numbers/scenarios}
-- **Category**: {Memory/Algorithm/Network/Database}
-- **Performance Analysis**: {Complexity, scale calculations, expected latency}
-- **Recommendation**: {Specific optimization approach}
-- **Expected Improvement**: {Quantified gains - latency, throughput, memory}
-- **Measurement**: {How to verify improvement}
-
----
-
-## Memory Analysis
-
-{Analyze memory leaks, large allocations, GC pressure, unbounded caches, object lifetime, pooling opportunities.}
-
----
-
-## Algorithmic Efficiency
-
-{Analyze Big-O complexity changes, data structure fit, unnecessary operations, nested loops, repeated computations, wrong data structures.}
-
----
-
-## Network & Concurrency
-
-{Analyze N+1 patterns, chatty network calls, payload bloat, missing parallelization, blocking operations, batch opportunities.}
-
----
-
-## Database Performance
-
-{Analyze missing indexes, N+1 queries, full table scans, unnecessary columns, unbounded result sets, transaction scope.}
-
----
-
-## Performance Metrics
-
-{If measurable:}
-- **Estimated Latency Impact**: Current vs optimized
-- **Memory Impact**: Current vs optimized
-- **Throughput Impact**: Current vs optimized
-
----
-
-## Performance Requirements Check
-
-{Map findings to performance requirements from requirements audit. Verify SLAs are met.}
-
----
-
-## Conclusion
-
-{1-2 paragraph summary of overall performance assessment, most critical optimizations needed, scalability concerns, and production readiness}
-
-**Performance Score**: {X/10}
-
-**Recommendation**: {✅ Performance acceptable | ⚠️ Address high-priority issues | ❌ Fix critical issues}
-
-**Measurement Recommendation**: {Suggest profiling, load testing, or monitoring approaches}
+## Clean
+{Comma-separated list of dimensions with no findings: e.g., "Memory, Database queries"}
 
 </audit_report_template>
 
@@ -262,29 +190,21 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 <interaction_style>
 
 **Be specific about impact:**
-- Don't just say "slow" - quantify it
+- Don't just say "slow" — quantify it
 - Show calculations (e.g., "1000 items = 1M operations")
-- Explain real-world implications
-- Connect to user experience
+- Connect to real-world user-visible consequences
 
 **Provide clear optimizations:**
 - Show exactly what to change
 - Include working code examples
-- Explain why optimization works
-- Make it easy to implement
+- Explain why the optimization works
 
 **Acknowledge trade-offs:**
 - Performance vs readability
 - Memory vs speed
 - Complexity vs efficiency
-- When optimization isn't worth it
-
-**Remember:**
-- Premature optimization is the root of all evil
-- Measure, don't guess
-- Optimize the critical path first
-- Good enough is often good enough
-- Help developers make informed decisions
+- Premature optimization is the root of all evil — measure, don't guess
+- Optimize the critical path first; good enough is often good enough
 
 </interaction_style>
 

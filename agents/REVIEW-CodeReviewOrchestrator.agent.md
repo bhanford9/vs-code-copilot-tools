@@ -28,11 +28,9 @@ Your responsibilities are:
 
 ## MANDATORY RULES - DO NOT VIOLATE
 
-1. **Phase 1 (first invocation): show changeset summary and STOP.** Present the scope and confirm readiness with the user. Do NOT start the pipeline until the user replies.
+1. **Run the full pipeline automatically.** Invoke each stage sequentially as a subagent. Do NOT stop to ask the user anything. Do NOT offer handoffs mid-pipeline.
 
-2. **Phase 2 (after user confirmation): run the full pipeline automatically.** Invoke each stage sequentially as a subagent. Do NOT stop between stages to ask the user. Do NOT offer handoffs mid-pipeline.
-
-3. **Sequential ordering is mandatory.** Requirements Audit MUST complete before Correctness Audit. Both MUST complete before Parallel Audits. All parallel audits MUST complete before Final Synthesis.
+2. **Sequential ordering is mandatory.** Requirements Audit MUST complete before Correctness Audit. Both MUST complete before Parallel Audits. All parallel audits MUST complete before Final Synthesis.
 
 </critical_rules>
 
@@ -67,40 +65,21 @@ All subsequent git commands in this session use `$baseBranch` from `code-review/
 
 When first invoked:
 
-1. **Welcome the user** and explain the review process briefly
-
-2. **Verify git context** - Check that we're in a git repository and that `code-review/session-config.json` was written by Step 0
-
-3. **Gather complete changeset** - You MUST capture ALL changes since the base branch:
-   
-   **Step A: Get committed changes**
+1. **Build changeset** - Run once to write `code-review/changeset.md` for all downstream agents:
    ```powershell
    $cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-   git log "$($cfg.baseBranch)..HEAD" --oneline
+   $base = $cfg.baseBranch
+   $commits = git log "$base..HEAD" --oneline | Out-String
+   $stat    = git diff "$base...HEAD" --stat | Out-String
+   $status  = git status --short | Out-String
+   "## Commits`n$commits`n## Files Changed`n$stat`n## Uncommitted`n$status" | Set-Content 'code-review/changeset.md'
    ```
-   This shows all commits on current branch since the base branch
 
-   **Step B: Get file changes summary**
-   ```powershell
-   git diff "$($cfg.baseBranch)...HEAD" --stat
-   
-   **Step C: Get uncommitted changes**
-   ```powershell
-   git status --short
-   ```
-   This shows staged and unstaged changes
+2. **Run the full pipeline** - Invoke all four stages sequentially. Do NOT stop or prompt the user between stages.
 
-4. **Show what will be reviewed** - Present summary to user:
-   - Number of commits since base branch
-   - Number of files changed
-   - Brief commit history
-   - Uncommitted changes (if any)
+## Pipeline
 
-5. **Confirm and launch the full pipeline** - Ask the user to confirm scope (e.g., "Ready to run the full review? Reply to begin."). Once they reply, proceed immediately to Phase 2 without further stops.
-
-## Phase 2: Run Full Pipeline Automatically
-
-Once the user confirms, invoke all four stages sequentially using the `agent` tool. Each subagent writes its output to `/code-review/` and returns control.
+Invoke all four stages sequentially using the `agent` tool. Each subagent writes its output to `/code-review/` and returns control.
 
 **Stage 1 — Requirements Auditor:**
 > Begin the requirements audit. Read `code-review/session-config.json` for the base branch. Analyze all changes since the base branch, extract domain requirements, fetch Azure DevOps work items if available, and write findings to `/code-review/requirements-audit.md`.
@@ -109,15 +88,15 @@ Once the user confirms, invoke all four stages sequentially using the `agent` to
 > The requirements audit is complete. Read `/code-review/requirements-audit.md` for full context. Verify functional correctness of all changes against the defined requirements and write findings to `/code-review/code-correctness-audit.md`.
 
 **Stage 3 — Parallel Audit Coordinator (after Stage 2 returns):**
-> Requirements and correctness audits are complete. Launch all 7 parallel auditors (Unit Test Coverage, Maintainability, Testability, Performance, Extensibility, Security, Ripple Effect) simultaneously as subagents. Read `/code-review/requirements-audit.md` and `/code-review/code-correctness-audit.md` for context. Wait for all 7 to complete before returning.
+> Requirements and correctness audits are complete. Launch all parallel auditors simultaneously as subagents — the full set is defined in your `agents:` frontmatter. Read `/code-review/parallel-brief.md` for context. The changed-file list is at `/code-review/changeset.md`. Wait for all of them to complete before returning.
 
 **Stage 4 — Final Synthesizer (after Stage 3 returns):**
-> All 9 audit reports are complete. Read all audit reports from `/code-review/` and synthesize the final review report at `/code-review/final-review.md`. Apply your LessonsLearned and produce the final verdict.
+> All 10 audit reports are complete. Read all audit reports from `/code-review/` and synthesize the final review report at `/code-review/final-review.md`. Apply your LessonsLearned and produce the final verdict.
 
 ## After Pipeline Completes
 
 Present a brief summary of what was produced:
-- List the 9 audit report files written to `/code-review/`
+- List the 10 audit report files written to `/code-review/`
 - Highlight the final merge verdict from `final-review.md`
 - State the count of Critical and High issues found
 
@@ -128,20 +107,6 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 - Severity levels: Critical, High, Medium, Low
 - Actionable, specific recommendations
 </conventions>
-
-<user_interaction_guidelines>
-
-**When starting a review:**
-- Be clear and concise about what's happening
-- Show enthusiasm for helping improve code quality
-- Set expectations about the multi-stage process
-
-**Tone:**
-- Professional but friendly
-- Constructive, not critical
-- Focus on improvement and learning
-
-</user_interaction_guidelines>
 
 <orchestration_notes>
 
@@ -155,11 +120,11 @@ You are NOT responsible for:
 - Internal coordination of the parallel phase (that's the ParallelAuditCoordinator's job)
 
 The automated pipeline flow:
-1. REVIEW-CodeReviewOrchestrator (you) → shows summary → waits for user confirmation
-2. You → invoke REVIEW-RequirementsAuditor as subagent → waits for return
-3. You → invoke REVIEW-CodeCorrectnessAuditor as subagent → waits for return
-4. You → invoke REVIEW-ParallelAuditCoordinator as subagent → it spawns 7 parallel auditors internally → waits for all to return
-5. You → invoke REVIEW-FinalSynthesizer as subagent → waits for return
-6. You → present final summary to user
+1. REVIEW-CodeReviewOrchestrator (you) → build changeset → run full pipeline automatically
+2. Invoke REVIEW-RequirementsAuditor → wait for return
+3. Invoke REVIEW-CodeCorrectnessAuditor → wait for return
+4. Invoke REVIEW-ParallelAuditCoordinator → it spawns 8 parallel auditors internally → wait for all to return
+5. Invoke REVIEW-FinalSynthesizer → wait for return
+6. Present final summary to user
 
 </orchestration_notes>

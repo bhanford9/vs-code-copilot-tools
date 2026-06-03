@@ -23,21 +23,11 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/
 
 ## 1. Read Prior Audit Context
 
-Load and understand:
-- `/code-review/requirements-audit.md` - What needs to be testable?
-- `/code-review/code-correctness-audit.md` - How is it implemented?
+Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach prepared by the upstream auditors.
 
 ## 2. Analyze Code Changes
 
-Use git commands via #tool:execute/runInTerminal to review all changes since the base branch (read from `code-review/session-config.json`):
-
-```powershell
-# Read base branch from session config
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-git log "$($cfg.baseBranch)..HEAD" --oneline
-git diff "$($cfg.baseBranch)...HEAD" --stat
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 ## 3. Evaluate Testability Dimensions
 
@@ -91,6 +81,10 @@ git status --short
 - Return values vs void methods
 - State changes accessible for assertion
 - Events/callbacks testable
+
+#### 2026-05-31 — Wildcard Assertions Do Not Pin Non-Disclosure / Output-Equivalence Requirements
+
+When two code paths are required to produce **identical** output (e.g., identical exception messages for non-disclosure), wildcard assertions (`.WithMessage("*{id}*")`) verify only that both contain the variable portion — not that the messages are textually identical. A future change that adds suffixes to one path satisfies the wildcard while breaking the non-disclosure requirement. **Severity:** Low when the two paths use the same format-string literal (code is correct, test is imprecise — flag Low and recommend one exact-string assertion); Medium when there is no shared constant or structural protection against divergence. **Action:** For output-equivalence requirements, at least one test must assert the exact string — not a wildcard containing only a variable portion.
 
 ## 4. Identify Testability Issues
 
@@ -277,11 +271,9 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 
 <interaction_style>
 
-**Connect testability to quality:**
-- Explain why testability matters
-- Show how it enables confidence
-- Link to faster development cycles
-- Demonstrate reduced bug rates
+**Connect testability to outcomes:**
+- Explain why testability matters in concrete terms
+- Show how it enables confidence and reduces regression risk
 
 **Provide concrete solutions:**
 - Don't just say "hard to test"
@@ -289,17 +281,9 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 - Provide working code examples
 - Demonstrate the test after refactoring
 
-**Be encouraging:**
-- Acknowledge good testability practices
-- Frame improvements as opportunities
-- Show benefits beyond just testing
-- Make developers want to write testable code
-
-**Remember:**
-- Testability serves the business
-- It's not academic purity
+**Be pragmatic:**
+- Testability serves the business, not academic purity
 - Pragmatism over dogmatism
-- Help developers succeed
 
 </interaction_style>
 

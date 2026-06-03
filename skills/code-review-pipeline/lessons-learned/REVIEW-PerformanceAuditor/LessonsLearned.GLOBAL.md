@@ -1,232 +1,203 @@
-# Lessons Learned: REVIEW-PerformanceAuditor
+# LessonsLearned.GLOBAL — REVIEW-PerformanceAuditor
 
-> # ⚠️ GLOBAL FILE — CODEBASE-SPECIFIC CONTENT IS STRICTLY FORBIDDEN
->
-> **This file is committed to a public shared repository and read across all projects and codebases.**
->
-> **BANNED — do NOT write any of the following:**
-> - Class names, interface names, method names, type names, field names
-> - File paths, namespace names, project names, solution names
-> - Work item IDs, ticket numbers, branch names, version identifiers
-> - Domain-specific abbreviations or industry jargon unique to one team or product
-> - Any identifier specific to one repository, team, or system
->
-> **Write ONLY:** abstract patterns, heuristics, and model-behavior observations that apply to any codebase.
->
-> **Proper-noun test:** Remove all proper nouns from your proposed entry. If it still makes sense as general engineering advice, it belongs here. If understanding it requires knowing the project, move it to `LessonsLearned.md` (gitignored, local only).
->
-> **MANDATORY SANITIZATION GATE — run before every append:**
-> 1. List every capitalized identifier and domain abbreviation in the proposed text.
-> 2. Classify each: standard framework/language type (safe) OR project-specific (banned).
-> 3. Replace all project-specific items with generic placeholders before writing.
-> 4. Re-read. If the entry still requires knowing the project to understand it, move it to `LessonsLearned.md`.
->
-> ⚠️ **Most common violation: an abstract lesson body with a concrete project-specific example. Generalizing the headline is not enough — generalize or remove the example too.**
+## Lesson 001 — Audit Tables: Single-Column Index Satisfies the Filter but Not the Sort
+
+**Date:** 2026-05-31
+**Category**: Process/Model
+
+Audit and event-log tables almost always have query patterns of the form:
+`WHERE entity_id = @id ORDER BY timestamp`. A single-column index on `entity_id`
+satisfies the filter predicate but forces a separate sort step on the filtered rows
+(O(k log k)). A composite index `(entity_id, timestamp)` allows an ordered index scan
+that eliminates the sort entirely (O(k)).
+
+**Rule:** When a changeset introduces an audit or event-log table with single-column
+filter indexes AND query methods that always `OrderBy(timestamp)`, flag a missing
+composite `(filter_column, timestamp)` index as Medium — not as "NFR-05 met." The
+NFR is met for filter coverage but not for ordered scan efficiency. Check whether each
+declared index's leading column matches the WHERE clause and its trailing column matches
+the ORDER BY before concluding index coverage is sufficient.
 
 ---
 
-## When to Append an Entry
+## Lesson 002 — Single-Record Audit Write Interface → N+1 Pattern in Batch Callers
 
-Only append if the session revealed something surprising, a false positive pattern, or a finding worth noting for future performance reviews. If the review ran smoothly using existing knowledge, skip the update.
+**Date:** 2026-05-31
+**Category**: Process/Model
 
----
+When an audit service exposes only a single-record write method (i.e., one
+`WriteAsync(record)` call that commits immediately), any caller that must emit N related
+records in one operation will exhibit N+1 `SaveChanges`/`commit` calls. This is a
+predictable, structural consequence of the interface design — not a bug at the call site.
 
-## 2026-04-22 — Verify struct vs class before flagging as allocation concern
-
-**Observation**: When a method creates a `new SomeType(...)` inside a loop or hot path, it looks like a heap allocation — but if the type is a struct it is a stack allocation with no GC cost. False positives are common for auditors unfamiliar with geometry and math libraries whose core types are value types.
-
-**Rule**: Always confirm `struct` vs `class` — look at the type definition or docs — before writing any allocation/GC finding. One lookup prevents a false positive that may look convincing in a report.
-
----
-
-## 2026-04-22 — Read the implementation before claiming computational cost
-
-**Observation**: A method called inside a retry/bump loop was flagged as Medium based on its name and loop position alone. Reading the actual implementation showed it received pre-computed results as a parameter and only recomputed check ratios — the expensive estimation step was not re-run. The name implied far more work than the code performed.
-
-**Rule**: For any Medium+ performance finding about a method call inside a loop, open the implementation and trace the actual execution path before writing the finding. "Sounds expensive" is not sufficient. Verify: (a) what inputs does the method receive — already-computed results or raw inputs? (b) is there a cache layer (`??=`, dictionary, factory) that short-circuits work? A wrong cost claim corrected by a developer during code review damages report credibility.
+**Rule:** When auditing a service that calls a single-record write method in a loop,
+always compute the total round-trips (loop iterations + 1 for the primary mutation).
+Flag as Medium when N is bounded but variable and unbounded-in-practice. The correct
+fix is a batch write method on the audit service interface, not a refactor at the caller.
+Separately note the partial-audit-trail risk (records K+1..N silently absent when K
+succeeded and K+1 failed) as a correctness concern, not just a performance concern.
 
 ---
 
-## 2026-04-24 — When new code is inserted inside an existing inner loop, check hoistability before writing the finding
+## Lesson 003 — BCrypt Auditing: Two Calibrated Non-Findings
 
-**Observation**: A new `if` branch was added inside an existing nested loop. The branch introduced a LINQ query whose result depended only on the outer-loop context (the outer iteration key), not the inner-loop variable. Because it was inside the inner loop, it ran n_inner times with the same result every time — classic hoistable computation.
+**Date:** 2026-05-29
+**Category**: Process/Model
 
-**Rule**: When reviewing any new code added inside an `if` block or nested loop, immediately ask: "Does any sub-expression depend only on outer-scope variables?" If yes, flag as a Medium hoisting opportunity. This is especially common when a developer adds a feature branch inside an existing loop without considering that the branch condition or its sub-computations could be evaluated once before the loop.
+**Work factor calibration**: Work factor 12 is the current industry standard (~300 ms on 2024-era hardware). Do NOT flag the work factor itself as a performance concern unless it deviates significantly from 12 (too low = weak security, too high = DoS amplifier). When BCrypt is present at WF 10–13, mark calibration as "Correct" in the report and redirect the finding to rate limiting coverage.
 
----
-
-## 2026-05-19 — Full-Project Reviews: Skip the session-config.json base-branch step entirely
-
-When the user specifies "full-project review" (entire codebase, not a diff), the standard `git diff base...HEAD` workflow step is meaningless. Do NOT read or reference `session-config.json` — it may not exist and the base branch concept doesn't apply. Instead, enumerate all source files directly (file search + read all) and treat every file in scope as "changed." Adjust the audit summary wording from "Changes Analyzed" to "Files Analyzed."
+**Static `_dummyHash` initialization**: A `static readonly` BCrypt hash computed at type-initialization time is the correct pattern for constant-time verification guards. The performance concern is not the pattern itself but when type initialization happens. If the service is scoped (not singleton, not warmed at startup), the first request pays double BCrypt cost. Flag as Medium, not Low — it affects every production restart.
 
 ---
 
-## 2026-05-19 — Synchronous EF Core calls inside async methods are invisible to the compiler
+## Lesson 004 — `.Include()` for PK-only Return Is a Medium Over-Fetch
 
-Synchronous EF Core calls (`.Any()`, `.ToList()`, `.Count()`, `.First()`, `.FirstOrDefault()` without the `Async` suffix on a DbSet) compile without warnings inside async methods. They are easy to miss on a scan. When reviewing repository/service layers, explicitly grep for these suffixless patterns on DbSet-typed variables — do not rely on noticing them while reading code linearly.
+**Date:** 2026-05-29
+**Category**: Process/Model
 
----
-
-## 2026-05-19 — ExecuteUpdateAsync always requires a post-load round-trip — do not over-rate it
-
-When `ExecuteUpdateAsync` is used for optimistic concurrency, the code must always reload the entity afterward if any of its fields are needed for subsequent operations (history, response building, etc.). This is the inherent design cost of bypassing the change tracker — it is not a bug. Rate this pattern Medium (not High/Critical) and recommend the explicit trade-off analysis: switch to tracked optimistic concurrency vs. accept the extra round-trip.
+When EF Core code uses `.Include(e => e.NavProp).FirstOrDefaultAsync(...)` and then only reads `e.NavProp.Id`, it is always over-fetching. The correct pattern is `.Select(e => (Guid?)e.NavPropId).FirstOrDefaultAsync(ct)`. Flag as Medium when the over-fetched path is a login hot path; flag as Low when it is a low-frequency admin path.
 
 ---
 
-## 2026-05-06 — Fallback / recovery paths have fundamentally different performance profiles than hot loops
+## Lesson 005 — Null `JsonSerializerOptions` Is the Correct Default Pattern — Do Not Flag
 
-**Observation**: A restore step used O(n) + O(k) traversals (IndexOf scan + linked-list walk). Taken in isolation it looks like a Medium algorithmic concern. But the step ran at most once per design session — only when the entire search loop had already exhausted all options. That upstream exhaustion loop had already done far more work.
+**Date:** 2026-05-30
+**Category**: Process/Model
 
-**Rule**: Before rating any O(n+) operation, establish call frequency. "At most once per session/request/user-action" is categorically different from "once per inner-loop iteration." If the path is a last-resort fallback that fires only after a preceding loop has already exhausted all options, the fallback's algorithmic cost is almost never the bottleneck — the upstream exhaustion is. Rate such findings Low or omit them unless n is large and unbounded.
-
----
-
-## 2026-05-06 — In flow-graph or step-graph patterns, distinguish construction-time from execution-time allocations
-
-**Observation**: Default interface implementations of the form `IFlowAction SomeStep => new SomeStep()` looked like per-iteration object creation. Reading the flow builder revealed that step lambdas (`() => [flow.Do(...)]`) are lazy initializers called once during graph construction (via a name-keyed cache), not once per execution. The `new SomeStep()` ran once per flow instance, not once per design iteration.
-
-**Rule**: In rule-engine, flow-graph, or pipeline-builder patterns, check whether object-creating expressions are called at construction time or execution time before writing any allocation finding. Look for: named-step caching (`GetStep(name, () => [...])`), lazy initialization patterns, or builder DSLs. If the lambda runs once to build a graph and the graph is then executed repeatedly, only allocations inside `ExecuteStep`/`Execute`/`Run` methods (not the graph-building lambda) contribute to per-execution cost.
+`JsonSerializer.Serialize(v, (JsonSerializerOptions?)null)` resolves to the framework's
+internal cached default options singleton. It does NOT allocate a new `JsonSerializerOptions`
+per call. This is the recommended pattern for default serialization. Do not flag it as
+a performance concern.
 
 ---
 
-## 2026-05-06 — Check if the target property is itself an allocating expression before writing an O(n) finding
+## Lesson 007 — C# `const string` Concatenation in Method Bodies Is a Compile-Time Non-Finding
 
-**Observation**: A `FirstOrDefault(...)` call looked like an O(n) linear search concern. Reading the preceding property revealed it was expression-bodied and called `.Concat().ToList()` on every access — the heap allocation was the actual concern, not the scan length. The linear scan over small fixed-n (10–40 items) is negligible; the per-call allocation in a hot calculation loop is the real finding.
+**Date:** 2026-06-02
+**Category:** Process/Model
 
-**Rule**: When flagging a `FirstOrDefault`/`.Where()`/`.Select()` call as an O(n) concern, immediately also check the type returned by the preceding property/accessor. If that accessor is expression-bodied and calls `.ToList()` / `.ToArray()` / `.Concat().ToList()`, the allocation dominates the cost — write the finding about the allocation, not just the scan. The fix is typically to target a pre-allocated typed sub-collection directly (reducing both allocation and scan scope in one change).
+When a `const string` field is concatenated with a string literal inside a method body
+(e.g., `constField + "/"` in a `StartsWith` call), the C# compiler (Roslyn) evaluates
+this as a constant expression at compile time (ECMA-334 §7.19). No runtime string
+allocation occurs. Do NOT flag this pattern as a heap allocation or GC pressure finding.
 
----
-
-## 2026-05-14 — For "private method → factory" refactorings, verify allocation equivalence before rating factory overhead
-
-**Observation**: A refactoring that extracts a private method into a factory class (implementing a new interface) was flagged as "one new transient object per request." Reading the factory's `Build()` method revealed it creates the exact same objects as the removed private method. The factory itself is the only new allocation, and at one-per-request frequency it is categorically Low.
-
-**Rule**: When auditing a "private method extracted to factory" pattern: (1) confirm `Build()` creates the same objects as the old method (correctness audit gives this for free), (2) count total DI resolutions before vs. after (usually +1 factory object only), (3) verify DI lifetime direction (Transient factory → Singleton/Transient services is safe), (4) confirm call frequency against the enclosing `new ClassName()` call site. If all four confirm, the correct rating is Low or N/A — not Medium+.
-
----
-
-## 2026-05-18 — Computed ViewModel properties that call each other multiply materialization cost non-linearly
-
-**Observation**: In an MVVM ViewModel, a computed property (`FilteredEntries`) was called by: a `GroupedEntries` getter (1×), five stat-property getters (5×), and directly via `OnPropertyChanged` (1×). A single refresh method triggering all of these caused 7+ materializations of the same filtered list. The individual getters looked cheap in isolation; the cost was invisible until the call graph was traced.
-
-**Rule**: For any computed property that re-runs a LINQ filter/sort/materialize on every access, trace all callers before rating severity. If the same property is accessed by multiple sibling properties AND those siblings are notified in the same refresh call, multiply the cost accordingly. Rate as High if k × n > ~1,000 for typical data sizes. The fix is always: cache in a backing field, rebuild once, expose the cache.
+The compile-time rule applies when BOTH operands are constant strings. If either operand
+is a non-const variable, the concatenation reverts to a runtime operation and is a valid
+finding. Verify which case applies before raising the issue.
 
 ---
 
-## 2026-05-18 — Fire-and-forget async in a message handler is a dual-risk: exception loss AND thread safety
+## Lesson 006 — New JSONB Column: Check Query Filter Scope Before Flagging Missing Index
 
-**Observation**: A `Receive()` message-handler method dispatched an async operation as fire-and-forget (`_ = DoSomethingAsync()`). This introduced two distinct risks: (1) exceptions are silently swallowed, causing stale state with no diagnostic signal; (2) in UI frameworks that dispatch messages on the sender's thread (not the UI thread), the async continuation runs off the UI thread and can trigger invalid cross-thread property-change notifications.
+**Date:** 2026-05-30
+**Category**: Process/Model
 
-**Rule**: When auditing message handler implementations in MVVM ViewModels: always check (a) whether async is fire-and-forgotten, (b) which thread the message bus delivers on, and (c) whether the async continuation touches UI-bound properties. Flag fire-and-forget in message handlers as High when: the ViewModel has UI-thread-only observable properties AND the message bus does not guarantee UI-thread delivery. Recommend both `try/catch` wrapping and explicit UI-thread dispatch.
-
----
-
-## 2026-05-16 — Interface contracts in pure domain layers encode performance anti-patterns before any implementation is written
-
-**Observation**: In a code review of a pure contract/domain layer (no EF, no HTTP, no I/O), the most impactful findings were in the interface method signatures, not the runtime method bodies. Specifically: list-returning methods with no pagination parameter force O(n) memory materialization in every compliant implementation; single-ID service methods on a hot loop path encode an N+1 database pattern that no implementation can avoid without violating the contract.
-
-**Rule**: When auditing a domain/contract layer, evaluate every list-returning interface method for: (a) presence of a `skip`/`take`, cursor, or date-range parameter; (b) whether the call site is inside a loop (N+1 risk). A method signature like `GetAllAsync()` returning `IReadOnlyList<T>` with no pagination is a performance bug baked into the contract — it must be fixed before implementations are written because retrofitting pagination after the fact is significantly more expensive. Do not limit performance audits of contract layers to the bodies of the few runtime classes that exist.
+When a changeset adds a JSONB column to an existing entity, the first index question is:
+"Does any query WHERE or JOIN on this column?" If the column is only SELECTed (loaded as
+part of a full entity fetch), a GIN or GiST index on it provides zero benefit. Flag a
+missing JSONB index only when you find a query filtering on the JSONB content.
 
 ---
 
-## 2026-05-16 — "Shared folder as database" architecture: cloud-sync latency replaces HTTP network latency
+## Lesson 007 — IDOR Guard Reusing an Existing Entity Fetch Adds Zero DB Round-Trips
 
-**Observation**: A codebase that used `System.IO` to read all data from a shared OneDrive folder presented the same performance concerns as a chatty HTTP API — but the transport was the OS cloud-sync client, not a network socket. Files that were locally cached were fast; files that hadn't been synced yet triggered cloud downloads at 100–2000 ms each. The standard "N+1 reads per navigation" pattern applied directly, but the fix is an in-memory TTL cache (read once, hold in memory), not batching or compression.
+**Date:** 2026-05-31
+**Category**: Process/Model
 
-**Rule**: When reviewing a "shared folder as database" design (local OneDrive, Dropbox, network share), apply the same N+1 detection heuristic as for HTTP: count file reads per user action, not just whether individual reads are "fast on local disk." Recommend a service-level TTL cache before any parallelization — parallelizing cloud-synced reads can overwhelm the sync client and make things worse, not better.
+When an IDOR guard pattern uses `FindAsync` (or equivalent PK-based single-entity lookup)
+and the fetched entity is also consumed by subsequent logic in the same method, the guard
+adds _zero_ additional DB round-trips. The ownership check is an in-memory field comparison
+appended to a fetch that was already required.
 
----
+**Do NOT flag this as a "fetch-then-check" inefficiency.** A genuine over-fetch concern
+requires both conditions to be true:
+1. The entity is fetched solely for the ownership check (not needed afterward)
+2. A cheaper projection query targeting only the ownership fields could replace it
 
-## 2026-05-16 — Blazor expression-bodied IEnumerable properties double-enumerate in templates with empty-state guards
+If the entity is needed downstream (e.g., for change-tracking before `Remove()`, or for a
+`Permissions` property read), the full `FindAsync` is the optimal choice. A projection would
+require a second query to reload the entity, turning one round-trip into two.
 
-**Observation**: A Blazor page declared a `FilteredPackages` property returning `IEnumerable<T>` (lazy LINQ). The template had a standard pattern: `@if (!FilteredPackages.Any())` (empty-state guard) followed by `@foreach (var x in FilteredPackages)` (render). This double-enumerates the lazy LINQ on every render cycle, running the predicate twice per render.
-
-**Rule**: When a Blazor template has both an empty-state guard and a `@foreach` on the same computed sequence, flag the property as double-enumerated. The fix is to materialize to a `List<T>` backing field that is recomputed only when source data or filter state changes. This is a common Blazor gotcha whenever someone adds an "empty results" UX pattern after the fact.
-
----
-
-## Pre-existing small-n framework patterns: do not escalate
-
-**Observation**: Pre-existing framework helpers that perform multiple passes over small fixed-size collections (n = 2–5 items) without caching are often found in geometry, graph, or segment-processing libraries. Similarly, object-creation expressions in logic-provider properties may appear to allocate on every access but are memoized by the framework.
-
-**Rule**: Before raising any allocation or repeated-enumeration finding, confirm whether the pattern was introduced by the change under review, and establish the actual n at runtime. Pre-existing patterns at small fixed n (2–5) should be Low at most, with a clear note that the change did not introduce them.
-
----
-
-## 2026-04-29 — Expression-bodied logic-provider properties: resolve via GetStep memoization before flagging
-
-**Observation**: A logic provider's expression-bodied property (`=>`) that creates new sub-flow instances on every access appeared to be a repeated-allocation concern because the property was referenced inside a loop construct. Reading the flow DSL's `GetStep` implementation revealed it memoizes by step name using a `HashSet` — the containing factory lambda is evaluated exactly once per `BuildFlow` call, making the property access happen exactly once per design run.
-
-**Rule**: Before flagging "property creates instances on every access" in a flow-graph DSL: (a) locate the `GetStep` / `Flow` DSL method, (b) confirm whether it deduplicates by name, (c) confirm how many times `BuildFlow` is called per unit of work. Only raise a finding if all three confirm repeated evaluation. This avoids a false positive that looks compelling from call-site inspection alone.
+**Additional positive**: An IDOR guard that fires before downstream DB queries (assignee
+fetches, mutation queries) makes the mismatch path cheaper than the success path — the guard
+eliminates subsequent queries on invalid requests. This is worth noting as a positive finding.
 
 ---
 
-## 2026-05-08 — In MVVM+Blazor codebases, distinguish PropertyChanged frequency from render-relevant property changes
+## Lesson 008 — `static readonly HashSet<string>(StringComparer.Ordinal)` Is the Reference-Correct Pattern — Do Not Flag
 
-**Observation**: Board sub-components subscribed to `ViewModel.PropertyChanged` with no filter, calling `StateHasChanged` on every property change. The tempting interpretation is "anything could affect the view" — but in practice, ViewModel properties divide into two groups: task-data properties (mutations to the `Tasks` collection or scored fields) that do need re-renders, and UI-state properties (`EditingTaskId`, `IsLoading`, `CurrentView`) that trigger re-renders in components that have no dependency on those properties. The correct fix is property-name filtering in the handler, not full re-render on every signal.
+**Date:** 2026-05-30
+**Category**: Process/Model
 
-**Rule**: When reviewing a `PropertyChanged` subscription in a Blazor component that calls `StateHasChanged` unconditionally, always check: (a) which ViewModel properties does this component's template actually read? (b) which `PropertyChanged` signals are actually mutation-relevant? If the component only renders task-list data, filter out `EditingTaskId`, modal state, and filter selections that belong to sibling components.
+A `public static readonly IReadOnlySet<string>` backed by a `new HashSet<string>(StringComparer.Ordinal)` field initializer is the canonical pattern for an immutable string catalog in .NET. It is:
+- Initialized exactly once per AppDomain at type-load time
+- O(1) lookup
+- The fastest available string comparer for ASCII identifiers with no culture/case concerns
 
----
+Do NOT flag this as a performance concern. Do NOT suggest `Lazy<T>`, a static constructor, or any other deferred-initialization pattern — they provide no benefit for a small, always-needed catalog. Mark as "Correct" and move on.
 
-## 2026-05-08 — Expression-bodied properties that call ToList() are double-materialization risks in Blazor templates
-
-**Observation**: A `private IReadOnlyList<T> WhatNowItems => source.ToList()` pattern looked like a single materialization. Reading the Razor template showed it was referenced twice (`!WhatNowItems.Any()` guard + `@foreach`) — producing two full LINQ pipeline executions per render. This is a common Blazor pattern-mistake because expression-bodied properties feel like computed values but actually execute on each access.
-
-**Rule**: When reviewing a Blazor component's code-behind for `IEnumerable<T>` or `IReadOnlyList<T>` expression-bodied properties that call `.ToList()`, immediately check the razor template for multiple access points (`.Any()` + `foreach`, `.Count` + `foreach`, etc.). If found, flag as a medium allocation/compute finding. The fix is always to assign to a field in the lifecycle method, not a property getter.
-
----
-
-## 2026-05-13 — Native graphics libraries: factory methods returning IDisposable do not transfer ownership to the renderer
-
-**Observation**: A `CreatePath()` helper returned a `new SKPath()` (SkiaSharp unmanaged resource). Two call sites (`DrawPolygon`, `DrawGhostLayer`) passed the path to `canvas.DrawPath(...)` without `using var` or `.Dispose()`. The canvas copies/uses the path data immediately and does not take ownership. Each call leaked a native handle.
-
-**Rule**: When reviewing code that uses a native/unmanaged graphics library (SkiaSharp, Direct2D, OpenGL wrappers), verify that `IDisposable` types returned from factory helpers are disposed at the call site. The key signals: (1) a factory method returns `new SKPath()` / `new SKBitmap()` / etc., (2) the result is passed to a draw method, (3) there is no `using` or explicit `.Dispose()`. Draw methods (`canvas.DrawPath`, `canvas.DrawBitmap`) copy/consume the content but do not own or dispose the source object. This is the most common SkiaSharp resource leak pattern.
+**Rule:** `static readonly HashSet<string>(StringComparer.Ordinal)` for a permission/constant catalog is a positive pattern, not a finding.
 
 ---
 
-## 2026-04-29 — Double-call pattern across adjacent pipeline steps: check for env-level result caching opportunity
+## Lesson 009 — LINQ `FirstOrDefault` on `IReadOnlyList<T>` Creates a Closure — Flag as Low, Not Medium
 
-**Observation**: In a stepped pipeline, two adjacent steps called the same O(n × m) operation on identical inputs — one step used a filtered subset of the result, the next step used the complementary subset. Neither step stored the full result for the other to consume. The correct Medium finding is "redundant computation on shared inputs" with the recommendation to cache the result on the shared environment/context object between steps.
+**Date:** 2026-05-30
+**Category**: Process/Model
 
-**Rule**: When a bump/retry loop contains two consecutive steps that call the same expensive method with the same parameters, flag as Medium. The fix pattern is: (a) identify the shared environment/context object, (b) add a nullable result field for the intermediate value, (c) first step populates it, second step reads it. Only apply if the work is genuinely meaningful (O(N) with non-trivial N) — not for O(1) lookups.
+When a method calls `.FirstOrDefault(predicate)` on a property typed as `IReadOnlyList<T>`:
+1. It allocates a delegate (closure, since it captures a local or field)
+2. It allocates an `IEnumerator<T>` through the interface (boxes the struct enumerator)
 
----
+This is a Low finding, not Medium, because:
+- The collection involved is invariably small (per-request, per-user data, ≤5 items)
+- The total allocation is 2 small short-lived objects per call
+- It is never on a hot path in authorization evaluators (multiple preceding short-circuit steps)
 
-## 2026-05-07 — Captive dependency investigation: verify lifetime first, then verify implementation cost before rating
+The correct recommendation is a manual `foreach` with an early `break`, which eliminates the closure regardless of whether struct-enumerator devirtualization applies.
 
-**Observation**: A Singleton service captured another service (IToggles) in its constructor. The question "is this a captive dependency?" was raised as the primary concern. The correct process is two sequential checks:
-1. **Verify registration lifetime**: Look for `AddSingleton/AddTransient/AddScoped` across all DI container files. If both sides are Singleton, it is definitionally safe — stop and record "no defect."
-2. **If safe, verify per-call cost**: If the captured service is called inside a hot-path LINQ predicate, open the concrete implementation and trace the call chain to the leaf. In this case: Singleton → dictionary TryGetValue — O(1), no I/O, no locks — also safe.
-
-**Rule**: Do not guess the lifetime from the class name or from convention. Grep for the actual registration. For any captured service called in a hot-path predicate, read the implementation before opining on cost. A service can be Singleton-safe but still have hidden per-call overhead (e.g., a lock, a file read) that makes it unsuitable for tight LINQ loops.
-
----
-
-## 2026-05-06 — `static` property returning `new(...)` is a factory, not a singleton — inspect constructor for hidden overhead before rating
-
-**Observation**: A codebase used a static `get`-only property (`public static T Foo => new(...)`) as a convenient shorthand for a well-known key value. The pattern looked like a constant/singleton at the call site but was a factory allocating a new class instance on every access. Worse, the class constructor called into a global lock-based registry (`KeyIndexer.NextKey`), making each access incur a heap allocation PLUS a lock acquisition. The property appeared inside a hot inner loop, resulting in hundreds of thousands of lock acquisitions per unit of work that could have been reduced to one with a simple hoist.
-
-**Rule**: When reviewing a `static` property (not field) of the form `=> new(...)` accessed inside a loop:
-1. Confirm it is a property (arrow getter) not a field — a field would be set once at class initialization
-2. Open the type's constructor and check for global registries, locks, or caches
-3. If the constructor has side effects (dictionary write, lock, counter), rate the finding at least Medium if accessed in an inner loop
-4. The fix is always a local hoist: `var cached = SomeClass.TheProperty;` before the loop
-
-This is distinct from the "struct vs class" lesson — even if allocation cost alone is small, a hidden lock in the constructor escalates severity. Read the constructor, not just the allocation type.
+**Rule:** Flag LINQ closures on small `IReadOnlyList<T>` collections as Low. Do not escalate to Medium unless the collection is unbounded or the step is documented as a hot path.
 
 ---
 
-## 2026-05-19 — Blazor bool computed properties backed by non-trivial computation are evaluated once per razor reference per render
+## Lesson 010 — `IReadOnlyList<T>` for a Whitelist Is a Medium Design Finding, Not a Low
 
-**Observation**: A dirty-state property (`bool IsDirty => expensive()`) was referenced three times in a Razor template (class binding, `disabled` attribute, conditional label). On each render cycle, the expensive computation ran three times — not once. The template's multiple references were easy to miss because each reference looked cheap in isolation, and the property returned a simple `bool` (not a list or complex object).
+**Date:** 2026-05-30
+**Category**: Process/Model
 
-**Rule**: When reviewing a Blazor component that exposes a bool expression-bodied property backed by non-trivial computation (JSON serialization, full-object traversal, LINQ with materialization), count how many times the Razor template references that property. Multiply the per-call cost by that reference count to get the true per-render cost. The fix — cache in a backing field, recompute only on mutation — is the same as for LINQ double-enumeration. The "IEnumerable double-enumeration" rules already in this file apply equally to bool properties if their backing computation is expensive.
+When a whitelist property (used exclusively for membership checks) is typed as `IReadOnlyList<T>`,
+the `Contains()` call resolves to the O(n) `IEnumerable<T>` extension. The semantically correct
+type is `IReadOnlySet<T>` (O(1) Contains, no duplicates). Check if the same file already uses
+`IReadOnlySet<T>` elsewhere for the same purpose. If it does, the asymmetry is
+a clear inconsistency and justifies at least a Medium finding.
+
+**Rule:** For any collection typed as `IReadOnlyList<T>` where the only operation is `.Contains()`,
+flag as Medium if (a) the collection is unbounded by validation or (b) the same file uses
+`IReadOnlySet<T>` elsewhere.
 
 ---
 
-## 2026-05-19 — `Task.Delay` auto-expire timers fire a ghost StateHasChanged after early manual dismissal
+## Lesson 011 — List Capacity Hint `* 2` Is a Low Finding When Per-Item Output Count Varies
 
-**Observation**: A toast notification component used `Task.Delay(N)` to auto-expire items from the visible list. The component also allowed manual dismissal via a click handler. When a user clicked dismiss, the toast was removed immediately — but the `Task.Delay` timer continued running and fired `StateHasChanged()` N milliseconds later as a ghost re-render against a list that no longer contained the item.
+**Date:** 2026-05-30
+**Category**: Process/Model
 
-**Rule**: When reviewing any UI component that combines (a) `Task.Delay`-based auto-expiry and (b) an early-dismiss action, verify that the delay is cancelled on early dismiss. The correct pattern is a `CancellationTokenSource` keyed per item: the dismiss handler cancels the token, and the timer path catches `TaskCanceledException` and returns without calling `StateHasChanged`. Ghost renders from orphaned timers are functionally harmless in most cases, but they indicate a missing cleanup path. Rate as Low unless the component is rendered at high frequency or the render cost is non-trivial.
+A projector that uses `new List<T>(items.Count * 2)` as a capacity hint is a recurring pattern.
+The `* 2` heuristic is correct only when each item produces exactly 2 projected entries on average.
+When the number of entries per item varies across a wide range, the hint under-allocates for medium-to-large inputs.
+
+**Rule:** Flag `* N` capacity hints as Low when the per-item output count is variable and bounded
+by a documented maximum that is significantly higher than N. Suggest an exact-capacity pre-scan
+or a more conservative multiplier. Do not escalate to Medium unless the projector is confirmed
+to be on a hot path (e.g., called per-request for a large user base).
+
+---
+
+## Lesson 012 — `Task.Run` for Synchronous CPU Work in Async Methods
+
+**Date:** 2026-05-29
+**Category**: Process/Model
+
+Synchronous CPU-bound work inside `async` methods (e.g., BCrypt, Argon2, heavy computation) blocks thread-pool threads during execution. Best practice in ASP.NET Core is to wrap in `Task.Run()` to signal explicit CPU-bound intent. This is Medium severity, not Low — it affects thread pool behavior under burst load.
+
+**Context:** In ASP.NET Core minimal APIs, `ConfigureAwait(false)` is not needed (no SynchronizationContext). But `Task.Run` for CPU-bound work still matters for thread pool scheduling.

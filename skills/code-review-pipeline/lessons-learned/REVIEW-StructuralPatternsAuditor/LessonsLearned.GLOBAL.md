@@ -42,46 +42,33 @@ The SP-003 signal as written targets **constructor parameter types** — a concr
 
 ---
 
-## Entry 2 — The catalog's five patterns may not fully cover "anemic domain model" and "feature envy" smells
+## Entry 2 — SP-007 Fires on Multi-File String Literal Scatter Even Without a Classic Strategy Pattern
 
-**Session**: Full codebase structural review (Blazor dev tool, May 2026)
+**Session**: Auth service structural review (May 2026)
 **Category**: Process/Model
 
-In a multi-auditor pipeline, prior audits (correctness, maintainability) will sometimes surface symptoms of a structural smell without naming its structural root cause. Specifically: a correctness auditor finding that a caller unconditionally overwrites a timestamp field is a symptom; the structural root cause is that the domain object's state machine lives in the caller (feature envy / anemic domain model). The structural auditor's value-add is to name the structural root cause and connect it to the correctness finding.
+SP-007's catalog description focuses on a strategy-registry pattern where a discriminator string is compared to resolve an implementation. The same smell applies more broadly when provider/vendor/channel identifier strings (known at compile time) appear as bare literals in two or more separate files with no shared constant declaration — even without a classic strategy interface. The review question remains valid: can the identifier be renamed by changing one declaration? If not, the string literals are scattered and SP-007 should fire.
 
-**Heuristic**: When a correctness finding describes unexpected or inconsistent field mutation, ask "who owns the logic that sets this field?" If the answer is "a caller N layers away from the model," that is a feature-envy / caller-owned state machine smell — and it is worth raising as a High structural finding even if the catalog has no exact SP-XXX match.
-
-**Suggested catalog addition**: Propose SP-006 (Feature Envy on State Transition). Draft recorded in the structural-patterns-audit report from this session.
+**Application guidance**: When reviewing any feature that supports N named providers (OAuth, payment gateways, notification channels), search for the provider slug string in more than one file. If the same literal string appears in a routing/dispatch table AND in a service-call call site in a registration class, flag SP-007 Medium. The fix is a central constant class, not necessarily an enum (since the strings may need to interface with external systems or DB columns).
 
 ---
 
-## Entry 3 — Two-component side-channel state sharing is not covered by any catalog pattern
+## Entry 3 — Abandoned Session State: a UI-layer gap not covered by SP-001 through SP-009
 
-**Session**: Full codebase structural review (Blazor dev tool, May 2026)
+**Session**: Permissions lifecycle structural review (May 2026)
 **Category**: Process/Model
 
-When two components (e.g., a layout shell and a router) share runtime state through a file-backed or store-backed side channel using string keys as the only contract, none of SP-001 through SP-005 detect it. The only way to find this smell is to trace all `Load()` / `Save()` call sites and look for matching key usage in components that do not declare a dependency on each other.
+When a UI component receives an immutable domain session record from a service, seeds a local mutable copy for UI state tracking, and then never updates the session record as that state evolves, the session object's computed properties become stale immediately after the first mutation. None of SP-001 through SP-009 detect this because: SP-004 (Tell-Don't-Ask) targets strategy/policy bridges, not session state management; SP-009 (Untestable Logic Path) targets infrastructure entanglement; and no existing catalog entry covers duplicated behavioral methods between a domain session object and its consumer.
 
-**Detection heuristic**: For any settings-style service that persists keyed strings (view name, role name, path), enumerate all write sites and all read sites. If two components write and read the same key without either component depending on the other, this is an implicit behavioral contract with no compile-time enforcement. Flag it even if neither component alone looks suspicious.
+**Detection heuristic**: When reviewing a UI component that holds both a domain session object field (`_session`) and a local mutable collection field (`_items`, `_decisions`, `_entries`), ask: (1) Are the local mutable items populated FROM the session at init time? (2) Is the session object ever UPDATED when the local items change? (3) Does the consumer declare any boolean or list property that uses the same LINQ predicate as a property on the session object? If (1) = yes, (2) = no, and (3) = yes, this is an Abandoned Session State smell. The fix is always to sync the session record on each mutation using a `with` expression, then delete the duplicated consumer property.
 
-**Suggested catalog addition**: Propose SP-007 (Side-Channel State Sharing). Draft recorded in the structural-patterns-audit report from this session.
+**Severity calibration**: Medium when the abandoned session properties could be read by a future maintainer in the same component (e.g., the session is a named field). The risk is a silent stale-state bug at future-maintenance time, not a current defect.
+
+**Proposed catalog entry**: Draft recorded in structural-patterns-audit — **TBD** (not yet in catalog; current max is SP-009).
 
 ---
 
-## Entry 4 — CLI Entrypoint Files Are High-Probability God File Sites
-
-**Session**: Full-project CLI structural review (May 2026)
-**Category**: Process/Model
-
-In a full-project CLI review, the entry file contained 600+ lines spanning configuration loading, multiple manual service factory functions, 14+ command handlers, utility functions (directory copy, path traversal), and a complex ~200-line command implementation mixing file I/O, JSON manipulation, and external tool integration — all in one file. The pattern emerged incrementally: each new command added "just a few lines." No existing SP entry (SP-001 through SP-007) catches this because they all operate at the class or method level, not at the file-scope accumulation level.
-
-**Detection heuristic**: When reviewing CLI projects, go directly to the entrypoint file first. The threshold for escalation is: any static utility function with no coupling to the command infrastructure, OR any handler lambda exceeding 30 lines with non-trivial logic. Flag as High if a handler contains file I/O, JSON DOM manipulation, or external tool integration.
-
-**Catalog gap**: Not covered by any existing SP entry. Proposed as SP-008 in the audit where this was discovered.
-
----
-
-## Entry 5 — Verify-Before-Execute Mutable State Is a Hidden Lifecycle Signal
+## Entry 4 — Verify-Before-Execute Mutable State Is a Hidden Lifecycle Signal
 
 **Session**: Full-project CLI structural review (May 2026)
 **Category**: Process/Model
@@ -90,93 +77,210 @@ A strategy class used two private mutable fields populated as side effects of a 
 
 **Detection heuristic**: When reviewing classes with a two-method interface (verify/execute, check/process, build/run), look for: (a) private nullable fields that are set in the first method and consumed in the second, and (b) `?? fallback` expressions in the second method that reconstruct what the first method already computed. A `"(unknown — call X first)"` return string is a near-certain signal that a hidden lifecycle exists.
 
-**Catalog gap**: Not covered by any existing SP entry. Proposed as SP-009 in the audit where this was discovered.
+**Catalog gap**: Not covered by any existing SP entry. Proposed new pattern — **TBD** (SP-009 was assigned to “Untestable Logic Path”).
 
 ---
 
-## Entry 6 — SP-001 on Eligibility Methods Should Trigger a Gate-Object Pattern Check
+## Entry 5 — Composition-Root-Dominated Reviews Produce Expected Clean Verdicts
 
-**Session**: Full-project CLI structural review (May 2026)
+**Session**: DI module consolidation structural review (May 2026)
 **Category**: Process/Model
 
-When SP-001 fires on an eligibility, authorization, or validation method with numbered sequential checks, immediately ask: does the broader codebase have an established gate-object or policy-object abstraction for this kind of check? If it does, the SP-001 finding should be co-reported with SP-006 and severity elevated (from Medium to High), because the numbered steps reveal both a structural smell AND an inconsistency with an existing architectural pattern.
+When the entire changeset is composed of DI registration modules (extension methods on `IServiceCollection`, composition roots, or factory wrappers), the structural patterns audit will correctly produce a Clean or near-Clean verdict. SP-002 explicitly exempts composition roots. SP-003, SP-004, SP-005, SP-006, and SP-007 all require call-site or instance-creation patterns that are absent from pure registration code.
 
-**Heuristic**: After detecting SP-001 in an eligibility method, search the codebase for terms like "Gate", "Policy", "Rule", "Evaluator" near the same domain area before determining severity. If a gate-object pattern exists elsewhere, co-report SP-006 and escalate.
+**Calibration note**: A Clean verdict in this scenario is not a failure to find issues — it IS the correct finding. The auditor should not manufacture findings or over-escalate marginal Low signals to compensate for the absence of Medium or High matches. When the changeset is structurally clean, say so clearly and direct analysis energy toward catalog gaps (new patterns observed that no SP entry covers).
 
 ---
 
-## Entry 4 — SP-003 static-call variant also appears in computed properties on entities, not just method bodies
+## Entry 6 — DI Lifetime-Qualifier Word in a Class Name Is a Recurring False-Positive Signal
 
-**Session**: Domain/contract layer structural review (May 2026)
+**Session**: DI module consolidation structural review (May 2026)
 **Category**: Process/Model
 
-LessonsLearned Entry 1 noted that SP-003's static-call variant (inline system-clock access) appears in method bodies of service-layer classes. This session confirmed the same variant in a **computed property on a domain entity** — specifically a `Status` property that calls `DateTime.UtcNow` inline to determine a state value. This is distinct from a service method body: the static call is evaluated on every property read, not just during an explicit operation.
+When a concrete service class name includes the word `Scoped`, `Transient`, or `Singleton` — and the class is registered with a *different* lifetime than the word implies — multiple independent review passes will incorrectly flag this as a captive-dependency or lifetime-mismatch bug. The pattern appears when a class uses a lifetime-qualifier word to describe its *behavioral* model (e.g., "creates a scope per call") rather than its own DI registration lifetime.
 
-**Extended heuristic**: When scanning for SP-003 static-call violations, include computed properties (`=> ...`) on entity and domain model classes, not only method bodies. A computed property that evaluates system clock, environment, or filesystem state on each access is at least as problematic as an equivalent inline call in a service method — and potentially worse, because callers often do not expect property reads to have I/O or time-sensitivity.
+**Detection heuristic**: Before flagging a Singleton-registered class whose name includes "Scoped" as a captive-dependency issue, check its constructor for `IServiceScopeFactory` (a framework singleton). If the constructor injects only `IServiceScopeFactory` and the implementation creates a scope per method call via `CreateAsyncScope()`, the Singleton registration is intentional and correct. The finding should be downgraded from a correctness issue to a naming observation and recorded as a catalog gap candidate (proposed new pattern — **TBD**; SP-008 was assigned to “Excessive Test Arrangement Complexity”).
+
+---
+
+## Entry 7 — Mutually Exclusive DI Extension Methods Are Not Detected by Any Existing Catalog Entry
+
+**Session**: DI module consolidation structural review (May 2026)
+**Category**: Process/Model
+
+A recurring structural smell appears in multi-host codebases where DI extension methods register competing implementations for the same interface (real vs. no-op, production vs. test). When these methods are defined without any compile-time or runtime guard preventing a caller from invoking both, the only enforcement is documentation. This is not detected by SP-001 through SP-007 because none of them scan for method pairs that register the same service type.
+
+**Detection heuristic**: During a DI module review, for each interface registered in extension method A, search for the same interface registered in any other extension method B. If A and B both register `services.AddSingleton<ISomeInterface, ImplementationX>()` and `services.AddSingleton<ISomeInterface, ImplementationY>()` respectively, ask: is there a guard in either method (a `services.Any(...)` check, a `TryAddSingleton`, or a builder that enforces exactly-one)? If not, document it as a catalog gap candidate (proposed new pattern — **TBD**; SP-009 was assigned to “Untestable Logic Path”) and note the severity based on how critical the interface is.
 
 **Key inconsistency signal**: If a codebase correctly injects a time abstraction (`TimeProvider`, `IClock`) in one domain computation class but another class calls the system clock inline in a computed property, the inconsistency is worth flagging as High even though the entity pattern might otherwise look like a Low finding.
 
 ---
 
-## Entry 5 — A general update command that bundles state-machine fields with content fields is a distinct smell confirmed in a pure contract layer
+## Entry 8 — Correctness Findings About Scope-Alignment Gaps Often Have a Structural Root Cause in Data Structure Type
 
-**Session**: Domain/contract layer structural review (May 2026)
+**Session**: Permission catalog structural review (May 2026)
 **Category**: Process/Model
 
-Entry 2 first identified SP-006 (Feature Envy on State Transition) in an application/service layer. This session confirmed the same pattern in a pure **domain contract layer** (interfaces and request records only) — a general update record that carries a status-transition field alongside content fields, while the same service interface also declares dedicated named transition methods.
+When a correctness audit surfaces a scope-alignment gap — "policy X fires without verifying the resource's scope" — the structural root cause is frequently that the policy is encoded as a flat membership set (`HashSet`, `IReadOnlySet`) where all scope-specific members share a single collection. A flat set can only answer "is this value a member?" — it cannot answer "is this value a member of the correct scope for this context?" without an additional, external scope derivation step that the flat set itself does not enforce.
+
+**Heuristic**: When reviewing a correctness finding about missing scope/category enforcement in a membership check, trace it to the data structure holding the policy. If the policy is a flat set whose members span two or more implicit categories, the correct structural fix is to replace the flat set with either (a) two named per-category sets, or (b) a dictionary keyed by category. The structural fix simultaneously resolves the correctness gap — no separate correctness patch is needed. Always recommend the structural fix as the combined resolution.
+
+**Calibration for severity**: If the scope mismatch produces an incorrect security decision (an allow where a deny is required), rate the structural finding at Medium even if the mismatch requires a caller error to trigger and all current call sites are consistent. The absence of a test asserting cross-category rejection is the secondary signal — if no test covers the mismatch, the gap is invisible until a caller error occurs in production.
 
 ---
 
-## Entry 6 — Two methods mapping the same type pair with intentionally different field sets is a distinct structural smell (Asymmetric Sibling Mappings)
+## Entry 9 — Deprecated API Surface Without `[Obsolete]` Is a Distinct, Underrepresented Structural Smell
+
+**Session**: Permission catalog structural review (May 2026)
+**Category**: Process/Model
+
+When a public class carries deprecated members (backward-compatible aliases, renamed constants, superseded overloads) alongside current API members with no `[Obsolete]` attribute, the deprecation is documentation-only. This is a structural smell not covered by any catalog entry through SP-009: it is not a strategy-dispatch string issue (SP-007), not a concrete dependency issue (SP-003), and not a numbered-step-comment issue (SP-001). The signal is specifically: "deprecated member visible in tooling autocomplete with no visual or compiler distinction from current members."
+
+**Severity calibration**: Rate Medium when the deprecated and current forms are pure aliases (no behavioral difference today) — the risk is future migration cost and audit confusion. Rate High when the deprecated form has different behavior (e.g., silently drops a field, uses a legacy API that will be removed).
+
+**The fix is always a one-liner**: `[Obsolete("Use X instead.")]` with `error: false` preserves backward compatibility for existing callers while generating a warning for new adoption. This is the lowest-cost structural fix in the catalog — recommend it whenever the pattern appears, regardless of how small the alias count is.
+
+**False-positive gate**: If the deprecated form is in a separately named nested class or companion file whose name signals legacy nature (e.g., `LegacyApi`, `_Compat`), the structural isolation is adequate — dismiss as Low or pass.
+
+---
+
+## Entry 10 — SP-001 Severity Escalates to Medium When Two Files in the Same Subsystem Use Opposite Step-Documentation Conventions in the Same PR
+
+**Session**: Authorization service structural review (May 2026)
+**Category**: Process/Model
+
+SP-001 (Numbered Step Comments) is normally Low when a method is otherwise clean and the numbered comments are the only issue. However, when two files in the same functional subsystem are BOTH modified in the same PR and use opposite step-documentation conventions — one using numbered comments, the other using named private methods — the inconsistency rises to Medium. The co-modification makes the inconsistency directly visible to reviewers and raises the question of which convention is canonical, creating ongoing maintenance ambiguity.
+
+**Calibration rule**: Before rating SP-001 as Low, check whether any other file in the same subsystem (or the same PR's changeset) contains the correct form (named private methods for each step). If it does, escalate to Medium. The inconsistency is the finding, not just the numbered comments in isolation.
+
+**Why this matters**: A Medium finding prompts the team to establish and apply the naming convention in the same PR rather than accumulating an inconsistency that compounds over time. A Low finding might be deferred indefinitely.
+
+---
+
+## Entry 11 — Non-Exhaustive Enum Dispatch Is the Structural Root Cause of “Dead Code Enum Member” Correctness Findings
+
+**Session**: Authorization service structural review (May 2026)
+**Category**: Process/Model
+
+When a correctness audit surfaces an enum member that is documented as having distinct behavior but is silently handled identically to another member (effectively dead code), the structural auditor should look immediately for a non-exhaustive `if/else` at the enum's dispatch site. If found, this is a Medium structural co-finding — it explains WHY the dead code was easy to introduce (the `else` branch caught the unimplemented member silently) and WHY it will recur if not fixed (future enum additions will be silently absorbed the same way).
+
+**Detection heuristic**: When a correctness audit identifies dead or stub behavior in a named enum member, trace back to the dispatch logic. If the dispatch uses `if (x == SomeValue) {} else {}` on a multi-member enum rather than an exhaustive `switch`, flag it as a structural Medium co-finding. Include a note that the switch form (C# 8+ `switch` expression) would emit a compiler warning on the next addition, making the structural fix a preventive measure for all future enum members, not just the current stub.
+
+**Catalog gap**: This pattern was proposed as a new catalog entry ("Non-Exhaustive Enum Dispatch") in the audit where it was first identified. Promote to the catalog after one additional confirmation sighting.
+
+---
+
+## Entry 12 — Duplicated conditional initialization blocks are a structural smell even when the logic is simple
 
 **Session**: Full ViewModel project structural review (May 2026)
 **Category**: Process/Model
 
-When a class contains two methods that both transfer state from the same source type to the same target type (e.g., a factory/initializer and an updater), they will naturally cover different field sets — the updater may intentionally skip immutable fields. The structural risk is that field additions to the source type must be propagated to both methods with no compile-time enforcement, and the asymmetry is enforced only by comments or tribal knowledge.
+The same non-trivial branching logic (tenant scoping, feature flag, authorization, environment check) appearing verbatim in two unrelated classes is a structural smell — not because of code volume, but because a rule change requires finding every site independently. Mechanical null-checks or try/catch boilerplate do not qualify.
 
-**Detection signal**: Look for two methods in the same class whose bodies both contain the pattern `target.PropertyX = source.PropertyX` across many properties. If one method has materially fewer assignments than the other for the same property surface, ask whether the excluded fields are truly immutable and whether the exclusion is documented.
+**Detection shortcut**: Look for a general update command (named `UpdateXxxRequest`, `EditXxxCommand`) in a codebase that also has a specific-verb service method for the same field (`SetStatusAsync`, `SetApprovedAsync`). If both exist with overlapping fields, flag as structural duplication.
 
-**False-positive gate**: If the excluded fields carry a clear, accurate inline comment (e.g., `// CreatedAt intentionally omitted — immutable after creation`), treat as Low rather than Medium. The smell is about undocumented asymmetry, not documented intentional design.
-
-**Suggested catalog addition**: Draft SP-009 (Asymmetric Sibling Mappings) recorded in the structural-patterns-audit report from this session.
+**Proposed catalog addition**: Draft (Duplicated Conditional Initialization Block) — **TBD** (not yet in catalog; current max is SP-009).
 
 ---
 
-## Entry 7 — Duplicated conditional initialization blocks are a structural smell even when the logic is simple
+## Entry 13 — Additive-Only Property Extensions Require Consistency Audit, Not Pattern Hunt
 
-**Session**: Full ViewModel project structural review (May 2026)
+**Session**: Entity property extension with persistence configuration (May 2026)
 **Category**: Process/Model
 
-The same branching pattern (e.g., "if no board is set, use the global variant; otherwise use the scoped variant") appearing verbatim in two unrelated classes is a structural smell even if the logic is short. The structural risk is not the code volume but the implicit maintenance contract: a rule change requires finding every site independently. Unlike pure code duplication (which a linter can detect), the smell here is that the condition encodes a domain or scoping rule that belongs in one place.
+When a changeset adds exactly one new property to an existing entity with matching service method, EF config, and no new class-level behavior, SP-001 through SP-009 will produce a Clean verdict by construction. The structural audit's real value is a **consistency check**: same access modifier/type/default as sibling? Same optional-parameter ordering? EF config copied verbatim (if so, extraction opportunity = Low finding)?
 
-**Key distinguisher from ordinary duplication**: The block must contain a non-trivial conditional whose branching logic reflects a domain rule (tenant scoping, feature flag, authorization, environment check). Mechanical null-checks or try/catch boilerplate do not qualify.
-
-**Suggested catalog addition**: Draft SP-010 (Duplicated Conditional Initialization Block) recorded in the structural-patterns-audit report from this session.
-
-**Calibration note**: In a pure contract layer where entities are anemic by design (EF Core pattern), SP-006 severity should be upgraded: because the entity offers no protection (all setters are public), the service interface is the only place where transition guards can exist. Two paths to the same transition at the interface level is therefore a direct correctness risk, not merely a maintainability smell.
-
-**Detection shortcut**: Look for a general update command (named `UpdateXxxRequest`, `EditXxxCommand`, etc.) in a codebase that also has a service method whose name is a specific verb for the same field (`SetStatusAsync`, `SetApprovedAsync`, `SetEnabledAsync`). If both exist, check whether the general update command carries any of those same fields.
+When all three checks pass, "Clean" is the correct honest verdict.
 
 ---
 
-## Entry 6 — Dual-channel notification (SP-008 proposed) is distinct from SP-007 Side-Channel State Sharing
+## Entry 14 — Early-exit precedence chain is NOT a co-report candidate for SP-006 (Closed Stage List)
 
-**Session**: Domain/contract layer structural review (May 2026)
+**Session**: Pure-domain authorization engine structural review (May 2026)
 **Category**: Process/Model
 
-SP-007 (Side-Channel State Sharing) covers two components exchanging state through an implicit, untyped side channel (string keys, file paths) without compile-time enforcement of the contract. The Dual-Channel Notification smell (proposed SP-008) is different: two typed, intentional interfaces both represent the same domain event but differ in transport (sync vs. async, in-process vs. network). The risk in SP-008 is **completeness** (every call site must invoke all channels) and **extensibility** (a third channel requires updating every call site). The risk in SP-007 is **discoverability** (the contract is invisible to the type system). They share no mechanism and should remain separate catalog entries.
+SP-006 applies only when ALL stages are evaluated and results collected into a record with fields named after stages. An early-exit precedence chain (return at first match) does NOT require changing the result type when a new step is added — SP-006’s core structural risk is absent. When SP-001 fires on a numbered method using early-return short-circuiting, check only:
+1. Is there an established gate-object pattern elsewhere? → If yes, co-report SP-006 (Entry 6 rule)
+2. Does the result type accumulate one field per step? → If yes, that IS SP-006
 
-**Suggested catalog addition**: Propose SP-008 (Dual-Channel Notification Without Coordination). Draft recorded in the structural-patterns-audit report from this session.
+If neither, SP-001 alone is the correct finding.
 
 ---
 
-## Entry 7 — "Misleading Async Contract" (SP-009 proposed) is detectable by searching for Task.FromResult at method exit
+## Entry 15 — Repeated Inline Authorization Guard Is a Distinct Structural Smell Not Covered by SP-001 Through SP-009
 
-**Session**: Domain/contract layer structural review (May 2026)
+**Session**: IDOR guard implementation structural review (May 2026)
 **Category**: Process/Model
 
-When an interface method is declared with `Task<T>` return type and an `Async` suffix, but the implementation returns `Task.FromResult(...)` with no `await` anywhere in the method body, the async contract is misleading. The practical detection method: search for `Task.FromResult` in any class that implements an interface with an `Async`-suffixed method. Any match is a candidate for this pattern.
+The same 4–8-line authorization guard (condition + audit log + throw) copied to N ≥ 3 methods in the same class is not detected by any existing catalog entry. A single private helper would create one enforcement point.
 
-**Severity calibration**: This is typically Medium. Upgrade to High only if callers hold locks, use `Task.WhenAll`, or set cancellation timeouts based on the assumption that the operation is genuinely async. Downgrade to Low if there is an XML doc comment explicitly noting the implementation is synchronous and the interface is forward-looking.
+**Detection**: After any security feature adding guards to multiple methods, search for identical `if (condition) { log + throw }` blocks in the same class. Flag **Medium** if condition, log message, and exception text appear in 3+ methods. Escalate to **High** if a co-current correctness audit identified a gap in the guard condition.
 
-**Suggested catalog addition**: Propose SP-009 (Misleading Async Contract Wrapping Synchronous Work). Draft recorded in the structural-patterns-audit report from this session.
+**Proposed catalog entry**: Repeated Inline Authorization Guard (May 2026). Promote after one additional sighting.
+
+---
+
+## Entry 16 — SP-009 Co-occurrence With a Correctness Finding Auto-Elevates to High
+
+**Session**: Sharing authority model structural review (May 2026)
+**Category**: Process/Model
+
+SP-009 (Untestable Logic Path) is normally rated Medium when the untestable path contains business logic subject to change. The severity should be auto-elevated to High when a correctness or security auditor has independently identified a bug in that same logic block in the same review cycle.
+
+**Rationale**: A correctness finding on an untestable block is direct, empirical evidence that the untestability gap has already caused a real failure. The structural finding is no longer predictive ("this path might produce a bug") — it is retrospective ("this path already produced a confirmed bug"). The correct severity for a structural pattern that has a proven consequence is High, not Medium.
+
+**Escalation rule**: At the end of applying SP-009, check the correctness audit report for any overlapping finding. If the correctness auditor flagged a bug or defensive gap in the same method body or logic branch, escalate the SP-009 finding from Medium to High, and note in the report: "Co-occurs with correctness [M-N] — escalated per pattern rule."
+
+**Severity cap**: If the correctness finding is Critical or the structural untestability directly prevents detection of a security-relevant bug, escalate the SP-009 finding to Critical — not just High.
+
+---
+
+## Entry 17 — Asymmetric Inverse-Operation Delegation as a Structural Smell
+
+**Session**: Sharing authority model structural review (May 2026)
+**Category**: Process/Model
+
+When a service implements two inverse operations (Grant/Revoke, Add/Remove) and routes one through a domain service interface but the other directly to infrastructure, future service-layer additions (audit, validation) silently apply only to the service-interface path.
+
+**Detection**: For every inverse method pair, trace mutation paths. If one calls a service interface and the other calls infrastructure (DbSet, HTTP client, file system) directly, flag as **Medium**. Escalate to **High** if the paths already diverge (e.g., one has IDOR guard + audit; the other has neither).
+
+**Fix**: Add an inverse method to the service interface and route through it. The direct-infrastructure access in the calling class disappears.
+
+**Proposed catalog entry**: Asymmetric Inverse-Operation Delegation (May 2026).
+
+---
+
+## Entry 18 — CancellationToken Threading Into Fire-and-Forget Secondary Actions Creates Silent Loss Window
+
+**Session**: Sharing authority model / audit trail structural review (May 2026)
+**Category**: Process/Model
+
+A secondary action (audit write, notification) wrapped in `try/catch` for resilience silently loses its result if the caller’s `CancellationToken` is passed to it — a request cancellation between primary completion and secondary completion is swallowed as a generic write failure.
+
+**Detection**: Any method that wraps a secondary async call in `try/catch`, passes the caller’s `CancellationToken` to the secondary call, and does not distinguish `OperationCanceledException` in the catch block.
+
+**Severity**: High for compliance-required writes (audit, consent). Medium for recoverable secondary actions. Low for telemetry.
+
+**Fix**: Pass `CancellationToken.None` to secondary actions. Or split the catch: `OperationCanceledException` → log "cancelled"; all others → existing behavior.
+
+**Proposed catalog entry**: CancellationToken threading smell (May 2026).
+
+---
+
+## Entry 19 — Fixed-Delay Negative Assertion Is a Test-Code Structural Smell Not Covered by Any Catalog Entry
+
+**Session**: Auth redirect handler structural review (June 2026)
+**Category**: Process/Model
+
+When a test asserts the *absence* of a state change (no navigation, no DOM update, no event emission) by sleeping a fixed duration and then observing unchanged state (`Task.Delay(N)` or `Thread.Sleep(N)` before the assertion), the assertion window is defined by an arbitrary constant rather than a deterministic framework signal. This pattern appeared in two tests in the same test class, both using the same sleep duration — sharing an implicit coupling that requires a coordinated update if the timing assumption ever changes.
+
+**Why it matters structurally:**
+1. The fixed duration is inherently racy: too short in slow CI environments (false negative), too long on fast machines (wasteful).
+2. When the same delay appears in multiple tests, it is a de facto "test-class scoped constant" with no declaration — a maintenance coupling invisible to the type system.
+3. Modern UI test frameworks offer deterministic absence-assertion alternatives: a short-timeout URL wait expected to time out, a settled-state attribute assertion, or a negative `WaitForSelector` with a short explicit timeout. These are both faster and unambiguous.
+
+**Severity calibration**: Low if the delay is ≤1 second and only one test in the class uses it. Medium if the pattern appears in 2+ tests in the same class, the delay is ≥2 seconds, or the test class has a known flakiness history.
+
+**Note**: This is a TEST CODE structural smell, not a production code pattern. None of SP-001 through SP-009 cover test code timing. The structural auditor should note it as a catalog gap candidate and route the finding to the Test Coverage auditor for the current review cycle, rather than issuing it as a standalone structural finding.
+
+**Proposed catalog entry**: Fixed-Delay Negative Assertion (test-code structural smell, June 2026). Consider adding as a test-code annex to the structural catalog.

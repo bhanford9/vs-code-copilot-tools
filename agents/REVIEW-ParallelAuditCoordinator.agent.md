@@ -52,28 +52,9 @@ Confirm that required audits are complete by checking for:
 
 If either is missing, inform the user they must complete sequential audits first.
 
-## 2. Brief the User
+## 2. Launch All Parallel Auditors as Subagents
 
-Explain what's about to happen:
-
-```
-I'll now launch 8 specialized auditors to run in parallel as subagents. Each will analyze different quality aspects:
-
-📋 **Unit Test Coverage Auditor** - Test completeness and quality
-🔧 **Maintainability Auditor** - Code readability and design principles
-🧪 **Testability Auditor** - How easy the code is to test
-⚡ **Performance Auditor** - Performance and efficiency concerns
-🔌 **Extensibility Auditor** - Future adaptability and design patterns
-🔒 **Security Auditor** - Vulnerabilities, injection risks, and access control
-🔗 **Ripple Effect Auditor** - Incomplete propagation and missing companion logic
-🏗️ **Structural Patterns Auditor** - Named structural design smells from the pattern catalog
-
-Each auditor runs in its own isolated context and creates its audit report in /code-review/
-
-I will wait for all 8 to complete before proceeding. This may take a few moments...
-```
-
-## 3. Launch All Parallel Auditors as Subagents
+Tell the user: "Launching 8 parallel auditors — waiting for all to complete."
 
 **CRITICAL — PARALLEL EXECUTION REQUIRED**
 
@@ -88,101 +69,35 @@ Make all 8 `agent` tool calls in a SINGLE parallel batch. All 8 must appear in t
 The 8 subagent invocations (all in ONE tool call block):
 
 **1. REVIEW-UnitTestCoverageAuditor subagent:**
-> Conduct a comprehensive unit test coverage audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Create your audit report at /code-review/unit-test-coverage-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive unit test coverage audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Create your audit report at /code-review/unit-test-coverage-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **2. REVIEW-MaintainabilityAuditor subagent:**
-> Conduct a comprehensive maintainability audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Analyze readability, SRP, modularity, YAGNI, KISS, and dependency hygiene. Create your audit report at /code-review/maintainability-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive maintainability audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Analyze readability, SRP, modularity, YAGNI, KISS, and dependency hygiene. Create your audit report at /code-review/maintainability-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **3. REVIEW-TestabilityAuditor subagent:**
-> Conduct a comprehensive testability audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Analyze dependency injection, external dependencies, complexity, Law of Demeter, hidden dependencies, and observable outcomes. Create your audit report at /code-review/testability-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive testability audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Analyze dependency injection, external dependencies, complexity, Law of Demeter, hidden dependencies, and observable outcomes. Create your audit report at /code-review/testability-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **4. REVIEW-PerformanceAuditor subagent:**
-> Conduct a comprehensive performance audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Analyze memory, algorithms, concurrency, and database performance. Create your audit report at /code-review/performance-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive performance audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Analyze memory, algorithms, concurrency, and database performance. Create your audit report at /code-review/performance-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **5. REVIEW-ExtensibilityAuditor subagent:**
-> Conduct a comprehensive extensibility audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Analyze Open/Closed Principle, Dependency Inversion, extension points, coupling, configuration vs code, and API evolution. Create your audit report at /code-review/extensibility-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive extensibility audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Analyze Open/Closed Principle, Dependency Inversion, extension points, coupling, configuration vs code, and API evolution. Create your audit report at /code-review/extensibility-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **6. REVIEW-SecurityAuditor subagent:**
-> Conduct a comprehensive security audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Analyze injection risks, broken access control, sensitive data exposure, cryptographic issues, input validation, security misconfiguration, and authentication gaps (OWASP Top 10). Create your audit report at /code-review/security-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive security audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Analyze injection risks, broken access control, sensitive data exposure, cryptographic issues, input validation, security misconfiguration, and authentication gaps (OWASP Top 10). Create your audit report at /code-review/security-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **7. REVIEW-RippleEffectAuditor subagent:**
-> Conduct a comprehensive ripple effect audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Analyze call site completeness, symmetric code paths (reader/writer, version pairs), companion logic (mappers, test data, config, docs), implicit contract gaps, and dead activation. Create your audit report at /code-review/ripple-effect-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a comprehensive ripple effect audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Analyze call site completeness, symmetric code paths (reader/writer, version pairs), companion logic (mappers, test data, config, docs), implicit contract gaps, and dead activation. Create your audit report at /code-review/ripple-effect-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
 **8. REVIEW-StructuralPatternsAuditor subagent:**
-> Conduct a structural patterns audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/requirements-audit.md and /code-review/code-correctness-audit.md for context. Load the pattern catalog from `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/STRUCTURAL-PATTERN-CATALOG.md` and apply each pattern (SP-001 through all entries) to the changed files. For each signal match, evaluate using the catalog's review question and severity guidance. Include a "Suggested New Catalog Entries" section for any structural smells you observe that are not yet in the catalog. Create your audit report at /code-review/structural-patterns-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> Conduct a structural patterns audit of the code changes since the base branch (read from `code-review/session-config.json`). Read /code-review/parallel-brief.md for context. The changed-file list is at /code-review/changeset.md. Load the pattern catalog from `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/STRUCTURAL-PATTERN-CATALOG.md` and apply each pattern (SP-001 through all entries) to the changed files. For each signal match, evaluate using the catalog's review question and severity guidance. Include a "Suggested New Catalog Entries" section for any structural smells you observe that are not yet in the catalog. Create your audit report at /code-review/structural-patterns-audit.md following `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
 
-## 4. Report Results and Offer Handoff
+## 3. Return
 
-After all 7 subagents complete and return their results, summarize for the caller:
+After all 8 subagents complete, return immediately with: `All 8 parallel audits complete.`
 
-- Confirm which auditors completed successfully
-- Note any auditors that encountered issues
-- List the output files created in `/code-review/`
-
-**Expected output files:**
-- `/code-review/unit-test-coverage-audit.md`
-- `/code-review/maintainability-audit.md`
-- `/code-review/testability-audit.md`
-- `/code-review/structural-patterns-audit.md`
-- `/code-review/performance-audit.md`
-- `/code-review/extensibility-audit.md`
-- `/code-review/security-audit.md`
-- `/code-review/ripple-effect-audit.md`
-
-Then **return**. The Orchestrator will proceed to Final Synthesis.
+Do NOT generate a findings summary, per-auditor status report, or file listing — that output is wasted tokens. The Orchestrator handles next steps.
 
 > **Note**: The Coordinator does not update LessonsLearned. Each parallel auditor independently updates its own LL directory at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/REVIEW-{AgentName}/`. The `REVIEW-FinalSynthesizer` agent handles promotion to the pipeline-level LL as needed.
 
 </workflow>
-
-<coordination_notes>
-
-**Your role:**
-- You're a coordinator, not an auditor
-- Launch all 7 parallel auditors as subagents in a single parallel batch
-- Wait for all to complete (subagents return their results automatically)
-- Report results and offer handoff to final synthesis
-- Your work is done once all auditors complete and the user is briefed
-
-**Why subagent parallel execution matters:**
-- Each auditor analyzes different quality dimensions independently
-- No dependencies between these 7 auditors - they can truly run simultaneously
-- Subagents run in isolated context windows, keeping the coordinator's context clean
-- Only final results are returned, reducing token usage
-- Dramatically faster than sequential execution (7x speedup potential)
-- No manual monitoring needed - the coordinator knows when all auditors finish
-
-**Error handling:**
-- If any subagent fails, note which ones succeeded
-- Report any errors to the user
-- Allow them to re-run failed auditors individually via direct invocation
-- Partial results are still valuable
-
-</coordination_notes>
-
-<conventions>
-Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md` for understanding the output structure, but you don't create audit reports yourself. 
-
-<interaction_style>
-
-**Be clear and informative:**
-- Set expectations about what's happening
-- Explain the parallel execution
-- Keep user informed of progress
-
-**Be efficient:**
-- Launch all auditors at once, not sequentially
-- Don't wait unnecessarily
-- Move quickly to completion
-
-**Handle issues gracefully:**
-- If an auditor fails, explain what happened
-- Offer to retry or proceed without it
-- Make it easy to recover from problems
-
-**Remember:**
-- You're a coordinator, not an auditor
-- Your job is orchestration and flow control
-- Keep things moving smoothly
-
-</interaction_style>

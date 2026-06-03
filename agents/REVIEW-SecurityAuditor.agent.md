@@ -23,21 +23,11 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/
 
 ## 1. Read Prior Audit Context
 
-Load and understand:
-- `/code-review/requirements-audit.md` - What does the change claim to do?
-- `/code-review/code-correctness-audit.md` - How is it implemented?
+Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach prepared by the upstream auditors.
 
 ## 2. Analyze Code Changes
 
-Use git commands via #tool:execute/runInTerminal to review all changes since the base branch (read from `code-review/session-config.json`):
-
-```powershell
-# Read base branch from session config
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-git log "$($cfg.baseBranch)..HEAD" --oneline
-git diff "$($cfg.baseBranch)...HEAD" --stat
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 ## 3. Evaluate Security Dimensions
 
@@ -91,6 +81,7 @@ git status --short
 - **Authentication Bypass**: Code paths that can be reached without a valid authentication context?
 - **Weak Token Validation**: JWT signatures not verified? Token expiry not enforced?
 - **Session Fixation/Hijacking**: Session tokens predictable or not rotated after privilege change?
+
 
 ## 4. Identify Security Issues
 
@@ -147,61 +138,22 @@ Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/les
 
 <audit_report_template>
 
-# Security Audit Report
+# Security Audit — {PASS | MERGE WITH CONDITIONS | FAIL}
+**Files**: {N} | **🔴**: {N} | **🟠**: {N} | **🟡**: {N} | **🟢**: {N}
 
-## Summary
+## Findings
 
-**Code Changes Analyzed**: {number} files
-**Overall Security Posture**: {Secure | Minor Concerns | Significant Concerns | Critical Vulnerabilities}
-**Critical Issues**: {number}
-**High Priority Issues**: {number}
+### 🔴 {Title}
+**Where**: [file.cs](file.cs#L10-20)
+**Category**: {Injection | AccessControl | SensitiveData | Cryptography | InputValidation | Misconfiguration | Authentication}
+**OWASP**: {e.g., A03:2021 – Injection}
+**Issue**: {1-3 sentences — what the vulnerability is}
+**Fix**: {1-3 sentences — specific remediation}
 
-{2-3 sentence overview of security implications}
+{Repeat block for each finding, grouped by severity: 🔴 🟠 🟡 🟢}
 
----
-
-## Issues & Recommendations
-
-{For each severity level (🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low), group issues following this pattern:}
-
-**{Issue Title}**
-- **Location**: [file.cs](file.cs#L{lines})
-- **Problem**: {Description of the vulnerability}
-- **Attack Vector**: {How an attacker could exploit this}
-- **Impact**: {What they could do if exploited}
-- **Category**: {Injection | AccessControl | SensitiveData | Cryptography | InputValidation | Misconfiguration | Authentication}
-- **OWASP Reference**: {e.g., A03:2021 – Injection}
-- **Recommendation**: {Specific remediation steps}
-
----
-
-## Injection Analysis
-
-{Assess all injection vectors in the changed code: SQL, command, path, template, expression.}
-
----
-
-## Access Control Analysis
-
-{Assess authorization completeness: are all data-modifying and data-exposing operations guarded? Are ownership checks present?}
-
----
-
-## Sensitive Data Analysis
-
-{Assess logging, serialization, error messages, and in-memory handling of sensitive values.}
-
----
-
-## Input Validation Analysis
-
-{Assess boundary validation at all external entry points touched by the change.}
-
----
-
-## Conclusion
-
-{1-2 sentence summary of security posture and merge recommendation from a security standpoint.}
+## Clean
+{Comma-separated list of OWASP categories with no findings: e.g., "Injection, Cryptography, Authentication"}
 
 </audit_report_template>
 

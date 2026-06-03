@@ -16,6 +16,9 @@
 # Machine-local workspace documentation configuration — unique per machine, never shared
 workspace-docs.json
 
+# VS Code workspace settings — machine-local
+.vscode/
+
 # VS Code Copilot runtime data
 command-history-state.json
 config.json
