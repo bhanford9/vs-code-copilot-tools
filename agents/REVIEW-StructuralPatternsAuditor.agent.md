@@ -4,7 +4,6 @@ description: Audits structural design patterns — signals that a class may be d
 user-invocable: false
 tools:
     - search
-    - search/changes
     - read
     - edit
     - search/usages

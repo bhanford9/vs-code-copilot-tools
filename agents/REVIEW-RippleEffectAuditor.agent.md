@@ -4,7 +4,6 @@ description: Audits code for incomplete propagation — call sites with wrong as
 user-invocable: false
 tools: 
     - search
-    - search/changes
     - read
     - edit
     - search/usages
@@ -23,7 +22,7 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/lessons-learned/
 
 ## 1. Read Prior Audit Context
 
-Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach prepared by the upstream auditors. Use the brief's changed files and symbols as your starting inventory. The ripple effect audit begins where the correctness audit ends.
+Read `/code-review/parallel-brief.md` — a concise summary of the change intent, requirements, and implementation approach prepared by the upstream auditors. Use it as your primary orientation — it replaces the need to independently re-read the full changeset diff. Use the brief's changed files and symbols as your starting inventory. The ripple effect audit begins where the correctness audit ends.
 
 ## 2. Analyze Code Changes
 

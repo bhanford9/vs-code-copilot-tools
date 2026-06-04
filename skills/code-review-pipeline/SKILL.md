@@ -21,10 +21,9 @@ The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor
 
 | Agent | Role | When Invoked |
 |---|---|---|
-| `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
+| `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors; launches all 8 parallel auditors directly | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
 | `REVIEW-RequirementsAuditor` | Extracts requirements; auto-fetches work item via API or prompts user | Sequential phase, first |
 | `REVIEW-CodeCorrectnessAuditor` | Verifies functional correctness against requirements | Sequential phase, second |
-| `REVIEW-ParallelAuditCoordinator` | Spawns the 8 parallel auditors as subagents | After user approves parallel phase |
 | `REVIEW-UnitTestCoverageAuditor` | Test completeness and quality | Parallel phase |
 | `REVIEW-MaintainabilityAuditor` | Readability, SRP, coupling | Parallel phase |
 | `REVIEW-TestabilityAuditor` | DI boundaries, complexity, observability | Parallel phase |

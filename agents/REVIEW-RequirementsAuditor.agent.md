@@ -4,7 +4,6 @@ description: Analyzes code changes to extract domain requirements and validates 
 user-invocable: false
 tools:
     - search
-    - search/changes
     - read
     - edit
     - execute/runInTerminal
@@ -34,21 +33,7 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.G
 
 ## 1. Analyze Code Changes
 
-Use git commands via #tool:execute/runInTerminal to examine all changes since master branch:
-
-```powershell
-# Load session config
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-
-# Get all commits on branch
-git log "$($cfg.baseBranch)..HEAD" --oneline
-
-# Get detailed file changes
-git diff "$($cfg.baseBranch)...HEAD" --stat
-
-# Get uncommitted changes
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 **Extract domain-level requirements** by analyzing:
 - What functionality is being added/modified?

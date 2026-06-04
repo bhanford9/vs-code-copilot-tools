@@ -5,7 +5,6 @@ argument-hint: Audit code correctness against requirements defined in requiremen
 user-invocable: false
 tools:
     - search
-    - search/changes
     - read
     - edit
     - search/usages
@@ -42,17 +41,7 @@ Load and thoroughly understand `/code-review/requirements-audit.md`:
 
 ## 2. Analyze Code Changes for Correctness
 
-Review all changes since master branch using git commands via #tool:execute/runInTerminal:
-
-```powershell
-# Load session config
-$cfg = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
-
-# Get all commits and changes
-git log "$($cfg.baseBranch)..HEAD" --oneline
-git diff "$($cfg.baseBranch)...HEAD" --stat
-git status --short
-```
+Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
 
 For each requirement, verify:
 
