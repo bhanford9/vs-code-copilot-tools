@@ -8,12 +8,6 @@ tools:
     - edit
     - search
     - agent
-hooks:
-  SubagentStop:
-    - type: command
-      windows: 'powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/hooks/scripts/check-auditor-output.ps1"'
-      command: 'powershell -File "~/Repos/vs-code-copilot-tools/hooks/scripts/check-auditor-output.ps1"'
-      timeout: 10
 agents:
     - REVIEW-RequirementsAuditor
     - REVIEW-CodeCorrectnessAuditor

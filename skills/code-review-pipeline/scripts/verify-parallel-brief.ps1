@@ -19,9 +19,9 @@ Write-Host "Has Intent section:        $hasIntent"
 Write-Host "Has Key Requirements:      $hasRequirements"
 
 if ($briefExists -and $briefSize -gt 100 -and $hasIntent -and $hasRequirements) {
-    Write-Host "RESULT: Brief is valid — proceed to Stage 3."
+    Write-Host "RESULT: Brief is valid - proceed to Stage 3."
     exit 0
 } else {
-    Write-Host "RESULT: Brief is missing or incomplete — Orchestrator must write it."
+    Write-Host "RESULT: Brief is missing or incomplete - Orchestrator must write it."
     exit 1
 }
