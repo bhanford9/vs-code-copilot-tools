@@ -76,6 +76,12 @@ When an interface method returns a trace label or identifier string that is cons
 
 ---
 
+## Interface return-type asymmetry when only one implementation can reject
+
+When an interface has two similar methods where one returns `bool` (can signal failure) and the other returns `void` (hardwired success), the interface encodes an extensibility constraint. Future callers cannot uniformly handle rejection across both methods without an interface change. Rate Medium — flag the asymmetry and recommend either aligning the return types (making void→bool with `return true`) or documenting the invariant explicitly in the interface contract. Do not rate it High unless there is active evidence the always-success constraint is fragile.
+
+---
+
 ## Security-invariant collections coupled to enum definitions
 
 When an immutable constant set (whitelist, catalog) is defined inline adjacent to the enum whose members it describes — and no automated check validates that the set contains every enum member — the invariant is purely manual. Adding an enum member without updating the set produces a silent security gap. Rate HIGH EX-006 when the set is used as an authorization guard. The fix is a compile-time completeness assertion.

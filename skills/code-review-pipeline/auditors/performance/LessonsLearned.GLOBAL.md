@@ -51,3 +51,9 @@ Calling `.FirstOrDefault(predicate)` on a property typed as `IReadOnlyList<T>` a
 ### List capacity hint `* N` is Low when per-item output count varies
 
 A projector using `new List<T>(items.Count * N)` as a capacity hint under-allocates when actual output per item exceeds N. Rate Low when the per-item count varies and the documented maximum is significantly higher than N. Do not escalate to Medium unless the projector is on a confirmed hot path.
+
+---
+
+### DI Transient→Singleton promotion: surviving per-call builders are the residual allocation source
+
+When a changeset promotes a large number of services from Transient to Singleton (e.g., a DI wiring refactoring), check for any **remaining Transient services that build wrapper objects per call** (e.g., a factory or runner that calls `new Builder()` / `new Runner()` on each operation). With dependencies now singleton, the wrapper's produced graph is structurally identical across calls; the residual allocations are often candidates for lazy-cache promotion. Rate Low — the promotion change itself is a net positive for allocator pressure. Do not flag the remaining per-call builders as High or Medium unless the per-call allocation is measurably significant (e.g., large collection initialization, reflection-based graph construction) or the operation is documented as a hot path.

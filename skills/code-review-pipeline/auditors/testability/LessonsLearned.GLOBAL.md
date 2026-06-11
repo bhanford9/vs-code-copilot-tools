@@ -67,3 +67,8 @@ A `static` class with no external dependencies is testable by direct invocation.
 
 ### Optional messenger parameter defaulting to a process-wide singleton: cross-test contamination risk
 In MVVM frameworks where `IMessenger? messenger = null` resolves to a global singleton, two test ViewModel instances constructed without injecting a fresh messenger share the same singleton and can trigger each other's handlers. Rate Medium. Add a comment: "unit tests must inject `new WeakReferenceMessenger()`." The fix is a constructor default that clearly signals the injection requirement.
+
+---
+
+### Interface-consumed pass-through classes may hide conditional property logic: don’t assume trivial
+When a class is always consumed through its interface and mocked in tests (e.g., `Mock<IXxxProvider>` in every dependent test), the concrete implementation's property getters are never exercised by the test suite. Most such classes are pure pass-throughs (cyclomatic complexity 1) and require no separate test. However, when one or more properties contain a conditional return (e.g., a feature-toggle guard returning `null!`), that conditional logic is invisible to the entire test suite. Before closing a provider-style pass-through class as "trivial, no tests needed," scan each property getter for any branching logic. Rate Medium when a conditional return is present and no dedicated concrete-class test exists.

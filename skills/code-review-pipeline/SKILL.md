@@ -9,7 +9,7 @@ Before beginning any review work, read [LessonsLearned.GLOBAL.md](./LessonsLearn
 
 ## Overview
 
-The code review pipeline is a 13-agent system that audits code changes across eight quality dimensions. Sequential audits establish requirements and correctness context; eight specialist auditors then run in parallel as subagents. A dedicated synthesizer produces the final report.
+The code review pipeline is a 6-agent system that audits code changes across eight quality dimensions. Sequential audits establish requirements and correctness context; a generic `REVIEW-Auditor` agent runs four batches in parallel, each executing one or more auditor-specific SKILL.md files in sequence. A dedicated synthesizer produces the final report.
 
 For full architecture and usage details, see [feature-overviews/code-review-pipeline/code-review-pipeline.md](../../feature-overviews/code-review-pipeline/code-review-pipeline.md).
 
@@ -21,18 +21,24 @@ The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor
 
 | Agent | Role | When Invoked |
 |---|---|---|
-| `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors; launches all 8 parallel auditors directly | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
+| `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors; launches 4 parallel REVIEW-Auditor batches | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
 | `REVIEW-RequirementsAuditor` | Extracts requirements; auto-fetches work item via API or prompts user | Sequential phase, first |
 | `REVIEW-CodeCorrectnessAuditor` | Verifies functional correctness against requirements | Sequential phase, second |
-| `REVIEW-UnitTestCoverageAuditor` | Test completeness and quality | Parallel phase |
-| `REVIEW-MaintainabilityAuditor` | Readability, SRP, coupling | Parallel phase |
-| `REVIEW-TestabilityAuditor` | DI boundaries, complexity, observability | Parallel phase |
-| `REVIEW-PerformanceAuditor` | Memory, algorithms, concurrency | Parallel phase |
-| `REVIEW-ExtensibilityAuditor` | OCP, extension points, future adaptability | Parallel phase |
-| `REVIEW-SecurityAuditor` | OWASP Top 10, injection, access control, sensitive data | Parallel phase |
-| `REVIEW-RippleEffectAuditor` | Incomplete propagation, missing companion logic, asymmetric paths | Parallel phase |
-| `REVIEW-StructuralPatternsAuditor` | Structural design patterns — over-coordination, hidden coupling, SRP violations | Parallel phase |
+| `REVIEW-Auditor` | Generic auditor; reads one or more auditor SKILL.md files and executes them in sequence | Parallel phase (4 batches) |
 | `REVIEW-FinalSynthesizer` | Reads all 10 audit reports, applies LessonsLearned, writes final-review.md | After parallel phase completes |
+
+### Parallel Batch Assignments
+
+The Orchestrator launches 4 `REVIEW-Auditor` batches simultaneously:
+
+| Batch | Auditor Skills Assigned |
+|---|---|
+| A | unit-test-coverage, testability |
+| B | extensibility, structural-patterns, maintainability |
+| C | ripple-effect |
+| D | performance [+ security if surface detected] |
+
+Each auditor skill lives at: `skills/code-review-pipeline/auditors/{name}/SKILL.md`
 
 ## Conventions
 
@@ -51,29 +57,49 @@ The following patterns recur during review initialization and agent configuratio
 `git symbolic-ref refs/remotes/origin/HEAD` returns the **full ref path** (e.g., `refs/remotes/origin/main`), not just the branch name. If this raw value is written to session config before stripping, all subsequent `git diff main...HEAD` commands fail or produce wrong results. Fix: strip inline in the same command — e.g., `-replace '.*/',''` (PowerShell) or `sed 's|.*origin/||'` (bash). Never split detection and strip into two sequential commands — the intermediate wrong value propagates silently to every downstream auditor.
 
 ### Worktree-as-main/master: "all changes since main" requires fallback
-When a repo uses git worktrees and the current branch IS the base branch (`HEAD -> main`), `git log main..HEAD` returns nothing — there is no divergence. Correct fallback: (1) detect the empty diff, (2) fall back to explicit commit(s) from the session config or user request, (3) write `reviewMode = 'single-commit'` so downstream auditors know the scope. Do NOT silently use the empty diff — that produces a review of nothing. Always surface the scope explicitly so the user can confirm.
+When a repo uses git worktrees and the current branch IS the base branch (`HEAD -> main`), `git log main..HEAD` returns nothing — there is no divergence. **`build-changeset.ps1` handles this automatically**: it detects the empty diff and falls back to `git show $cfg.targetCommit` (single-commit mode). The `reviewMode` field in `session-config.json` will be `"single-commit"`. Always pass `-TargetCommit` to `detect-base-branch.ps1` when reviewing a specific already-merged commit.
 
 ### Agent frontmatter: `user-invocable: false` vs. `disable-model-invocation: true`
 `disable-model-invocation: true` prevents ALL programmatic invocation of an agent — including by an Orchestrator that lists it in its `agents:` frontmatter array. Any REVIEW-* agent meant to be called by the Orchestrator or Coordinator must use `user-invocable: false` instead. Reserve `disable-model-invocation: true` only for agents that must never be invoked by any agent under any circumstances.
 
+### changeset-full.md: the primary context file for all auditors
+After running `build-changeset.ps1`, `code-review/changeset-full.md` contains five sections:
+
+| Section | Content | Primary consumers |
+|---|---|---|
+| A — Commit messages | Full commit bodies | Requirements, Correctness |
+| B — Diff hunks | `--unified=10` diff for all changed files | All auditors |
+| C — Full source (size-gated) | Complete current content of ≤20 non-test source files | Structural, Maintainability, Testability, Extensibility, Performance |
+| D — Symbol reference index | File:line:content for every reference to each changed public symbol | RippleEffect (replaces all grep calls) |
+| E — Test file index | Changed source → expected test file + existence check | UnitTestCoverage, Testability |
+
+**Auditors should read `changeset-full.md` as their first action** (after LessonsLearned). They should use the sections appropriate to their audit and only perform additional `read_file` calls for targeted investigation after the index points them to specific locations.
+
+### Security surface classification: skip batch D security audit when not applicable
+`detect-base-branch.ps1` writes `securitySurface: true/false` to `session-config.json` by scanning changed file paths for controller/auth/input/external integration patterns. The Orchestrator reads this before launching the parallel phase. When `securitySurface = false`, write the security-audit.md stub directly (no subagent dispatch) and omit security from Batch D's prompt.
+
 ## Lessons Learned
 
-This skill uses a per-auditor LessonsLearned structure. Each parallel auditor maintains its own independent LL directory:
+This skill uses a per-auditor LessonsLearned structure. Each parallel auditor maintains its own independent LL files under `auditors/`:
 
 ```
+skills/code-review-pipeline/auditors/
+  audit-report-template.md             shared compact report format
+  ripple-effect/       SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  unit-test-coverage/  SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  testability/         SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  extensibility/       SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  structural-patterns/ SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  maintainability/     SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  performance/         SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
+  security/            SKILL.md + LessonsLearned.GLOBAL.md
+
 skills/code-review-pipeline/lessons-learned/
-  REVIEW-MaintainabilityAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-TestabilityAuditor/           LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-PerformanceAuditor/           LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-ExtensibilityAuditor/         LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-UnitTestCoverageAuditor/      LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-SecurityAuditor/              LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-RippleEffectAuditor/          LessonsLearned.GLOBAL.md + LessonsLearned.md
-  REVIEW-StructuralPatternsAuditor/    LessonsLearned.GLOBAL.md + LessonsLearned.md
+  REVIEW-CodeCorrectnessAuditor/       LessonsLearned.GLOBAL.md + LessonsLearned.md
   REVIEW-FinalSynthesizer/             LessonsLearned.GLOBAL.md + LessonsLearned.md
 ```
 
-The pipeline-level `LessonsLearned.GLOBAL.md` / `LessonsLearned.md` (this directory) are shared by the Orchestrator, Coordinator, RequirementsAuditor, and CorrectnessAuditor.
+The pipeline-level `LessonsLearned.GLOBAL.md` / `LessonsLearned.md` (this directory) are shared by the Orchestrator, RequirementsAuditor, and CorrectnessAuditor.
 
 **Rules:**
 - Each parallel auditor reads and writes only its own directory — auditors do not read each other's LL files

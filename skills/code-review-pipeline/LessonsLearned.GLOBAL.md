@@ -6,7 +6,23 @@
 
 ---
 
-### SKILL.md auditor count must be updated atomically when a new REVIEW-* agent is added
+### Manual orchestration bypasses the Orchestrator's file routing — invoke as a subagent instead
+
+When a user says "let's review this commit" conversationally, invoke `REVIEW-CodeReviewOrchestrator` as a subagent. The Orchestrator's batch prompts already route each parallel agent to the correct minimal file set (`changeset.md` + `parallel-brief.md`, not `changeset-full.md`). Manual orchestration requires replicating this routing by hand and is error-prone — in one observed session, all 6 agents were incorrectly pointed at `changeset-full.md`, costing ~$2 in unnecessary token reads.
+
+The Orchestrator uses `user-invocable: false`, not `disable-model-invocation: true`, so it can be invoked as a subagent.
+
+---
+
+### `changeset-full.md` is ONLY for Requirements and Correctness auditors — all parallel auditors use `changeset.md`
+
+`changeset-full.md` is 200+ KB (98% raw diff). Only the two sequential auditors (Requirements, Correctness) need this full context. All Stage 3 parallel auditors must read only `changeset.md` (5 KB) + `parallel-brief.md`. Reading `changeset-full.md` in a parallel agent multiplies pipeline cost by 4–6×.
+
+`symbol-index.md` (186 KB): Only the Ripple Effect auditor needs this. Requirements and Correctness auditors must NOT pre-load it — Correctness uses `vscode_listCodeUsages` for targeted symbol lookups instead.
+
+---
+
+
 Cross-check the Agent Roles table in SKILL.md against the deployed `<agents>` list before starting the parallel phase. If they disagree, fix SKILL.md first. When a new auditor is added, update all of these in one commit: (1) Overview "N-agent system" count, (2) "M specialist auditors" count, (3) Coordinator/FinalSynthesizer row descriptions, (4) LL directory tree, (5) LL rules.
 
 ---
@@ -31,6 +47,11 @@ When cherry-picked commits contain `code-review/*.md` files from a prior session
 
 ### Auto-start lessons learned after the final review report — do not prompt
 Once `final-review.md` is written and presented, start lessons learned in the same turn. Do not print "type 'lessons learned session'" and wait for a trigger phrase.
+
+---
+
+### Session continuation across token limit: conversation summary contains full continuation state
+When a long pipeline run hits the token limit mid-session, the conversation summary (injected into the next session's context) contains the full state needed to resume: which audit files were written, what the verdict and finding content should be, which tool calls are pending. On continuation: (1) read the "Active Work State" and "Continuation Plan" sections first, (2) verify the partially-written artifacts match what the summary says, (3) complete the partial artifacts before moving to the next stage. Do not re-run earlier stages — the artifacts are already on disk.
 
 ---
 
@@ -98,6 +119,16 @@ When a `Build()` method is extracted, check whether toggle evaluations inside it
 
 ### Filter-removal: two mandatory companion checks
 When a `.Where()` guard is removed: (1) check whether downstream code relied on it as a safety net against `.First()` / `.Single()` throws on empty sequences — trace the full call chain; (2) verify a new test documents the now-inclusive behavior. The previously-excluded case is by definition untested with the old code.
+
+---
+
+### Transient-in-Singleton is NOT flagged by .NET DI ValidateScopes — inspect the concrete type
+`ValidateScopes = true` (ASP.NET Core default) only flags **Scoped-in-Singleton**, not Transient-in-Singleton. Capturing a Transient inside a Singleton is a functional defect **only if the Transient has mutable per-request instance state**. Before rating this as High/Critical, inspect the concrete implementation: if all fields are `readonly`, it is stateless and the capture is harmless (functionally equivalent to Singleton). Rate it 🟡 Medium at most (maintenance risk: future state addition would silently persist across requests).
+
+---
+
+### parallel-brief.md: include confirmed-correct patterns as explicit "do not flag" notes for other auditors
+When a correctness audit resolves an ambiguous pattern (e.g., Transient-in-Singleton) as intentional and safe, document the resolution in `parallel-brief.md` with a clear "✅ confirmed correct — not a defect" note. This prevents 7 other auditors from independently re-investigating the same pattern and producing false positive findings.
 
 ---
 

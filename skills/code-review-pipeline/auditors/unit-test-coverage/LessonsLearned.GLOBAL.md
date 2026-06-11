@@ -80,8 +80,18 @@ When an engine executes a series of flow steps that each contain conditional log
 
 ---
 
+### When the PR brief pre-catalogs a test gap, rate it High (not Critical) if integration coverage exists
+When a parallel-brief explicitly flags a known unit test gap and also notes that characterization/integration tests cover the same behavior end-to-end, the correct severity is 🟠 High — not 🔴 Critical. The integration coverage reduces the regression risk enough to demote it. Still flag it; the unit test is needed to pin the contract independently, but it is not a merge blocker.
+
+---
+
 ### Parametrization consistency: all equivalence classes must be represented across parametrized test cases
 When a parametrized test covers N scenarios but a new equivalence class (e.g., empty input, null input, boundary value) is missing, rate the gap based on what the missing input would produce. Boundary and null cases are the most regression-prone.
+
+---
+
+### `TestableXxx` override helper in a flow test removes behavioral coverage of the concrete overridden method
+When a flow test introduces a `TestableXxx` helper class that overrides an abstract method to inject a mock (e.g., overriding `GetInitializeXxx()` to return a captured mock action), any existing tests that previously exercised the real concrete implementation through the flow are typically deleted in the same commit. The concrete implementation has zero test coverage after the change. Before closing a flow test refactoring as fully covered, check whether the abstract method's concrete implementations have dedicated unit tests independent of the flow test. If the previous tests were the only coverage of the concrete behavior, flag the gap as High — the behavior is not verified anywhere in the suite.
 
 ---
 

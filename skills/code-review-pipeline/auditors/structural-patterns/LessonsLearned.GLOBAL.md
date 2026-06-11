@@ -77,3 +77,13 @@ When a changeset adds exactly one new property to an existing entity with matchi
 
 ### Early-exit precedence chain is NOT a candidate for SP-006 (Closed Stage List)
 A method that uses early returns to enforce priority ordering (e.g., explicit deny > explicit allow > no-decision) is not a SP-006 "Closed Stage List" pattern. SP-006 targets linearly accumulated stage states; an early-exit chain is a correctly-structured guard pattern. Do not co-report these.
+
+---
+
+### Logic provider interface with named step properties is Low SP-006 at most — testability intent overrides severity
+When a dedicated interface is introduced as a unit-test seam for a flow algorithm (so tests can mock one interface instead of N concrete steps), that interface will encode step names as property names by design. This satisfies the SP-006 signal (named fields per stage). Rate Low only — the testability benefit is real, the interface is internal, and the step set is stable by definition of the algorithm. Do not escalate. The finding is worth noting as an observation but never blocks merge.
+
+---
+
+### Sibling class name collision requiring namespace aliases is a structural smell with no existing catalog entry
+When two concrete classes in the same solution have identical short names and are registered together in the same composition file, namespace aliases become necessary (`using AFlows = Namespace.A`). This is a proposed new catalog entry (SP-010) — the signal is the alias pair itself. Rate Medium when both classes are registered in the same method and their names are indistinguishable without tracing the alias. Dismissed at Low when the namespace context is clear from directory structure alone and no alias is required. This pattern was observed in a bulk DI refactoring where two subsystem-local classes happened to share a name; renaming either one to include its subsystem context would eliminate the aliasing need entirely. Do not confuse with SP-007 (string key dispatch) — this is a naming/readability concern, not a strategy-dispatch concern.

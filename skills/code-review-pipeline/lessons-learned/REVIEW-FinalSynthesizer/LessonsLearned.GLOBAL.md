@@ -55,13 +55,25 @@ When implementation uses a different behavioral constant than its interface XML 
 
 ---
 
-### Multi-auditor convergence on a data-structure defect: consolidate with all auditors cited
-When the same collection/comparer defect is independently flagged by Correctness (data-loss), Performance (wrong algorithm), and Ripple Effect (inconsistency), consolidate into one finding. Lead with the Correctness framing, add the other angles as supporting evidence.
+### Multi-auditor transient-retention findings: consolidate at the highest single-auditor severity, not escalated
+
+When 4 auditors independently note the same retained-Transient registration, the correct synthesis rating is the highest single-auditor severity (🟡 Medium, from the auditor whose scope is most directly about lifecycle correctness — Maintainability or Correctness). Do not escalate to High unless the retained Transient is also a confirmed captive dependency of a Singleton. "Four auditors noticed it" signals breadth of concern, not increased severity when no defect path exists.
+
+---
+
+### Captive-dep machine scan: rate the commit-introduced subset as High; pre-existing violations as Medium context
+
+When a pre-scan script produces a combined list of pre-existing + newly-introduced captive dependencies, only the newly-introduced subset (caused by this commit's batch Singleton promotion) should be rated at the commit's severity. Pre-existing violations provide context for the overall codebase health but should not be attributed to this commit's scope. The distinction should be called out explicitly in the synthesis report.
 
 ---
 
 ### Security-critical method extraction: structural + correctness + coverage = one Critical finding with three-part fix
 A private security-critical method that is (a) structurally inaccessible to tests, (b) confirmed to have a correctness bug, and (c) has zero tests collapses to one Critical: (1) extract to internal static class, (2) `InternalsVisibleTo`, (3) write failing tests first (TDD order).
+
+---
+
+### `void → bool` promotion: scan ALL call sites across the entire source tree
+When any method is promoted from `void` to returning `bool` (rejection signal), the Ripple Effect audit should scan all callers — not just the files touched in the changeset. Callers that don't route on the return value will silently discard the rejection. The highest-risk caller is one that reads entity state immediately after the call (trusting the entity was mutated when it was not). This is a distinct and complementary finding to the unit-test gap: fix the call site AND add the test.
 
 ---
 
@@ -72,6 +84,11 @@ When the review brief provides a cross-auditor deduplication map, use it as-is. 
 
 ### Security + Performance co-flag on same endpoint: one High, Security framing leads
 When Security and Performance both flag the same missing control, lead with the Security framing (attack vector, OWASP reference), append the Performance impact as quantification. One finding, one fix.
+
+---
+
+### Transient→Singleton mass promotion: scan for "left-behind" Transient dependencies consumed by promoted Singletons
+When a PR promotes many services from Transient to Singleton, the Ripple Effect auditor should also scan services that are _consumed by_ the promoted types. Any service that is still Transient but injected into a newly-promoted Singleton is a captive dependency — effectively application-lifetime without the intent. Flag as High when the omission directly contradicts the PR's stated goal (promote all stateless services). The fix is always trivial if the consumed service is confirmed stateless.
 
 ---
 

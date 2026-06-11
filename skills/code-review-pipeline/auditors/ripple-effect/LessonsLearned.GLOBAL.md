@@ -60,6 +60,11 @@ When a factory can produce a new type but the dispatcher/router that consumes fa
 
 ---
 
+### Batch Transient→Singleton promotion silently creates captive dependencies
+When a commit promotes a group of services (e.g., all flow steps) from Transient to Singleton in bulk, their direct Transient dependencies become captured for the process lifetime even though they remain registered as Transient. The DI container does not warn about Transient-in-Singleton captures (only Scoped-in-Singleton). Check the `RegisterDesignLogicModules` (or equivalent utility-registration method) for Transient services that the now-Singleton consumers inject — and verify whether those services have mutable instance state. If stateless: rate Low (structural inconsistency, not a functional bug); if stateful: rate High (shared state across concurrent calls).
+
+---
+
 ### Event log / status enum split: persisted enum values and display enum values must change in sync
 When a domain status is represented by one enum for persistence (stored in the database) and a different enum for display (shown in the UI), adding a new status requires changes to both enums, the mapping between them, and any filter that operates on either. Verify all three are updated in the same changeset.
 
@@ -75,8 +80,28 @@ When an enum value is declared in one component but the record type that would b
 
 ---
 
+### God interface deletion leaves architecture docs with stale type references
+When a god interface (40+ members, named after the wide concern it covers) is deleted and replaced by a set of focused per-flow interfaces, architecture documents that list the god interface by name become stale. The document will still name the deleted type as a first-class design concept. Rate Medium. Always check the codebase's architecture/docs directory after any large interface deletion for named references.
+
+---
+
+### Batch Singleton promotion creates captive dependencies for direct-dependency Transient services
+When a batch of consumers is promoted from Transient to Singleton, any Transient service they directly inject becomes captive. The correct follow-up action is to also promote those captured Transient services (if stateless) in the same or an immediately-following commit. When reviewing a Singleton-promotion commit: (1) use the captive-deps pre-scan script output if available; (2) enumerate captured Transient types; (3) verify each is stateless; (4) flag the ones that were not co-promoted as a SymmetricPath ripple gap.
+
+---
+
 ### Agent output with no storage destination: results are ephemeral and unverifiable
 When a process, background service, or agent computes a result but has no mechanism to store or report it (no log, no event, no persistent field), the output is invisible to future requests, debugging, and auditing. Rate Medium when the computation is non-trivial; High when the output is a security or compliance artifact.
+
+---
+
+### Incomplete Singleton promotion: captive dependencies are silent in .NET DI
+When a PR promotes a batch of services from Transient to Singleton, check that all consumed dependencies of the newly promoted Singletons were also promoted. .NET DI does not warn about Transient-captured-in-Singleton (only Scoped-in-Singleton is flagged by `ValidateScopes`), so the captive dependency is invisible at startup. Rate Medium when the captured services are currently stateless; rate High if any captured service has mutable fields or inherits from a class that does. The fix is always to also promote the dependency to Singleton.
+
+---
+
+### Architecture docs that describe design patterns become stale when the pattern changes
+When a changeset removes or replaces a named design pattern (e.g., "factory-style providers that create new instances per call" → "Singleton property-bags injected by DI"), check architecture overview docs that describe the pattern at the behavioral level. These companion docs are often missed because they describe *how* things work rather than *what* exists — so they never fail compile checks and are easy to overlook. If the overview doc names deleted interface types or uses language specific to the old pattern's mechanics, flag it as a Medium CompanionLogic finding.
 
 ---
 
