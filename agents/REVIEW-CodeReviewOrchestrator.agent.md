@@ -48,6 +48,38 @@ Before anything else, detect the base branch and write session config.
 # Example:
 powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/detect-base-branch.ps1"
 
+## Step 0.5: Report Pipeline Configuration Status
+
+After `detect-base-branch.ps1` completes, check whether `review-exclusions.json` exists in the git common dir:
+
+```powershell
+$configPath = "$(git rev-parse --git-common-dir)/review-exclusions.json"
+Test-Path $configPath
+```
+
+**Always report this to the user** before proceeding. Use one of these two messages:
+
+**If the file exists:**
+> Pipeline configured. Artifact exclusions loaded from `<full path>`. Starting review…
+
+**If the file does not exist:**
+> Pipeline is set up and ready. No artifact exclusions configured yet — the review will run with only the built-in `TestResources/**` exclusion.
+> Config file location for this repo: `<full path>`
+> Want me to scan the repo and configure exclusions before running the review?
+
+If the user says yes, scan the git history to identify large non-source file extensions and artifact directories:
+```powershell
+# Find extensions with the most tracked file count — candidates for exclusion
+git ls-files | Select-String '\.' | ForEach-Object { ($_ -split '\.')[-1] } | Group-Object | Sort-Object Count -Descending | Select-Object -First 20 Name, Count
+# Find directories that appear to be fixture/artifact storage (not source)
+git ls-files | ForEach-Object { ($_ -split '/')[0] } | Group-Object | Sort-Object Count -Descending | Select-Object -First 15 Name, Count
+```
+Review the results, apply judgment (binary extensions, fixture dumps, generated output folders), then write a populated `review-exclusions.json` to the config path and confirm what was written. Then proceed with the review.
+
+If the user says no (or does not respond to the offer — treat silence as "no, proceed"), continue immediately to the next step.
+
+---
+
 ## Initial Invocation
 
 When first invoked:
