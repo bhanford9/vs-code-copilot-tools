@@ -31,7 +31,9 @@ $reviewableFiles = $changedFiles | Where-Object {
     $_ -notmatch 'Tests\.cs$' -and
     $_ -notmatch '\.fja$' -and
     $_ -notmatch '\.std$' -and
-    $_ -notmatch '[/\\]TestResources[/\\]'
+    $_ -notmatch '\.json$' -and
+    $_ -notmatch '[/\\]TestResources[/\\]' -and
+    $_ -notmatch '[/\\]IntegrationTests[/\\]'
 }
 $securityPatterns = @(
     'Controller', 'Middleware', 'Authorize', 'Authentication', 'Authorization',
@@ -41,8 +43,9 @@ $securityPatterns = @(
     'SqlCommand', 'DbContext', 'Repository'
 )
 foreach ($file in $reviewableFiles) {
+    $fileName = Split-Path $file -Leaf   # match against filename only, not directory segments
     foreach ($pattern in $securityPatterns) {
-        if ($file -match $pattern) { $securitySurface = $true; break }
+        if ($fileName -match $pattern) { $securitySurface = $true; break }
     }
     if ($securitySurface) { break }
 }

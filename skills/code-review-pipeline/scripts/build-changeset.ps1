@@ -65,7 +65,8 @@ Write-Host "Changeset written to code-review/changeset.md"
 $artifactExcludes = @(
     ':(exclude)**/*.fja',
     ':(exclude)**/*.std',
-    ':(exclude)**/TestResources/**/*.json'
+    ':(exclude)**/IntegrationTests/**',
+    ':(exclude)**/TestResources/**'
 )
 
 # ---------------------------------------------------------------------------
