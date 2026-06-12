@@ -1,0 +1,10 @@
+{
+  "extensionExcludes": [
+    "*.snap",
+    "*.generated.cs"
+  ],
+  "pathExcludes": [
+    "**/fixtures/**",
+    "**/IntegrationTests/**"
+  ]
+}

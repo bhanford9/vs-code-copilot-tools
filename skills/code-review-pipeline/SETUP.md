@@ -4,10 +4,10 @@ Follow these steps the first time you use this pipeline against a repository.
 
 ---
 
-## Step 1 — Required: place scripts in the git common dir
+## Step 1 — Optional: place config files in the git common dir
 
-The pipeline reads two optional config files from the repository's **git common directory**
-(shared across all worktrees, never committed to the repo).
+The pipeline reads two optional config files from the repository's **git common directory** —
+shared across all worktrees, never committed to the repo, never tracked by git.
 
 Find the common dir:
 ```powershell
@@ -17,30 +17,19 @@ git rev-parse --git-common-dir
 
 ### `review-exclusions.json` — artifact exclusions for diff + security classifier
 
-Create this file if your repo contains **generated or binary fixture files** that inflate diffs
-without carrying review value (e.g. test output snapshots, design files, binary analysis files).
+Copy the bundled template and edit it for your repo:
 
-```json
-{
-  "extensionExcludes": [
-    "*.snap",
-    "*.bin"
-  ],
-  "pathExcludes": [
-    "**/IntegrationTests/**",
-    "**/fixtures/**"
-  ]
-}
+```powershell
+$dst = "$(git rev-parse --git-common-dir)/review-exclusions.json"
+Copy-Item "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/review-exclusions.example.json" $dst
+# Then open $dst and replace the example values with your repo's artifact extensions and paths
 ```
 
-Place at: `$(git rev-parse --git-common-dir)/review-exclusions.json`
+**`extensionExcludes`** — file extensions that are always generated/binary and never reviewable
+(e.g. `*.fja`, `*.std`, `*.snap`). The diff for these files is silently omitted.
 
-**When to populate each field:**
-
-| Field | Populate when... |
-|---|---|
-| `extensionExcludes` | Files with this extension are always generated/binary and never reviewable |
-| `pathExcludes` | An entire directory tree is fixture/artifact storage, not source code |
+**`pathExcludes`** — directory trees containing only fixture or artifact storage, not source code
+(e.g. `**/IntegrationTests/**`, `**/fixtures/**`). All files under these paths are excluded.
 
 If omitted: only the built-in `TestResources/**` exclusion applies.
 
@@ -48,7 +37,7 @@ If omitted: only the built-in `TestResources/**` exclusion applies.
 
 ### `check-captive-dependencies.ps1` — stack-specific DI validation (optional)
 
-Create this script only if your codebase has a known **captive dependency** risk pattern
+Provide this script only if your codebase has a known **captive dependency** risk pattern
 (e.g. Singleton services capturing Scoped dependencies in a DI container).
 
 **Contract:** the script must write its findings to `code-review/captive-deps.md`.
@@ -59,7 +48,6 @@ The Ripple Effect auditor reads this file if it exists.
 # Output: code-review/captive-deps.md
 
 $findings = @()
-
 # ... your stack-specific checks here ...
 
 if ($findings.Count -eq 0) {
