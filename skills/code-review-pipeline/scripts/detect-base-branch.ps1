@@ -27,13 +27,26 @@ if ($TargetCommit) {
 } else {
     $changedFiles = git diff "$baseBranch...HEAD" --name-only | Where-Object { $_ -ne '' }
 }
+# Load workspace-local exclusions (codebase-specific extensions/paths).
+# Convention: workspace provides .github/scripts/review-exclusions.json
+# Schema: { "extensionExcludes": ["*.fja", "*.std"], "pathExcludes": ["**/IntegrationTests/**"] }
+$wsExclusions = @{ extensionExcludes = @(); pathExcludes = @() }
+$wsExclusionsFile = '.github/scripts/review-exclusions.json'
+if (Test-Path $wsExclusionsFile) {
+    $wsExclusions = Get-Content $wsExclusionsFile | ConvertFrom-Json
+    Write-Host "Loaded workspace exclusions from $wsExclusionsFile"
+}
+
+# Build exclusion regexes from the workspace config
+$extPatterns  = $wsExclusions.extensionExcludes | ForEach-Object { [regex]::Escape($_.TrimStart('*')) + '$' }
+$pathPatterns = $wsExclusions.pathExcludes     | ForEach-Object { $_ -replace '\*\*/', '[/\\\\]' -replace '\*\*', '.*' -replace '/', '[/\\\\]' }
+
 $reviewableFiles = $changedFiles | Where-Object {
-    $_ -notmatch 'Tests\.cs$' -and
-    $_ -notmatch '\.fja$' -and
-    $_ -notmatch '\.std$' -and
-    $_ -notmatch '\.json$' -and
-    $_ -notmatch '[/\\]TestResources[/\\]' -and
-    $_ -notmatch '[/\\]IntegrationTests[/\\]'
+    $f = $_
+    if ($f -match 'Tests\.cs$') { return $false }  # Test files always excluded — inherit prod class names
+    foreach ($ext  in $extPatterns)  { if ($f -match $ext)  { return $false } }
+    foreach ($path in $pathPatterns) { if ($f -match $path) { return $false } }
+    return $true
 }
 $securityPatterns = @(
     'Controller', 'Middleware', 'Authorize', 'Authentication', 'Authorization',

@@ -58,16 +58,23 @@ if ($reviewMode -eq 'single-commit') {
 Write-Host "Changeset written to code-review/changeset.md"
 
 # ---------------------------------------------------------------------------
-# Artifact exclusions: known generated fixture files that inflate diffs without
+# Artifact exclusions: generated fixture files that inflate diffs without
 # carrying review value. Applied to all diff and file-count operations below.
-# Add new extensions or path patterns here as the codebase evolves.
+#
+# Generic exclusions are defined here. Codebase-specific exclusions are loaded
+# from .github/scripts/review-exclusions.json (same convention as captive deps).
+# Schema: { "extensionExcludes": ["*.fja", "*.std"], "pathExcludes": ["**/IntegrationTests/**"] }
 # ---------------------------------------------------------------------------
 $artifactExcludes = @(
-    ':(exclude)**/*.fja',
-    ':(exclude)**/*.std',
-    ':(exclude)**/IntegrationTests/**',
-    ':(exclude)**/TestResources/**'
+    ':(exclude)**/TestResources/**'   # generic: test resource fixtures
 )
+$wsExclusionsFile = '.github/scripts/review-exclusions.json'
+if (Test-Path $wsExclusionsFile) {
+    $wsExclusions = Get-Content $wsExclusionsFile | ConvertFrom-Json
+    foreach ($ext  in $wsExclusions.extensionExcludes) { $artifactExcludes += ":(exclude)**/$ext" }
+    foreach ($path in $wsExclusions.pathExcludes)      { $artifactExcludes += ":(exclude)$path" }
+    Write-Host "Loaded workspace exclusions from $wsExclusionsFile ($($wsExclusions.extensionExcludes.Count) ext, $($wsExclusions.pathExcludes.Count) path)"
+}
 
 # ---------------------------------------------------------------------------
 # Adaptive unified diff context: scale down for large changesets to keep
