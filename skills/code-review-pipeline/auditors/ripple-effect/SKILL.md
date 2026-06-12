@@ -31,7 +31,13 @@ Read the LessonsLearned files listed in Skill Metadata above. Apply any recorded
 
 **If `code-review/captive-deps.md` exists**: read it now. It contains machine-verified captive dependency violations (Transient services injected into Singleton consumers) produced by a workspace-local script. Treat its findings as confirmed facts — do NOT re-derive them manually. Incorporate them directly into Section D (DI lifetime violations) of your findings with severity from the file.
 
-**`code-review/symbol-index.md`**: pre-built call-site reference tables for all changed public symbols. Use this as your primary source for call-site lookups in Step 1 before reaching for any other tool.
+**`code-review/symbol-index.md`**: call-site reference tables for all changed public symbols. This file is now generated on demand by this auditor — **if it does not exist**, generate it now by running from the repository root:
+```
+& '~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/build-symbol-index.ps1'
+```
+(No arguments needed — reads `code-review/session-config.json` automatically.) Then read the resulting `code-review/symbol-index.md`. Use it as your primary source for call-site lookups in Step 1 before reaching for any other tool.
+
+**If `code-review/dead-code-candidates.md` exists**: read it now. It lists symbols deleted from production code with verified remaining reference counts (confirmed dead / test-only / still in production). Use the "Still Referenced in Production" section as a pre-computed ripple effect miss list. Use "Confirmed Dead" and "Test-Only" to validate claims without re-running searches.
 
 ## 1. Evaluate Ripple Effect Dimensions
 

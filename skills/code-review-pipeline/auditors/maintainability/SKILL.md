@@ -27,6 +27,8 @@ Your mission: Evaluate how easy the code will be to understand, modify, and main
 
 Read the LessonsLearned files listed in Skill Metadata above. Apply any recorded patterns.
 
+**If `code-review/dead-code-candidates.md` exists**: read it now. It lists symbols deleted from production code with verified remaining reference counts. Use the "Confirmed Dead" and "Test-Only References" sections to support dead-code findings without running additional searches.
+
 ## 1. Evaluate Maintainability Dimensions
 
 ### Readability

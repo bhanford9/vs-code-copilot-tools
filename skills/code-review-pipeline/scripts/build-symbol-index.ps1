@@ -1,19 +1,47 @@
-# Extracts changed public symbols from a list of changed .cs files (using diff @@ headers
-# already parsed by the caller), then runs Select-String across the entire Source tree
-# to build a reference index: symbol → file:line:content for every reference.
+# Extracts changed public symbols from a list of changed .cs files, then runs git grep
+# across the entire Source tree to build a reference index: symbol → file:line:content.
 #
-# Called by build-changeset.ps1. Returns the index as a string (Section D content).
-#
-# Usage: & build-symbol-index.ps1 -ChangedFiles $changedFiles
-#
-# Output: Markdown string written to stdout (captured by caller into changeset-full.md)
+# Two modes:
+#   Called mode: & build-symbol-index.ps1 -ChangedFiles $changedFiles
+#     Returns the index as a string (captured by caller).
+#   Standalone mode: & build-symbol-index.ps1  (no args)
+#     Reads code-review/session-config.json to compute ChangedFiles itself,
+#     writes directly to code-review/symbol-index.md.
+#     Used by the Ripple Effect auditor when the file was not pre-generated.
 
 param(
     [string[]]$ChangedFiles = @()
 )
 
-if (-not $ChangedFiles -or $ChangedFiles.Count -eq 0) {
-    return '> No changed source files detected. Symbol index skipped.'
+$standaloneMode = (-not $ChangedFiles -or $ChangedFiles.Count -eq 0)
+
+if ($standaloneMode) {
+    if (-not (Test-Path 'code-review/session-config.json')) {
+        Write-Error 'No -ChangedFiles provided and no code-review/session-config.json found.'
+        return
+    }
+    $cfg        = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
+    $reviewMode = $cfg.reviewMode
+    $base       = $cfg.baseBranch
+    $target     = $cfg.targetCommit
+    $testExcludes = @(':(exclude)*Tests.cs', ':(exclude)*IntegrationTests.cs')
+
+    if ($reviewMode -eq 'single-commit') {
+        $ChangedFiles = @(git show $target --name-only --format='' |
+            Where-Object { $_ -match '\.cs$' -and $_ -notmatch 'Tests\.cs$' } |
+            Where-Object { Test-Path $_ })
+    } else {
+        $ChangedFiles = @(git diff "$base...HEAD" --name-only |
+            Where-Object { $_ -match '\.cs$' -and $_ -notmatch 'Tests\.cs$' } |
+            Where-Object { Test-Path $_ })
+    }
+
+    if (-not $ChangedFiles -or $ChangedFiles.Count -eq 0) {
+        '> No changed source files detected. Symbol index skipped.' | Set-Content 'code-review/symbol-index.md'
+        Write-Host 'Symbol index: no changed files detected.'
+        return
+    }
+    Write-Host "Symbol index: standalone mode — $($ChangedFiles.Count) changed source files"
 }
 
 # ---------------------------------------------------------------------------
@@ -116,4 +144,9 @@ foreach ($symbol in $orderedSymbols) {
     [void]$sb.AppendLine()
 }
 
-return $sb.ToString()
+if ($standaloneMode) {
+    $sb.ToString() | Set-Content 'code-review/symbol-index.md'
+    Write-Host "Symbol index written to code-review/symbol-index.md ($($orderedSymbols.Count) symbols)"
+} else {
+    return $sb.ToString()
+}

@@ -1,12 +1,15 @@
 # Reads code-review/session-config.json and writes:
-#   code-review/changeset.md      — stat-level summary (unchanged format, backward compat)
-#   code-review/changeset-full.md — enriched: commit messages, source-only diff hunks, full
-#                                   source (size-gated), symbol index pointer, test file index
-#   code-review/test-diffs.md     — test file diffs only (consumed by Batch A auditors)
-#   code-review/symbol-index.md   — symbol reference index (consumed by Correctness + Ripple-effect)
-#   code-review/captive-deps.md   — captive dependency findings, IF .github/scripts/check-captive-dependencies.ps1 exists
+#   code-review/changeset.md            — stat-level summary (unchanged format, backward compat)
+#   code-review/changeset-full.md       — enriched: commit messages, source-only diff hunks, full
+#                                         source (size-gated), symbol index pointer, test file index
+#   code-review/test-diffs.md           — test file diffs only (consumed by Batch A auditors)
+#   code-review/dead-code-candidates.md — deleted declarations with remaining reference counts
+#   code-review/captive-deps.md         — captive dependency findings, IF .github/scripts/check-captive-dependencies.ps1 exists
 #
-# Calls build-symbol-index.ps1 and build-test-index.ps1.
+# Note: code-review/symbol-index.md is generated on demand by the Ripple Effect auditor
+#       (via build-symbol-index.ps1 standalone mode — no longer pre-generated here).
+#
+# Calls build-dead-code-candidates.ps1 and build-test-index.ps1.
 # Optionally calls .github/scripts/check-captive-dependencies.ps1 (workspace-local, stack-specific).
 #
 # Usage: Run from the root of the repository being reviewed, after
@@ -55,6 +58,18 @@ if ($reviewMode -eq 'single-commit') {
 Write-Host "Changeset written to code-review/changeset.md"
 
 # ---------------------------------------------------------------------------
+# Adaptive unified diff context: scale down for large changesets to keep
+# changeset-full.md token-efficient for the sequential auditors.
+# ---------------------------------------------------------------------------
+if ($reviewMode -eq 'single-commit') {
+    $allChangedFileCount = @(git show $target --name-only --format='' | Where-Object { $_ }).Count
+} else {
+    $allChangedFileCount = @(git diff "$base...HEAD" --name-only | Where-Object { $_ }).Count
+}
+$unifiedContext = if ($allChangedFileCount -gt 50) { 3 } else { 10 }
+Write-Host "Adaptive diff context: --unified=$unifiedContext ($allChangedFileCount changed files)"
+
+# ---------------------------------------------------------------------------
 # Build changeset-full.md
 # ---------------------------------------------------------------------------
 $out = [System.Text.StringBuilder]::new()
@@ -73,13 +88,13 @@ if ($reviewMode -eq 'single-commit') {
 
 # --- Section B: Source-only diff hunks (--unified=10, test files excluded) ---
 [void]$out.AppendLine()
-[void]$out.AppendLine('## Section B — Diff Hunks: Source Files (10 lines context, test files excluded)')
+[void]$out.AppendLine("## Section B — Diff Hunks: Source Files ($unifiedContext lines context, test files excluded)")
 [void]$out.AppendLine()
 $testExcludes = @(':(exclude)*Tests.cs', ':(exclude)*IntegrationTests.cs')
 if ($reviewMode -eq 'single-commit') {
-    $diff = git show $target --unified=10 -- $testExcludes | Out-String
+    $diff = git show $target --unified=$unifiedContext -- $testExcludes | Out-String
 } else {
-    $diff = git diff "$base...HEAD" --unified=10 -- $testExcludes | Out-String
+    $diff = git diff "$base...HEAD" --unified=$unifiedContext -- $testExcludes | Out-String
 }
 [void]$out.AppendLine('```diff')
 [void]$out.AppendLine($diff.Trim())
@@ -94,9 +109,9 @@ $testDiffsOut = [System.Text.StringBuilder]::new()
 [void]$testDiffsOut.AppendLine('> Consumed by: Unit Test Coverage and Testability auditors only.')
 [void]$testDiffsOut.AppendLine()
 if ($reviewMode -eq 'single-commit') {
-    $testDiff = git show $target --unified=10 -- '*Tests.cs' '*IntegrationTests.cs' | Out-String
+    $testDiff = git show $target --unified=$unifiedContext -- '*Tests.cs' '*IntegrationTests.cs' | Out-String
 } else {
-    $testDiff = git diff "$base...HEAD" --unified=10 -- '*Tests.cs' '*IntegrationTests.cs' | Out-String
+    $testDiff = git diff "$base...HEAD" --unified=$unifiedContext -- '*Tests.cs' '*IntegrationTests.cs' | Out-String
 }
 if ($testDiff.Trim()) {
     [void]$testDiffsOut.AppendLine('```diff')
@@ -120,6 +135,13 @@ if ($reviewMode -eq 'single-commit') {
 }
 $changedFiles = @($changedFiles | Where-Object { Test-Path $_ })
 
+# Write Section C metadata to session-config for parallel auditors (avoids opening changeset-full.md)
+$sectionCMode = if ($changedFiles.Count -le 20) { 'full-source' } else { 'diff-only' }
+$cfgObj2 = Get-Content 'code-review/session-config.json' | ConvertFrom-Json
+$cfgObj2 | Add-Member -NotePropertyName 'sourceFileCount' -NotePropertyValue $changedFiles.Count -Force
+$cfgObj2 | Add-Member -NotePropertyName 'sectionCMode'    -NotePropertyValue $sectionCMode      -Force
+$cfgObj2 | ConvertTo-Json | Set-Content 'code-review/session-config.json'
+
 if ($changedFiles.Count -le 20) {
     [void]$out.AppendLine("> **Mode: full-source** - $($changedFiles.Count) non-test source files (threshold: 20). Complete current file content embedded below.")
     [void]$out.AppendLine()
@@ -134,14 +156,12 @@ if ($changedFiles.Count -le 20) {
     [void]$out.AppendLine("> **Mode: diff-only** - $($changedFiles.Count) non-test source files (threshold: 20 exceeded). Full source omitted. Use Section B diff hunks and Section D symbol reference index for navigation.")
 }
 
-# --- Section D: Symbol reference index — written to separate file ---
-$symbolIndex = & "$scriptDir\build-symbol-index.ps1" -ChangedFiles $changedFiles
-$symbolIndex | Set-Content 'code-review/symbol-index.md'
-Write-Host 'Symbol index written to code-review/symbol-index.md'
+# --- Section D: Symbol reference index — generated on demand by Ripple Effect auditor ---
 [void]$out.AppendLine()
 [void]$out.AppendLine('## Section D — Symbol Reference Index')
 [void]$out.AppendLine()
-[void]$out.AppendLine('> See `code-review/symbol-index.md`. Read by: Correctness auditor, Ripple-effect auditor.')
+[void]$out.AppendLine('> Generated on demand by the Ripple Effect auditor. If `code-review/symbol-index.md` does not exist,')
+[void]$out.AppendLine('> the auditor runs `build-symbol-index.ps1` (no args, reads session-config.json) from the repo root.')
 
 # --- Section E: Test file index ---
 $testIndex = & "$scriptDir\build-test-index.ps1" -ChangedFiles $changedFiles
@@ -152,6 +172,9 @@ $testIndex = & "$scriptDir\build-test-index.ps1" -ChangedFiles $changedFiles
 
 $out.ToString() | Set-Content 'code-review/changeset-full.md'
 Write-Host "Full changeset written to code-review/changeset-full.md"
+
+# --- Dead code candidates: deleted declarations with remaining reference counts ---
+& "$scriptDir\build-dead-code-candidates.ps1"
 
 # --- Workspace-local captive dependency check (stack-specific, optional) ---
 # Convention: workspace provides .github/scripts/check-captive-dependencies.ps1

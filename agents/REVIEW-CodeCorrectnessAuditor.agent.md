@@ -31,6 +31,8 @@ Your mission: Verify that the code implementation correctly achieves the goals a
 
 Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.GLOBAL.md` and, if it exists on disk, `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.md`. Apply any recorded patterns.
 
+**If `code-review/dead-code-candidates.md` exists**: read it now. It lists symbols deleted from production source with verified remaining reference counts (confirmed dead / test-only / still in production). Use the "Still Referenced in Production" section to catch incomplete deletions that are correctness bugs. Use "Confirmed Dead" to verify intentional dead-code claims without re-running searches.
+
 ## 1. Read Requirements Audit
 
 Load and thoroughly understand `/code-review/requirements-audit.md`:
