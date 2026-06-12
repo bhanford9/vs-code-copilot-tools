@@ -1,4 +1,4 @@
-# Reads code-review/session-config.json and writes:
+﻿# Reads code-review/session-config.json and writes:
 #   code-review/changeset.md            — stat-level summary (unchanged format, backward compat)
 #   code-review/changeset-full.md       — enriched: commit messages, source-only diff hunks, full
 #                                         source (size-gated), symbol index pointer, test file index
@@ -75,9 +75,9 @@ Write-Host "Adaptive diff context: --unified=$unifiedContext ($allChangedFileCou
 $out = [System.Text.StringBuilder]::new()
 
 # --- Section A: Commit messages + bodies ---
-[void]$out.AppendLine('# Changeset — Full Context')
+[void]$out.AppendLine('# Changeset - Full Context')
 [void]$out.AppendLine()
-[void]$out.AppendLine('## Section A — Commit Messages')
+[void]$out.AppendLine('## Section A - Commit Messages')
 [void]$out.AppendLine()
 if ($reviewMode -eq 'single-commit') {
     $log = git show $target --format='%H %s%n%b' -s | Out-String
@@ -88,7 +88,7 @@ if ($reviewMode -eq 'single-commit') {
 
 # --- Section B: Source-only diff hunks (--unified=10, test files excluded) ---
 [void]$out.AppendLine()
-[void]$out.AppendLine("## Section B — Diff Hunks: Source Files ($unifiedContext lines context, test files excluded)")
+[void]$out.AppendLine("## Section B - Diff Hunks: Source Files ($unifiedContext lines context, test files excluded)")
 [void]$out.AppendLine()
 $testExcludes = @(':(exclude)*Tests.cs', ':(exclude)*IntegrationTests.cs')
 if ($reviewMode -eq 'single-commit') {
@@ -125,7 +125,7 @@ Write-Host 'Test diffs written to code-review/test-diffs.md'
 
 # --- Section C: Full source (size-gated at ≤20 non-test source files) ---
 [void]$out.AppendLine()
-[void]$out.AppendLine('## Section C — Full Source Content')
+[void]$out.AppendLine('## Section C - Full Source Content')
 [void]$out.AppendLine()
 
 if ($reviewMode -eq 'single-commit') {
@@ -158,7 +158,7 @@ if ($changedFiles.Count -le 20) {
 
 # --- Section D: Symbol reference index — generated on demand by Ripple Effect auditor ---
 [void]$out.AppendLine()
-[void]$out.AppendLine('## Section D — Symbol Reference Index')
+[void]$out.AppendLine('## Section D - Symbol Reference Index')
 [void]$out.AppendLine()
 [void]$out.AppendLine('> Generated on demand by the Ripple Effect auditor. If `code-review/symbol-index.md` does not exist,')
 [void]$out.AppendLine('> the auditor runs `build-symbol-index.ps1` (no args, reads session-config.json) from the repo root.')
@@ -166,7 +166,7 @@ if ($changedFiles.Count -le 20) {
 # --- Section E: Test file index ---
 $testIndex = & "$scriptDir\build-test-index.ps1" -ChangedFiles $changedFiles
 [void]$out.AppendLine()
-[void]$out.AppendLine('## Section E — Test File Index')
+[void]$out.AppendLine('## Section E - Test File Index')
 [void]$out.AppendLine()
 [void]$out.AppendLine($testIndex)
 

@@ -1,4 +1,4 @@
-# Scans deleted lines in the source diff for C# declaration names, then checks
+﻿# Scans deleted lines in the source diff for C# declaration names, then checks
 # each symbol for remaining references (production vs. test-only vs. none).
 #
 # Outputs code-review/dead-code-candidates.md with three sections:
@@ -83,7 +83,7 @@ foreach ($name in $candidates) {
     if ($srcFile -and (Test-Path $srcFile)) {
         $stillPresent = git grep -l "\b$name\b" -- $srcFile 2>$null
         if ($stillPresent) {
-            Write-Host "  Skipping '$name' — still present in $srcFile (modified, not deleted)"
+            Write-Host "  Skipping '$name' - still present in $srcFile (modified, not deleted)"
             continue
         }
     }
@@ -147,7 +147,7 @@ if ($testOnly.Count -gt 0) {
     [void]$sb.AppendLine('## Test-Only References (likely dead — verify test fixtures can be removed)')
     [void]$sb.AppendLine()
     foreach ($r in $testOnly) {
-        [void]$sb.AppendLine("- ``$($r.Symbol)`` — $($r.TestCount) test file(s)")
+        [void]$sb.AppendLine("- ``$($r.Symbol)`` - $($r.TestCount) test file(s)")
     }
     [void]$sb.AppendLine()
 }
@@ -159,7 +159,7 @@ if ($hasProds.Count -gt 0) {
     [void]$sb.AppendLine('> Each entry may represent an incomplete deletion or a ripple effect miss.')
     [void]$sb.AppendLine()
     foreach ($r in $hasProds) {
-        [void]$sb.AppendLine("### ``$($r.Symbol)`` — $($r.ProductionCount) production file(s)")
+        [void]$sb.AppendLine("### ``$($r.Symbol)`` - $($r.ProductionCount) production file(s)")
         foreach ($f in $r.ProductionFiles) {
             [void]$sb.AppendLine("- $f")
         }

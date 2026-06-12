@@ -1,4 +1,4 @@
-# For each changed non-test .cs source file, resolves the expected test file path
+﻿# For each changed non-test .cs source file, resolves the expected test file path
 # using naming convention and checks whether it exists at that exact location.
 #
 # Called by build-changeset.ps1. Returns the index as a string (Section E content).
@@ -53,7 +53,7 @@ foreach ($file in $ChangedFiles) {
     $projectRoot = Find-ProjectRoot $sourceDir
 
     if (-not $projectRoot) {
-        [void]$sb.AppendLine("| $relSource | (no .csproj found in path) | ❓ Unknown |")
+        [void]$sb.AppendLine("| $relSource | (no .csproj found in path) | ? Unknown |")
         continue
     }
 
@@ -69,9 +69,9 @@ foreach ($file in $ChangedFiles) {
     $relTest = $expectedTestFile -replace [regex]::Escape($repoRoot + '\'), '' -replace '\\', '/'
 
     if (Test-Path $expectedTestFile) {
-        [void]$sb.AppendLine("| $relSource | [$relTest]($relTest) | ✅ Yes |")
+        [void]$sb.AppendLine("| $relSource | [$relTest]($relTest) | Yes |")
     } else {
-        [void]$sb.AppendLine("| $relSource | $relTest | ❌ Missing from expected location |")
+        [void]$sb.AppendLine("| $relSource | $relTest | MISSING - expected location not found |")
     }
 }
 
