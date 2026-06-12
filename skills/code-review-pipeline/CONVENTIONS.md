@@ -43,35 +43,30 @@ Use these standardized severity levels in audit reports:
 
 ## Report Structure Template
 
-Each auditor should structure their output as:
+Each auditor structures their output as a compact, header-grouped finding list. No intro prose, no summary section, no conclusion. The verdict in the report header is the summary.
 
 ```markdown
-# {Auditor Name} Report
+# {Auditor Name} Audit — {PASS | MERGE WITH CONDITIONS | BLOCKED}
+**Files**: {N} | **🔴**: {N} | **🟠**: {N} | **🟡**: {N} | **🟢**: {N}
 
-## Summary
-{Brief overview of findings - 2-4 sentences}
+### 🔴 {Issue Title}
+- **Where**: [file.cs](file.cs#L10-20)
+- **Issue**: {1-2 sentences — what is wrong}
+- **Fix**: {1-2 sentences — specific remediation}
 
-## Issues & Recommendations
+### 🟡 {Issue Title}
+- **Where**: ...
+- **Issue**: ...
+- **Fix**: ...
 
-### 🔴 Critical
-**{Issue Title}**
-- **Location**: [file.ts](file.ts#L10-L20)
-- **Problem**: {Clear description of what's wrong}
-- **Impact**: {Why this matters}
-- **Recommendation**: {Specific actionable steps to fix}
-
-### 🟠 High
-{Same structure...}
-
-### 🟡 Medium
-{Same structure...}
-
-### 🟢 Low
-{Same structure...}
-
-## Conclusion
-{1-2 sentence summary of overall assessment}
+## Clean
+{Comma-separated list of areas with no findings, or "None"}
 ```
+
+**Rules:**
+- Omit severity sections entirely when empty — never write an empty `### 🟢` block
+- Do not write a `## Summary` or `## Conclusion` section — the header verdict and finding list are sufficient
+- One `**Where**:` link per finding; if multiple locations, list them on the same line
 
 ## Actionable Advice Guidelines
 

@@ -22,11 +22,12 @@ Your procedure has three phases.
 
 ## Phase 0 — Read Shared Context
 
-Read these three files before executing any auditor skill:
+Read these four files before executing any auditor skill:
 
 1. **`/code-review/parallel-brief.md`** — the requirements and correctness summary produced by earlier pipeline stages
 2. **`/code-review/changeset.md`** — the full list of changed files with diff context
 3. **`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`** — the shared audit report template used by all compact-format auditors
+4. **`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`** — output format rules, severity definitions, and **output token budget constraints** that all auditors must follow
 
 These files must be in context before you begin any audit work. Do not re-read them during Phase 2.
 

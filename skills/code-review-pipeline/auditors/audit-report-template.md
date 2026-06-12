@@ -18,19 +18,13 @@ Most auditors use this format. Auditor-specific fields are noted in each SKILL.m
 ## Findings
 
 ### 🔴 {Title}
-**Where**: [file.cs](file.cs#L10-20)
+- **Where**: [file.cs](file.cs#L10-20)
 {AUDITOR-SPECIFIC DISCRIMINATOR FIELD — see skill for this auditor}
-**Issue**: {1-3 sentences describing the problem}
-**Fix**: {1-3 sentences or short code snippet with the specific remediation}
-
-### 🟠 {Title}
-...
+- **Issue**: {1-2 sentences describing the problem}
+- **Fix**: {1-2 sentences or short code snippet with the specific remediation}
 
 ### 🟡 {Title}
-...
-
-### 🟢 {Title}
-...
+- ...
 
 ## Clean
 {Comma-separated list of dimensions or areas with no findings}
@@ -38,9 +32,11 @@ Most auditors use this format. Auditor-specific fields are noted in each SKILL.m
 
 **Rules:**
 - Group findings by severity: 🔴 Critical first, then 🟠 High, 🟡 Medium, 🟢 Low
+- **Omit empty severity sections entirely** — never write `### 🟢` if there are no Low findings
 - Every finding must include a `**Where**:` with a markdown file link and line number
 - Every finding must include `**Issue**:` and `**Fix**:` — no finding without both
-- The `## Clean` section is required even when empty — write "None" if everything had findings
+- **No `## Summary` section. No `## Conclusion` section.** The verdict in the header is the summary.
+- The `## Clean` section is required — write "None" if everything had findings
 - Use `BLOCKED` verdict only when a Critical finding is present and unresolved
 - Use `MERGE WITH CONDITIONS` when High or Medium findings require action before or after merge
 - Use `PASS` when only Low findings or none
