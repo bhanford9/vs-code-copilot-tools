@@ -62,18 +62,20 @@ Write-Host "Changeset written to code-review/changeset.md"
 # carrying review value. Applied to all diff and file-count operations below.
 #
 # Generic exclusions are defined here. Codebase-specific exclusions are loaded
-# from .github/scripts/review-exclusions.json (same convention as captive deps).
+# from the git common directory (shared across all worktrees, never committed).
 # Schema: { "extensionExcludes": ["*.fja", "*.std"], "pathExcludes": ["**/IntegrationTests/**"] }
+# Setup: copy to $(git rev-parse --git-common-dir)/review-exclusions.json
 # ---------------------------------------------------------------------------
 $artifactExcludes = @(
     ':(exclude)**/TestResources/**'   # generic: test resource fixtures
 )
-$wsExclusionsFile = '.github/scripts/review-exclusions.json'
+$gitCommonDir     = git rev-parse --git-common-dir
+$wsExclusionsFile = Join-Path $gitCommonDir 'review-exclusions.json'
 if (Test-Path $wsExclusionsFile) {
     $wsExclusions = Get-Content $wsExclusionsFile | ConvertFrom-Json
     foreach ($ext  in $wsExclusions.extensionExcludes) { $artifactExcludes += ":(exclude)**/$ext" }
     foreach ($path in $wsExclusions.pathExcludes)      { $artifactExcludes += ":(exclude)$path" }
-    Write-Host "Loaded workspace exclusions from $wsExclusionsFile ($($wsExclusions.extensionExcludes.Count) ext, $($wsExclusions.pathExcludes.Count) path)"
+    Write-Host "Loaded workspace exclusions from git common dir ($($wsExclusions.extensionExcludes.Count) ext, $($wsExclusions.pathExcludes.Count) path)"
 }
 
 # ---------------------------------------------------------------------------
@@ -199,10 +201,10 @@ Write-Host "Full changeset written to code-review/changeset-full.md"
 & "$scriptDir\build-dead-code-candidates.ps1"
 
 # --- Workspace-local captive dependency check (stack-specific, optional) ---
-# Convention: workspace provides .github/scripts/check-captive-dependencies.ps1
-# Contract:   script must write findings to code-review/captive-deps.md
-# To replace: swap the script file; keep the output path the same.
-$captiveDepsScript = '.github/scripts/check-captive-dependencies.ps1'
+# Stored in the git common directory — shared across all worktrees, never committed.
+# Contract: script must write findings to code-review/captive-deps.md
+# Setup: copy to $(git rev-parse --git-common-dir)/check-captive-dependencies.ps1
+$captiveDepsScript = Join-Path $gitCommonDir 'check-captive-dependencies.ps1'
 if (Test-Path $captiveDepsScript) {
     Write-Host 'Running workspace-local captive dependency check...'
     & powershell -File $captiveDepsScript

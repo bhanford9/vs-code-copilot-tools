@@ -28,13 +28,15 @@ if ($TargetCommit) {
     $changedFiles = git diff "$baseBranch...HEAD" --name-only | Where-Object { $_ -ne '' }
 }
 # Load workspace-local exclusions (codebase-specific extensions/paths).
-# Convention: workspace provides .github/scripts/review-exclusions.json
+# Stored in the git common directory — shared across all worktrees, never committed.
 # Schema: { "extensionExcludes": ["*.fja", "*.std"], "pathExcludes": ["**/IntegrationTests/**"] }
+# Setup: copy to $(git rev-parse --git-common-dir)/review-exclusions.json
 $wsExclusions = @{ extensionExcludes = @(); pathExcludes = @() }
-$wsExclusionsFile = '.github/scripts/review-exclusions.json'
+$gitCommonDir      = git rev-parse --git-common-dir
+$wsExclusionsFile  = Join-Path $gitCommonDir 'review-exclusions.json'
 if (Test-Path $wsExclusionsFile) {
     $wsExclusions = Get-Content $wsExclusionsFile | ConvertFrom-Json
-    Write-Host "Loaded workspace exclusions from $wsExclusionsFile"
+    Write-Host "Loaded workspace exclusions from git common dir"
 }
 
 # Build exclusion regexes from the workspace config
