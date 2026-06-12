@@ -3,6 +3,8 @@
 This file defines the shared report format used by all parallel auditors.
 It is read once per batch session in Phase 0 and stays in context throughout.
 
+> **Output budget**: These files are synthesizer input only — not human docs. Write the minimum needed for the synthesizer to make merge/block decisions. Targets: clean-pass ≤400 words, standard ≤600 words, finding-heavy ≤800 words. Omit empty severity sections. No reasoning traces, no codebase tours, no closing summary paragraphs.
+
 ---
 
 ## Standard Compact Format

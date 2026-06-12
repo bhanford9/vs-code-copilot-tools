@@ -58,13 +58,26 @@ if ($reviewMode -eq 'single-commit') {
 Write-Host "Changeset written to code-review/changeset.md"
 
 # ---------------------------------------------------------------------------
+# Artifact exclusions: known generated fixture files that inflate diffs without
+# carrying review value. Applied to all diff and file-count operations below.
+# Add new extensions or path patterns here as the codebase evolves.
+# ---------------------------------------------------------------------------
+$artifactExcludes = @(
+    ':(exclude)**/*.fja',
+    ':(exclude)**/*.std',
+    ':(exclude)**/TestResources/**/*.json'
+)
+
+# ---------------------------------------------------------------------------
 # Adaptive unified diff context: scale down for large changesets to keep
 # changeset-full.md token-efficient for the sequential auditors.
+# Artifact files are excluded from the count so the threshold reflects
+# meaningful reviewable files only.
 # ---------------------------------------------------------------------------
 if ($reviewMode -eq 'single-commit') {
-    $allChangedFileCount = @(git show $target --name-only --format='' | Where-Object { $_ }).Count
+    $allChangedFileCount = @(git show $target --name-only --format='' -- $artifactExcludes | Where-Object { $_ }).Count
 } else {
-    $allChangedFileCount = @(git diff "$base...HEAD" --name-only | Where-Object { $_ }).Count
+    $allChangedFileCount = @(git diff "$base...HEAD" --name-only -- $artifactExcludes | Where-Object { $_ }).Count
 }
 $unifiedContext = if ($allChangedFileCount -gt 50) { 3 } else { 10 }
 Write-Host "Adaptive diff context: --unified=$unifiedContext ($allChangedFileCount changed files)"
@@ -88,13 +101,14 @@ if ($reviewMode -eq 'single-commit') {
 
 # --- Section B: Source-only diff hunks (--unified=10, test files excluded) ---
 [void]$out.AppendLine()
-[void]$out.AppendLine("## Section B - Diff Hunks: Source Files ($unifiedContext lines context, test files excluded)")
+[void]$out.AppendLine("## Section B - Diff Hunks: Source Files ($unifiedContext lines context, test files and artifact fixtures excluded)")
 [void]$out.AppendLine()
 $testExcludes = @(':(exclude)*Tests.cs', ':(exclude)*IntegrationTests.cs')
+$diffExcludes  = $testExcludes + $artifactExcludes
 if ($reviewMode -eq 'single-commit') {
-    $diff = git show $target --unified=$unifiedContext -- $testExcludes | Out-String
+    $diff = git show $target --unified=$unifiedContext -- $diffExcludes | Out-String
 } else {
-    $diff = git diff "$base...HEAD" --unified=$unifiedContext -- $testExcludes | Out-String
+    $diff = git diff "$base...HEAD" --unified=$unifiedContext -- $diffExcludes | Out-String
 }
 [void]$out.AppendLine('```diff')
 [void]$out.AppendLine($diff.Trim())

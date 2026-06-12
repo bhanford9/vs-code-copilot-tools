@@ -88,3 +88,24 @@ Auditors should:
 - Use semantic search to understand patterns across the codebase
 - Look at related tests, documentation, and configuration
 - Consider the broader system architecture
+
+## Output Token Budget — Intermediate Audit Files
+
+All `*-audit.md` files (except `final-review.md`) are consumed only by the FinalSynthesizer — **not by humans**. Write the minimum content needed for the synthesizer to make accurate merge/block decisions.
+
+**Word-count targets:**
+- Clean-pass audit (0 findings, or only 🟢 Low): ≤400 words
+- Standard audit (1–4 findings): ≤600 words
+- Finding-heavy audit (5+ findings): ≤800 words
+
+**Do NOT include:**
+- Reasoning traces, exploratory analysis, or "I checked X and found Y" walkthrough prose
+- Background or codebase tour sections
+- Headers for empty severity levels — omit the section entirely
+- Closing summary paragraphs that restate the verdict already in the header
+- Any sentence that does not carry a finding, a fix, or a severity judgment
+
+**Compact field rules:**
+- `## Clean` section: one comma-separated list, not a paragraph
+- `**Issue**:` and `**Fix**:` fields: 1–2 sentences each, 3 sentences maximum
+- If a finding has only Low severity, the entire findings section should fit in ≤150 words

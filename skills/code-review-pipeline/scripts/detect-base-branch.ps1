@@ -18,12 +18,20 @@ if ($baseBranch) {
     $baseBranch = if (git show-ref --verify --quiet refs/heads/master) { 'master' } else { 'main' }
 }
 
-# Detect security surface: scan changed file paths for web/auth/input/external patterns
+# Detect security surface: scan changed file paths for web/auth/input/external patterns.
+# Test files (*Tests.cs) are excluded — they inherit production class names (e.g.,
+# RepositoryTests.cs) and cause false positives. Artifact fixtures are also excluded.
 $securitySurface = $false
 if ($TargetCommit) {
     $changedFiles = git show $TargetCommit --name-only --format='' | Where-Object { $_ -ne '' }
 } else {
     $changedFiles = git diff "$baseBranch...HEAD" --name-only | Where-Object { $_ -ne '' }
+}
+$reviewableFiles = $changedFiles | Where-Object {
+    $_ -notmatch 'Tests\.cs$' -and
+    $_ -notmatch '\.fja$' -and
+    $_ -notmatch '\.std$' -and
+    $_ -notmatch '[/\\]TestResources[/\\]'
 }
 $securityPatterns = @(
     'Controller', 'Middleware', 'Authorize', 'Authentication', 'Authorization',
@@ -32,7 +40,7 @@ $securityPatterns = @(
     'Sanitize', 'Validate', 'InputModel', 'RequestModel',
     'SqlCommand', 'DbContext', 'Repository'
 )
-foreach ($file in $changedFiles) {
+foreach ($file in $reviewableFiles) {
     foreach ($pattern in $securityPatterns) {
         if ($file -match $pattern) { $securitySurface = $true; break }
     }
