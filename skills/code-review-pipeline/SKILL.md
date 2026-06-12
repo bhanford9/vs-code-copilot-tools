@@ -13,6 +13,8 @@ The code review pipeline is a 6-agent system that audits code changes across eig
 
 For full architecture and usage details, see [feature-overviews/code-review-pipeline/code-review-pipeline.md](../../feature-overviews/code-review-pipeline/code-review-pipeline.md).
 
+> **First time using this pipeline on a new repo?** See [SETUP.md](./SETUP.md) for the one-time per-repo configuration steps (artifact exclusions, captive dependency script). The pipeline works without any setup — configuration only improves diff quality and audit accuracy.
+
 ## Related Skills
 
 The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor to automatically retrieve work item details from Azure DevOps via REST API. It lives in the reviewed repo at `.claude/skills/fetch-azure-devops-work-item/`. The `REVIEW-RequirementsAuditor` gracefully falls back to asking the user if the skill is not configured.
