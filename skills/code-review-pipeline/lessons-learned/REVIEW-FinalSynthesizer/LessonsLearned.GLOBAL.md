@@ -80,6 +80,11 @@ When Ripple Effect, Testability, and/or Extensibility overlap with Maintainabili
 
 ---
 
+### Dead-code safety confirmation overrides specialist severity bump
+When the Requirements auditor rates a finding 🟠 but Code Correctness confirms the affected code path was dead in production (e.g., gated by a toggle that was always ON), use 🟡 in the final report. A confirmed dead-code argument is a factual safety claim that outweighs a specialist's architectural concern rating. Document both views in the finding body so the team has full context.
+
+---
+
 ### Same element introduced in this PR: do not apply the pre-existing downgrade rule
 The rule "pre-existing issues rate lower than introduced issues" applies only to issues that existed BEFORE the PR. When an element was introduced in the current PR, do not downgrade its severity on pre-existing grounds.
 

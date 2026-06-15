@@ -22,3 +22,8 @@ When a changeset consists entirely of adding `sealed` to concrete implementation
 
 ### Feature status documentation may have multiple write sites — verify all are updated
 When verifying that a feature completion event is documented, check ALL canonical write sites for that event. A changeset that updates one site but misses a companion site leaves the documentation partially stale. Treat this as a Medium finding.
+
+---
+
+### Grep for deleted config keys: exclude `**/bin/**` paths to avoid build-artifact noise
+When searching for remaining references to a deleted configuration key (e.g., a feature toggle name in JSON files), always exclude `**/bin/**` and `**/obj/**` from the search pattern, or post-filter results. Build output directories always contain stale copies of config files; hits there are never a real finding. Use `includePattern` scoped to source directories (e.g., `Source/RemoteServices/**/*.json`) rather than `**/*.json` to avoid this noise.

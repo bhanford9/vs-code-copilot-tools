@@ -22,3 +22,8 @@ When a changeset consists entirely of adding `sealed` to concrete implementation
 
 ### Toggle-promotion changesets are net-positive for testability
 When a toggle-promotion changeset simplifies a class by removing `IToggles` constructor injection that was only used for one deprecated toggle, the testability verdict is net-positive. A simpler constructor with fewer dependencies improves testability. Do not flag as a testability concern.
+
+---
+
+### Null-suppressed property returns (`null!`) are a testability hazard to check for
+When reviewing provider or factory classes, scan all interface properties for `null!` (null-forgiving) returns that are gated on runtime state (toggles, flags, config). These are testability hazards: any test exercising the property under the "off" condition receives a null reference rather than a meaningful value, silently undermining test correctness. Flag any `null!`-returning property that depends on mutable/injectable state as a testability issue, even if it doesn't yet crash in production.
