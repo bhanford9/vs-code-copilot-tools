@@ -1,89 +1,24 @@
 # Lessons Learned: REVIEW-StructuralPatternsAuditor
 
-> GLOBAL FILE. Abstract patterns only — no class names, file paths, or project-specific identifiers.
+> GLOBAL FILE — workflow process improvements only.
+> **Recording rule**: Record only missing workflow steps, new checklist items, tool-use rules, or process sequencing discoveries that apply to any review of any codebase. No codebase-specific observations, false-positive suppressions, code patterns, or finding calibrations.
 
 ---
 
 ## When to Append
 
-Only append for false-positive patterns, severity calibration updates, or new structural smell candidates not yet in the catalog. Skip if the review ran cleanly with existing catalog knowledge.
+Only append if the session revealed a missing audit step or process rule that would have made this type of audit more accurate or efficient in any future review.
 
 ---
-
-### SP-003 scope is narrower than the smell it names: also covers inline static calls
-SP-003 targets constructor parameters typed as concrete classes. The same smell appears as inline static calls in method bodies (`DateTime.Now`, `File.ReadAllText`, `Directory.Exists`) in service-layer classes. These produce the same un-swappable concrete dependency but evade the constructor-parameter check. When reviewing for SP-003, also scan method bodies for static calls that access the file system, system clock, environment, or process state without routing through an injected abstraction.
-
----
-
-### SP-007 fires on multi-file string literal scatter even without a classic strategy pattern
-SP-007's catalog description focuses on strategy-registry dispatch. The same smell applies when a provider/vendor/channel identifier string appears as a bare literal in two or more files with no shared constant. The review question is the same: can the identifier be renamed by changing one declaration? If not, SP-007 applies even without a strategy interface.
-
----
-
-### Abandoned session state: a UI-layer smell not covered by SP-001 through SP-009
-When a UI component seeds a local mutable collection from an immutable domain session object at init time but never updates the session object as the local collection evolves, the session's computed properties become stale after the first mutation. Detection: (1) is the local collection seeded FROM the session? (2) is the session ever updated WHEN the local collection changes? (3) does the consumer re-implement a predicate already on the session object? If (1) yes, (2) no, (3) yes → Abandoned Session State, Medium. Proposed catalog entry: not yet assigned a number.
-
----
-
-### Verify-before-execute hidden lifecycle is signaled by a "call X first" fallback string
-When a class has a two-method interface (verify/execute, check/process) and the second method has a `?? "(unknown — call X first)"` fallback, private nullable fields set in the first method and consumed in the second represent a hidden lifecycle dependency. Rate Medium when the second method produces degraded output without an error signal. Not covered by existing SP entries.
-
----
-
 ### Composition-root-dominated reviews produce expected clean verdicts — do not manufacture findings
-When the entire changeset is DI registration code (extension methods on `IServiceCollection`, composition roots), SP-002 explicitly exempts composition roots. SP-003 through SP-007 require call-site or instance-creation patterns absent from pure registration code. A clean verdict is correct — do not escalate marginal Low signals to compensate.
+When the entire changeset consists of DI composition-root changes (new registrations, lifetime adjustments, module reorganization), expect Clean verdicts across most SP categories. Do not manufacture structural pattern findings to populate the report — a Clean verdict is the correct outcome.
 
 ---
 
-### "Scoped" in a class name ≠ Scoped DI lifetime — check the constructor before flagging captive dependency
-Before flagging a Singleton-registered class named `ScopedXxxFactory` as a captive dependency, inspect its constructor. If it only injects `IServiceScopeFactory` and creates scopes per-call via `CreateAsyncScope()`, the Singleton registration is intentional and correct. Downgrade the finding from correctness to naming observation (Low).
+### Toggle-promotion PRs: structural verdict is Clean — orphaned injection is the one exception
+When auditing a toggle-promotion PR (feature flag permanently enabled, dual-case code removed), the structural verdict should be Clean for all SP categories EXCEPT: check for orphaned toggle-bag constructor injections in every changed class. If the removed toggle was the sole consumer of the injection, the orphaned injection is a Low finding regardless of toggle-promotion context.
 
 ---
 
-### Mutually exclusive DI extension methods: no catalog entry detects competing registrations for the same interface
-When two DI extension methods register competing implementations for the same interface (real vs. no-op, production vs. test) without a compile-time or runtime guard, a caller can invoke both and the last registration wins silently. Detection: for each interface registered in method A, search for the same interface in method B. If both exist without a `TryAddSingleton` or existence guard, flag Medium. Proposed catalog entry: not yet assigned a number.
-
----
-
-### Correctness findings about scope-alignment gaps often have a structural root cause in data structure type
-When a correctness audit identifies a missing scope/category check in a membership predicate, trace it to the data structure. A flat `HashSet<T>` spanning two implicit categories cannot enforce scope without an external derivation step. The structural fix (two named per-category sets, or a dictionary keyed by category) resolves both the structural smell and the correctness gap simultaneously. Rate Medium even when all current call sites are consistent — no test asserts cross-category rejection.
-
----
-
-### Deprecated API surface without `[Obsolete]` is a distinct, underrepresented structural smell
-Deprecated members (aliases, renamed constants, superseded overloads) without `[Obsolete]` appear in tooling autocomplete alongside current API members with no visual distinction. Rate Medium for pure aliases (risk is migration cost and audit confusion); High when the deprecated form has different behavior. The fix is always `[Obsolete("Use X instead.", error: false)]`. False-positive gate: if the deprecated form is in a separately-named legacy class or companion file, dismiss as Low.
-
----
-
-### SP-001 severity escalates to Medium when two files in the same subsystem use opposite documentation conventions in the same PR
-SP-001 (numbered step comments) is normally Low when the method is otherwise clean. When two files in the same functional subsystem are both modified in the same PR and use opposite conventions (one uses numbered comments, the other uses named private methods), escalate to Medium. The co-modification makes the inconsistency visible and creates an ongoing convention ambiguity.
-
----
-
-### Non-exhaustive enum dispatch is the structural root cause of "dead code enum member" correctness findings
-When a correctness audit identifies an enum member with dead or stub behavior, trace it to the dispatch logic. An `if/else` on a multi-member enum that silently absorbs the unimplemented member is a structural Medium co-finding. The `switch` expression form produces a compiler warning on future additions — making the structural fix also preventive.
-
----
-
-### Duplicated conditional initialization blocks are a structural smell even when the logic is simple
-The same non-trivial branching logic (tenant scoping, feature flag, authorization, environment check) appearing verbatim in two unrelated classes creates a rule-change risk. Rate Medium. Detection shortcut: look for a general update command alongside a specific-verb service method for the same field — if both exist with overlapping fields, flag structural duplication.
-
----
-
-### Additive-only property extensions: when all sibling consistency checks pass, "Clean" is the correct verdict
-When a changeset adds exactly one new property to an existing entity with matching service method, EF config, and no new class-level behavior, the structural audit's value is a consistency check (same access modifier, type, default, and EF config as siblings). If all three checks pass, the correct honest verdict is Clean.
-
----
-
-### Early-exit precedence chain is NOT a candidate for SP-006 (Closed Stage List)
-A method that uses early returns to enforce priority ordering (e.g., explicit deny > explicit allow > no-decision) is not a SP-006 "Closed Stage List" pattern. SP-006 targets linearly accumulated stage states; an early-exit chain is a correctly-structured guard pattern. Do not co-report these.
-
----
-
-### Logic provider interface with named step properties is Low SP-006 at most — testability intent overrides severity
-When a dedicated interface is introduced as a unit-test seam for a flow algorithm (so tests can mock one interface instead of N concrete steps), that interface will encode step names as property names by design. This satisfies the SP-006 signal (named fields per stage). Rate Low only — the testability benefit is real, the interface is internal, and the step set is stable by definition of the algorithm. Do not escalate. The finding is worth noting as an observation but never blocks merge.
-
----
-
-### Sibling class name collision requiring namespace aliases is a structural smell with no existing catalog entry
-When two concrete classes in the same solution have identical short names and are registered together in the same composition file, namespace aliases become necessary (`using AFlows = Namespace.A`). This is a proposed new catalog entry (SP-010) — the signal is the alias pair itself. Rate Medium when both classes are registered in the same method and their names are indistinguishable without tracing the alias. Dismissed at Low when the namespace context is clear from directory structure alone and no alias is required. This pattern was observed in a bulk DI refactoring where two subsystem-local classes happened to share a name; renaming either one to include its subsystem context would eliminate the aliasing need entirely. Do not confuse with SP-007 (string key dispatch) — this is a naming/readability concern, not a strategy-dispatch concern.
+### Additive-only property extensions: "Clean" is the correct verdict when all sibling consistency checks pass
+When a changeset adds new properties to an existing record or class without changing existing properties, verify: (1) the new properties follow the naming convention of siblings, (2) any companion arrays or dictionaries that enumerate same-type properties are updated. If both checks pass, "Clean" is the correct structural verdict — do not manufacture a finding.

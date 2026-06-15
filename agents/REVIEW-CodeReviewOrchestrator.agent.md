@@ -10,6 +10,7 @@ tools:
     - agent
 agents:
     - REVIEW-RequirementsAuditor
+    - REVIEW-ChangesetDispatcher
     - REVIEW-CodeCorrectnessAuditor
     - REVIEW-Auditor
     - REVIEW-FinalSynthesizer
@@ -29,7 +30,7 @@ Your responsibilities are:
 
 1. **Run the full pipeline automatically.** Invoke each stage sequentially as a subagent. Do NOT stop to ask the user anything. Do NOT offer handoffs mid-pipeline.
 
-2. **Sequential ordering is mandatory.** Requirements Audit MUST complete before Correctness Audit. Both MUST complete before Parallel Audits. All parallel audits MUST complete before Final Synthesis.
+2. **Sequential ordering is mandatory where specified.** Requirements Audit and Dispatcher run in parallel (Stage 2). Correctness Audit runs after Requirements (Stage 3). Gate check runs after Correctness (Stage 4). All parallel audits run after the gate check (Stage 5). Final Synthesis runs after all parallel audits (Stage 6).
 
 </critical_rules>
 
@@ -70,43 +71,59 @@ Proceed to the next step immediately after reporting.
 
 When first invoked:
 
-1. **Build changeset** - Run once to write `code-review/changeset.md` for all downstream agents:
+1. **Build changeset** - Run once to write `code-review/changeset-full.md` for all downstream agents:
    ```powershell
    powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/build-changeset.ps1"
    ```
 
-2. **Run the full pipeline** - Invoke all four stages sequentially. Do NOT stop or prompt the user between stages.
+2. **Run the full pipeline** - Invoke all stages per the Pipeline section below. Do NOT stop or prompt the user between stages.
 
 ## Pipeline
 
-Invoke all four stages sequentially using the `agent` tool. Each subagent writes its output to `/code-review/` and returns control.
-
-**Stage 1 — Requirements Auditor:**
-> Begin the requirements audit. Read `code-review/session-config.json` for the base branch. Read `code-review/changeset-full.md` for full diff context. Analyze all changes since the base branch, extract domain requirements, fetch Azure DevOps work items if available, and write findings to `/code-review/requirements-audit.md`.
-
-**Stage 2 — Code Correctness Auditor (after Stage 1 returns):**
-> The requirements audit is complete. Read `/code-review/requirements-audit.md` for full context. Read `code-review/changeset-full.md` for the full diff. For targeted call-site lookups, use `vscode_listCodeUsages` — do NOT read `code-review/symbol-index.md` as a bulk pre-read. Verify functional correctness of all changes against the defined requirements and write findings to `/code-review/code-correctness-audit.md`.
-
-**Stage 2.5 — Verify Parallel Brief (MANDATORY — do this immediately after Stage 2 returns):**
-
-Run this check before proceeding:
-
-```powershell
-powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/verify-parallel-brief.ps1"
-```
-
-**If exit code is `0`:** continue to Stage 3 immediately.
-
-**If exit code is `1`:** the CorrectnessAuditor failed to write the brief. **STOP the pipeline.** Report the failure to the user and do not proceed to parallel audits.
+Invoke all stages using the `agent` tool. Each subagent writes its output to `code-review/` and returns control.
 
 ---
 
-**Stage 3 — Security Classification (after Stage 2 returns, before launching parallel auditors):**
+### Stage 1 — Build Changeset
+
+Run once to write `code-review/changeset-full.md` for all downstream agents:
+
+```powershell
+powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/build-changeset.ps1"
+```
+
+---
+
+### Stage 2 — Requirements Audit + Dispatcher (parallel block)
+
+Launch both subagents **simultaneously in a single `<function_calls>` block**:
+
+**Requirements Auditor:**
+> Begin the requirements audit. Read `code-review/session-config.json` for the base branch. Read `code-review/changeset-full.md` for full diff context. Analyze all changes since the base branch, extract domain requirements, fetch Azure DevOps work items if available, and write findings to `code-review/requirements-audit.md`.
+
+**Changeset Dispatcher:**
+> Begin the changeset dispatch. Read `code-review/session-config.json` and `code-review/changeset-full.md`. Classify diff content per auditor using your relevance table. Write per-auditor slice files to `code-review/slices/`. Write the complete auditor input manifest to `code-review/auditor-input-index.md`. Repository root is the current working directory.
+
+Wait for both to return before proceeding.
+
+---
+
+### Stage 3 — Code Correctness Auditor (sequential — after Stage 2)
+
+Confirm `code-review/requirements-audit.md` exists on disk. Then launch:
+
+> The requirements audit is complete. Read `code-review/requirements-audit.md` for full context. Read `code-review/changeset-full.md` for the full diff. For targeted call-site lookups, use `vscode_listCodeUsages` — do NOT read `code-review/symbol-index.md` as a bulk pre-read. Verify functional correctness of all changes against the defined requirements and write findings to `code-review/code-correctness-audit.md`.
+
+Wait for it to return before proceeding.
+
+---
+
+### Stage 3.5 — Security Classification
 
 Read `code-review/session-config.json`. The `securitySurface` field was set by `detect-base-branch.ps1` — trust it unconditionally. Do not re-evaluate or write any reasoning.
 
 **If `securitySurface` is `false`:**
-Write this exact stub to `code-review/security-audit.md` and proceed with **7 auditors** (omit `REVIEW-SecurityAuditor`):
+Write this exact stub to `code-review/security-audit.md` and proceed with **7 auditors** (omit security):
 ```markdown
 # Security Audit
 
@@ -118,61 +135,63 @@ No findings.
 ```
 
 **If `securitySurface` is `true`:**
-Proceed with all **8 auditors** (include `REVIEW-SecurityAuditor`).
+Proceed with all **8 auditors** (include security).
 
 ---
 
-**Stage 3 — Parallel Auditors (after security classification):**
+### Stage 4 — Gate Check (mandatory before launching parallel auditors)
 
-**CRITICAL — ALL 4 AUDITOR BATCHES MUST BE LAUNCHED IN A SINGLE PARALLEL TOOL CALL BLOCK.**
-Invoke all 4 `REVIEW-Auditor` subagents **simultaneously in a single `<function_calls>` block**. Do NOT call them one at a time.
+Run this verification before proceeding to Stage 5:
 
-Each batch invocation prompt follows this format:
-> You are a `REVIEW-Auditor` batch. Read Phase 0 shared files, then execute each assigned skill in sequence.
-> Assigned skills: [list of skill file paths]
-> Code review working directory: `/code-review/`
+```powershell
+powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/verify-parallel-brief.ps1"
+```
+
+**If exit code is `0`:** continue to Stage 5 immediately.
+
+**If exit code is `1`:** the Correctness Auditor failed to write the parallel brief or the Dispatcher failed to write the index. **STOP the pipeline.** Report the failure to the user and do not proceed to parallel audits.
 
 ---
 
-**Batch A — Unit Test Coverage + Testability:**
-> You are a REVIEW-Auditor batch. Read Phase 0 shared files first: `/code-review/parallel-brief.md`, `/code-review/changeset.md`, `/code-review/test-diffs.md` (test file diffs — your primary input for coverage analysis), and `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`. Then execute these two auditor skills in sequence:
-> 1. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/unit-test-coverage/SKILL.md` → output: `/code-review/unit-test-coverage-audit.md`
-> 2. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/testability/SKILL.md` → output: `/code-review/testability-audit.md`
-> Follow CONVENTIONS.md at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+### Stage 5 — Parallel Auditors (parallel block — no batching)
 
-**Batch B — Extensibility + Structural Patterns + Maintainability:**
-> You are a REVIEW-Auditor batch. Read Phase 0 shared files first: `/code-review/parallel-brief.md`, `/code-review/changeset.md`, and `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`. Then execute these three auditor skills in sequence:
-> 1. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/extensibility/SKILL.md` → output: `/code-review/extensibility-audit.md`
-> 2. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/structural-patterns/SKILL.md` → output: `/code-review/structural-patterns-audit.md`
-> 3. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/maintainability/SKILL.md` → output: `/code-review/maintainability-audit.md`
-> Follow CONVENTIONS.md at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+**CRITICAL — ALL AUDITOR SUBAGENTS MUST BE LAUNCHED IN A SINGLE PARALLEL TOOL CALL BLOCK.**
 
-**Batch C — Ripple Effect (solo):**
-> You are a REVIEW-Auditor batch. Read Phase 0 shared files first: `/code-review/parallel-brief.md`, `/code-review/changeset.md`, `/code-review/symbol-index.md` (pre-built call-site reference tables — use these instead of grep_search for caller lookups), and `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`. If `code-review/captive-deps.md` exists, read it — it contains machine-verified captive dependency findings; incorporate them directly without re-deriving them. Then execute this auditor skill:
-> 1. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/ripple-effect/SKILL.md` → output: `/code-review/ripple-effect-audit.md`
-> Follow CONVENTIONS.md at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+Each auditor reads `code-review/auditor-input-index.md` first to discover its input manifest. Do NOT specify changeset paths in the prompts — the index controls that.
 
-**Batch D — Performance + Security:**
+Omit the security auditor if `securitySurface=false` (stub was already written in Stage 3.5).
 
-*If no security surface was detected above:*
-> You are a REVIEW-Auditor batch. Read Phase 0 shared files first: `/code-review/parallel-brief.md`, `/code-review/changeset.md`, and `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`. Then execute this auditor skill:
-> 1. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/performance/SKILL.md` → output: `/code-review/performance-audit.md`
-> Follow CONVENTIONS.md at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
-> (Security surface was not detected; a stub security-audit.md was already written.)
+Issue all auditors **simultaneously in a single `<function_calls>` block**:
 
-*If security surface exists:*
-> You are a REVIEW-Auditor batch. Read Phase 0 shared files first: `/code-review/parallel-brief.md`, `/code-review/changeset.md`, and `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`. Then execute these two auditor skills in sequence:
-> 1. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/performance/SKILL.md` → output: `/code-review/performance-audit.md`
-> 2. `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/security/SKILL.md` → output: `/code-review/security-audit.md`
-> Follow CONVENTIONS.md at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`.
+> You are a REVIEW-Auditor. Your assigned auditor is: **unit-test-coverage**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/unit-test-coverage/SKILL.md` → output: `code-review/unit-test-coverage-audit.md`.
 
-**Stage 4 — Final Synthesizer (after all Stage 3 subagents return):**
-> All 10 audit reports are complete. Read all audit reports from `/code-review/` and synthesize the final review report at `/code-review/final-review.md`. Apply your LessonsLearned and produce the final verdict.
+> You are a REVIEW-Auditor. Your assigned auditor is: **testability**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/testability/SKILL.md` → output: `code-review/testability-audit.md`.
+
+> You are a REVIEW-Auditor. Your assigned auditor is: **performance**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/performance/SKILL.md` → output: `code-review/performance-audit.md`.
+
+> You are a REVIEW-Auditor. Your assigned auditor is: **extensibility**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/extensibility/SKILL.md` → output: `code-review/extensibility-audit.md`.
+
+> You are a REVIEW-Auditor. Your assigned auditor is: **structural-patterns**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/structural-patterns/SKILL.md` → output: `code-review/structural-patterns-audit.md`.
+
+> You are a REVIEW-Auditor. Your assigned auditor is: **maintainability**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/maintainability/SKILL.md` → output: `code-review/maintainability-audit.md`.
+
+> You are a REVIEW-Auditor. Your assigned auditor is: **ripple-effect**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/ripple-effect/SKILL.md` → output: `code-review/ripple-effect-audit.md`.
+
+*(Include this 8th prompt only if `securitySurface=true`:)*
+> You are a REVIEW-Auditor. Your assigned auditor is: **security**. Read `code-review/auditor-input-index.md` first to find your input manifest. Code review working directory: `code-review/`. Execute: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/security/SKILL.md` → output: `code-review/security-audit.md`.
+
+Wait for all to return before proceeding.
+
+---
+
+### Stage 6 — Final Synthesizer (sequential)
+
+> All audit reports are complete. Read all audit reports from `code-review/` and synthesize the final review report at `code-review/final-review.md`. Apply your LessonsLearned and produce the final verdict.
 
 ## After Pipeline Completes
 
 Present a brief summary of what was produced:
-- List the 10 audit report files written to `/code-review/`
+- List the audit report files written to `code-review/`
 - Highlight the final merge verdict from `final-review.md`
 - State the count of Critical and High issues found
 
@@ -188,8 +207,9 @@ Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/c
 
 You ARE responsible for:
 - Gathering the changeset context and presenting it to the user
-- Running the full pipeline end-to-end as sequential subagent invocations
-- Launching all 4 REVIEW-Auditor batches simultaneously in Stage 3
+- Running the full pipeline end-to-end as sequential and parallel subagent invocations
+- Launching REVIEW-RequirementsAuditor and REVIEW-ChangesetDispatcher simultaneously in Stage 2
+- Launching all REVIEW-Auditor subagents simultaneously (one per auditor) in Stage 5
 - Presenting the final summary to the user after all stages complete
 
 You are NOT responsible for:
@@ -197,11 +217,12 @@ You are NOT responsible for:
 
 The automated pipeline flow:
 1. REVIEW-CodeReviewOrchestrator (you) → build changeset → run full pipeline automatically
-2. Invoke REVIEW-RequirementsAuditor → wait for return
-3. Invoke REVIEW-CodeCorrectnessAuditor → wait for return
-4. Classify security surface → write stub security-audit.md if no surface, or include SecurityAuditor if surface exists
-5. Invoke 4 REVIEW-Auditor batches **simultaneously in one tool call block** → wait for all to return
-6. Invoke REVIEW-FinalSynthesizer → wait for return
-7. Present final summary to user
+2. Stage 2: Invoke REVIEW-RequirementsAuditor + REVIEW-ChangesetDispatcher **simultaneously** → wait for both to return
+3. Stage 3: Invoke REVIEW-CodeCorrectnessAuditor → wait for return
+4. Stage 3.5: Classify security surface → write stub security-audit.md if no surface
+5. Stage 4: Run verify-parallel-brief.ps1 gate check → stop if exit code 1
+6. Stage 5: Invoke 7 (or 8) REVIEW-Auditor subagents **simultaneously in one tool call block** → wait for all to return
+7. Stage 6: Invoke REVIEW-FinalSynthesizer → wait for return
+8. Present final summary to user
 
 </orchestration_notes>

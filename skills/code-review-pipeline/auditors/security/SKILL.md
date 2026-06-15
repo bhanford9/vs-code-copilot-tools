@@ -118,11 +118,19 @@ Write findings to `/code-review/security-audit.md` using the audit report templa
 
 ## 5. Update LessonsLearned
 
-Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop process:
-- **Codebase findings** (false positives specific to this codebase, project-specific patterns) → write to `LessonsLearned.md`
-- **Process/Model findings** (recurring false positive types, agent behavior gaps across any codebase) → write to `LessonsLearned.GLOBAL.md`
+After completing the audit, identify any **workflow process improvements** discovered during this session.
 
-Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/security/`.
+A **workflow process improvement** is: a missing workflow step, a new checklist item, a tool-use rule, a process sequencing discovery, or a scoping rule that would make this type of audit more accurate or efficient in ANY future review — regardless of the codebase being reviewed.
+
+Write qualifying improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/security/`.
+
+**Do NOT write**:
+- Codebase-specific observations, class names, method names, or file paths from the reviewed codebase
+- False-positive suppressions tied to this codebase’s architecture or conventions
+- Code-finding patterns, severity calibrations, or notes about what you found in this particular code
+- Anything that would not apply word-for-word to a review of a completely different codebase
+
+`LessonsLearned.md` (the per-repo local file) **should remain empty** — there is no codebase knowledge category that belongs in the skill.
 
 </workflow>
 

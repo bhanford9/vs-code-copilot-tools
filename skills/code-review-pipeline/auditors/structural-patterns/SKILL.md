@@ -1,5 +1,16 @@
 # Structural Patterns Audit Skill
 
+## Input Protocol
+
+> **This section governs how this auditor locates its input files. Follow it before doing any other work.**
+
+1. Read `code-review/auditor-input-index.md`
+2. Find your row by auditor name (`structural-patterns`)
+3. Read ONLY the files listed in your row — Changeset Input, Parallel Brief, and Pre-built Artifacts
+4. Do NOT read `changeset-full.md` or source files unless your row's Changeset Input column explicitly points to them
+5. If your Changeset Input is `changeset-full.md`, proceed normally as if you had the full diff
+6. If you believe the slice excluded something relevant to your findings, note it in your audit output under a **Dispatcher Coverage Note** section
+
 ## Skill Metadata
 
 **LessonsLearned**:
@@ -111,11 +122,19 @@ Write findings to `/code-review/structural-patterns-audit.md` using the audit re
 
 ## 6. Update LessonsLearned
 
-Read `~/Repos/vs-code-copilot-tools/skills/lessons-learned/SKILL.md` and follow the two-tier feedback loop:
-- **Codebase findings** (false positives specific to this codebase, project conventions that suppress a pattern for this repo) → write to `LessonsLearned.md`
-- **Process/Model findings** (recurring false-positive types, signal-detection improvements that apply to any codebase) → write to `LessonsLearned.GLOBAL.md`
+After completing the audit, identify any **workflow process improvements** discovered during this session.
 
-Both files at: `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/structural-patterns/`
+A **workflow process improvement** is: a missing workflow step, a new checklist item, a tool-use rule, a process sequencing discovery, or a scoping rule that would make this type of audit more accurate or efficient in ANY future review — regardless of the codebase being reviewed.
+
+Write qualifying improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/structural-patterns/`.
+
+**Do NOT write**:
+- Codebase-specific observations, class names, method names, or file paths from the reviewed codebase
+- False-positive suppressions tied to this codebase's architecture or conventions
+- Code-finding patterns, severity calibrations, or notes about what you found in this particular code
+- Anything that would not apply word-for-word to a review of a completely different codebase
+
+`LessonsLearned.md` (the per-repo local file) **should remain empty** — there is no codebase knowledge category that belongs in the skill.
 
 </workflow>
 

@@ -9,7 +9,9 @@ Before beginning any review work, read [LessonsLearned.GLOBAL.md](./LessonsLearn
 
 ## Overview
 
-The code review pipeline is a 6-agent system that audits code changes across eight quality dimensions. Sequential audits establish requirements and correctness context; a generic `REVIEW-Auditor` agent runs four batches in parallel, each executing one or more auditor-specific SKILL.md files in sequence. A dedicated synthesizer produces the final report.
+The code review pipeline is an 8-agent system that audits code changes across eight quality dimensions. Requirements and the new ChangesetDispatcher run in parallel first; Correctness follows sequentially; then a generic `REVIEW-Auditor` runs all 7 (or 8) specialist auditors simultaneously — one subagent per auditor, no batching. A dedicated synthesizer produces the final report.
+
+The **ChangesetDispatcher** is the key cost-reduction agent: it reads `changeset-full.md` once in isolation, classifies diff content per auditor using a relevance table, writes slim per-auditor slice files, and produces `auditor-input-index.md`. Each parallel auditor reads only its slice instead of the full diff.
 
 For full architecture and usage details, see [feature-overviews/code-review-pipeline/code-review-pipeline.md](../../feature-overviews/code-review-pipeline/code-review-pipeline.md).
 
@@ -23,24 +25,31 @@ The **`fetch-azure-devops-work-item`** skill is used by the Requirements Auditor
 
 | Agent | Role | When Invoked |
 |---|---|---|
-| `REVIEW-CodeReviewOrchestrator` | Entry point; routes to sequential auditors; launches 4 parallel REVIEW-Auditor batches | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
-| `REVIEW-RequirementsAuditor` | Extracts requirements; auto-fetches work item via API or prompts user | Sequential phase, first |
-| `REVIEW-CodeCorrectnessAuditor` | Verifies functional correctness against requirements | Sequential phase, second |
-| `REVIEW-Auditor` | Generic auditor; reads one or more auditor SKILL.md files and executes them in sequence | Parallel phase (4 batches) |
-| `REVIEW-FinalSynthesizer` | Reads all 10 audit reports, applies LessonsLearned, writes final-review.md | After parallel phase completes |
+| `REVIEW-CodeReviewOrchestrator` | Entry point; coordinates all stages; launches parallel blocks | User invokes `/ReviewLocal` or `/PrepareCommitReview` |
+| `REVIEW-RequirementsAuditor` | Extracts requirements; auto-fetches work item via API or prompts user | Stage 2 (parallel with Dispatcher) |
+| `REVIEW-ChangesetDispatcher` | Classifies diff per auditor; writes per-auditor slices + `auditor-input-index.md` | Stage 2 (parallel with Requirements) |
+| `REVIEW-CodeCorrectnessAuditor` | Verifies functional correctness against requirements | Stage 3 (sequential, after Requirements) |
+| `REVIEW-Auditor` | Generic auditor; reads `auditor-input-index.md`, then executes one assigned skill | Stage 5 (fully parallel — one subagent per auditor) |
+| `REVIEW-FinalSynthesizer` | Reads all audit reports, applies LessonsLearned, writes final-review.md | Stage 6 (sequential, after all parallel audits) |
 
-### Parallel Batch Assignments
+### Stage 5 Auditor Assignment
 
-The Orchestrator launches 4 `REVIEW-Auditor` batches simultaneously:
+The Orchestrator launches one `REVIEW-Auditor` subagent per specialist auditor simultaneously — no batching:
 
-| Batch | Auditor Skills Assigned |
+| Subagent | Auditor Skill |
 |---|---|
-| A | unit-test-coverage, testability |
-| B | extensibility, structural-patterns, maintainability |
-| C | ripple-effect |
-| D | performance [+ security if surface detected] |
+| 1 | unit-test-coverage |
+| 2 | testability |
+| 3 | extensibility |
+| 4 | structural-patterns |
+| 5 | maintainability |
+| 6 | ripple-effect |
+| 7 | performance |
+| 8 | security (only if `securitySurface=true`) |
 
 Each auditor skill lives at: `skills/code-review-pipeline/auditors/{name}/SKILL.md`
+
+Each subagent reads `code-review/auditor-input-index.md` first (written by the Dispatcher in Stage 2) to discover its specific changeset slice path and pre-built artifacts.
 
 ## Conventions
 
@@ -64,7 +73,7 @@ When a repo uses git worktrees and the current branch IS the base branch (`HEAD 
 ### Agent frontmatter: `user-invocable: false` vs. `disable-model-invocation: true`
 `disable-model-invocation: true` prevents ALL programmatic invocation of an agent — including by an Orchestrator that lists it in its `agents:` frontmatter array. Any REVIEW-* agent meant to be called by the Orchestrator or Coordinator must use `user-invocable: false` instead. Reserve `disable-model-invocation: true` only for agents that must never be invoked by any agent under any circumstances.
 
-### changeset-full.md: the primary context file for all auditors
+### changeset-full.md: the primary context file — read by Requirements, Correctness, and Dispatcher only
 After running `build-changeset.ps1`, `code-review/changeset-full.md` contains five sections:
 
 | Section | Content | Primary consumers |
@@ -75,7 +84,7 @@ After running `build-changeset.ps1`, `code-review/changeset-full.md` contains fi
 | D — Symbol reference index | File:line:content for every reference to each changed public symbol | RippleEffect (replaces all grep calls) |
 | E — Test file index | Changed source → expected test file + existence check | UnitTestCoverage, Testability |
 
-**Auditors should read `changeset-full.md` as their first action** (after LessonsLearned). They should use the sections appropriate to their audit and only perform additional `read_file` calls for targeted investigation after the index points them to specific locations.
+**Requirements, Correctness, and the Dispatcher** read `changeset-full.md` as their first action. Parallel specialist auditors (Stage 5) do NOT read `changeset-full.md` directly — they read `code-review/auditor-input-index.md` first to discover their assigned slice file (or `changeset-full.md` if the dispatcher determined slicing wasn't worth it for their dimension). This distinction is the primary token-cost control in the pipeline.
 
 ### Security surface classification: skip batch D security audit when not applicable
 `detect-base-branch.ps1` writes `securitySurface: true/false` to `session-config.json` by scanning changed file paths for controller/auth/input/external integration patterns. The Orchestrator reads this before launching the parallel phase. When `securitySurface = false`, write the security-audit.md stub directly (no subagent dispatch) and omit security from Batch D's prompt.
@@ -87,6 +96,7 @@ This skill uses a per-auditor LessonsLearned structure. Each parallel auditor ma
 ```
 skills/code-review-pipeline/auditors/
   audit-report-template.md             shared compact report format
+  changeset-dispatcher/ SKILL.md + LessonsLearned.GLOBAL.md
   ripple-effect/       SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
   unit-test-coverage/  SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md
   testability/         SKILL.md + LessonsLearned.GLOBAL.md + LessonsLearned.md

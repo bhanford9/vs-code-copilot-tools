@@ -22,17 +22,17 @@ Your procedure has three phases.
 
 ## Phase 0 — Read Shared Context
 
-Read these four files before executing any auditor skill:
+Read these files before executing any auditor skill:
 
-1. **`/code-review/parallel-brief.md`** — the requirements and correctness summary produced by earlier pipeline stages
-2. **`/code-review/changeset.md`** — the full list of changed files with diff context
+1. **`code-review/auditor-input-index.md`** — the dispatcher-generated manifest. Find the row matching your assigned auditor name.
+2. **Read each file listed in your row's input manifest:** Changeset Input, Parallel Brief, and Pre-built Artifacts (if any). Read each in a **single `read_file` call** using `startLine: 1` and a large `endLine` (e.g. `99999`). Do NOT read changeset files in chunks — each chunk call is a separate LLM turn that accumulates all prior content in context, making a 6,000-line file read in 150-line chunks ~20× more expensive than a single read.
 3. **`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/audit-report-template.md`** — the shared audit report template used by all compact-format auditors
 4. **`~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`** — output format rules, severity definitions, and **output token budget constraints** that all auditors must follow
 
 These files must be in context before you begin any audit work. Do not re-read them during Phase 2.
 
-> **TOKEN BUDGET RULE — `changeset-full.md` is FORBIDDEN in Phase 0.**
-> Do NOT read `code-review/changeset-full.md` unless a specific finding cannot be answered by the files listed above and you have already exhausted them. It is 200+ KB and reading it speculatively multiplies pipeline cost by 4–6×. If your assigned skill instructs you to read the "full changeset", satisfy that requirement with `changeset.md` + `parallel-brief.md`. Only fetch `changeset-full.md` as a last resort for a targeted section, never as a default Phase 0 read.
+> **TOKEN BUDGET RULE — `changeset-full.md` access is index-governed.**
+> Do NOT read `code-review/changeset-full.md` unless your row's **Changeset Input** column explicitly points to it. The dispatcher decides whether you receive the full file or a targeted slice. If your row points to a slice file, use that slice and do not fetch the full file. If you believe relevant content is missing from your slice, note it in your audit output under a **Dispatcher Coverage Note** section — do not silently read `changeset-full.md` to compensate.
 
 ---
 
@@ -60,7 +60,7 @@ Work through your todo list one auditor at a time. For each:
 
 1. Mark the todo item as in-progress
 2. Execute every workflow step defined in the skill file
-   - The shared context from Phase 0 is already in memory — do not re-read `parallel-brief.md`, `changeset.md`, or `audit-report-template.md`
+   - The shared context from Phase 0 is already in memory — do not re-read `auditor-input-index.md`, your changeset input file(s), `parallel-brief.md`, or `audit-report-template.md`
    - **Do** read any auditor-specific files called for by the skill (e.g., LessonsLearned files, STRUCTURAL-PATTERN-CATALOG.md, CONVENTIONS.md)
 3. Write the audit report to the output file specified in the skill
 4. Complete the LessonsLearned update step from the skill

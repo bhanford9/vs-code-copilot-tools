@@ -104,3 +104,16 @@ All `*-audit.md` files (except `final-review.md`) are consumed only by the Final
 - `## Clean` section: one comma-separated list, not a paragraph
 - `**Issue**:` and `**Fix**:` fields: 1–2 sentences each, 3 sentences maximum
 - If a finding has only Low severity, the entire findings section should fit in ≤150 words
+
+## Auditor Input Index Protocol
+
+All parallel specialist auditors (Stage 5) MUST follow this input protocol:
+
+1. **Read `code-review/auditor-input-index.md` first** — before reading any other audit input
+2. **Find your row** in the index by auditor name (first column)
+3. **Read only the files listed in your row** — Changeset Input, Parallel Brief, and Pre-built Artifacts
+4. **Do NOT read `changeset-full.md`** unless your row's Changeset Input column explicitly points to it
+5. **Slice precedence:** if your row points to a slice file in `code-review/slices/`, that slice IS your changeset — treat it as authoritative
+6. **Dispatcher Coverage Note:** if you believe your slice excluded relevant content, add a `## Dispatcher Coverage Note` section to your audit output describing what you believe is missing and why — do not silently compensate by reading the full file
+
+The `auditor-input-index.md` is written by `REVIEW-ChangesetDispatcher` in Stage 2. If it does not exist when Stage 5 launches, the pipeline gate check will have already caught that condition.
