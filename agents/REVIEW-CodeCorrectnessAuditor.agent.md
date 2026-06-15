@@ -43,7 +43,9 @@ Load and thoroughly understand `/code-review/requirements-audit.md`:
 
 ## 2. Analyze Code Changes for Correctness
 
-Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
+Read `/code-review/changeset-full.md` in a **single `read_file` call** with `endLine: 99999` — it contains the commit log, changed-file stat, and full diffs. Do NOT also read `changeset.md`; it is a subset of changeset-full.md.
+
+> **SINGLE-READ RULE**: Read every file in a single call. Never read any file in multiple chunks. Each extra read_file call accumulates that file's content in context for ALL subsequent turns, multiplying cost.
 
 For each requirement, verify:
 

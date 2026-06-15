@@ -3,7 +3,9 @@
 This file defines the shared report format used by all parallel auditors.
 It is read once per batch session in Phase 0 and stays in context throughout.
 
-> **Output budget**: These files are synthesizer input only — not human docs. Write the minimum needed for the synthesizer to make merge/block decisions. Targets: clean-pass ≤400 words, standard ≤600 words, finding-heavy ≤800 words. Omit empty severity sections. No reasoning traces, no codebase tours, no closing summary paragraphs.
+> **Output budget**: These files are synthesizer input only — not human docs. Write the minimum needed for the synthesizer to make merge/block decisions. Targets: clean-pass ≤100 words, standard ≤600 words, finding-heavy ≤800 words. Omit empty severity sections. No reasoning traces, no codebase tours, no closing summary paragraphs.
+>
+> **Zero-findings rule**: If all severities are 0, write ONLY the header stats line and `## Clean: All dimensions pass`. Do NOT list what was checked. Do NOT describe what was confirmed correct. The synthesizer only needs to know what to fix — a clean audit needs no prose.
 
 ---
 
@@ -56,6 +58,7 @@ Each auditor adds one identifying field between `**Where**:` and `**Issue**:`:
 | Security | `**Category**: {Injection \| AccessControl \| SensitiveData \| Cryptography \| InputValidation \| Misconfiguration \| Authentication}` + `**OWASP**: {e.g., A03:2021 – Injection}` |
 | Extensibility | `**Principle**: {OCP \| DIP \| Coupling \| Configuration \| APIEvolution}` |
 | Structural Patterns | `**Pattern**: {SP-XXX — pattern name}` |
+| Testability | `**Dimension**: {DependencyInjection \| ExternalDependencies \| Complexity \| LawOfDemeter \| HiddenDependencies \| ObservableOutcomes}` |
 
 Structural Patterns also adds two additional sections after `## Clean`:
 ```markdown
@@ -71,9 +74,4 @@ And a `**Patterns applied**:` line in the header stats:
 **Patterns applied**: {comma-separated list, e.g., SP-001, SP-002, SP-003}
 ```
 
----
 
-## Testability Auditor Exception
-
-The Testability Auditor uses a different, more verbose format defined in its own SKILL.md.
-It does not use the compact format above.

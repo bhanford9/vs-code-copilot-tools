@@ -20,7 +20,7 @@
 
 **Output file**: `/code-review/testability-audit.md`
 
-**Audit report template**: This auditor uses a **verbose multi-section format** (defined below), not the standard compact format from Phase 0. The verbose format provides a separate section per testability dimension, which is appropriate for this audit's depth of analysis.
+**Audit report format**: Use the **standard compact format** from `audit-report-template.md`. The testability discriminator field is `**Dimension**: {DependencyInjection | ExternalDependencies | Complexity | LawOfDemeter | HiddenDependencies | ObservableOutcomes}`.
 
 ---
 
@@ -124,67 +124,14 @@ For each issue provide:
 
 ## 4. Write Testability Audit Report
 
-Write findings to `/code-review/testability-audit.md` using the verbose format below.
+Write findings to `/code-review/testability-audit.md` using the **compact format** from `audit-report-template.md`.
 
-<testability_report_format>
+The discriminator field for each finding is:
+- `**Dimension**: {DependencyInjection | ExternalDependencies | Complexity | LawOfDemeter | HiddenDependencies | ObservableOutcomes}`
 
-```markdown
-# Testability Audit Report
+Place it between `**Where**:` and `**Issue**:` in each finding block.
 
-## Summary
-
-**Code Changes Analyzed**: {number} files
-**Overall Testability**: {Excellent | Good | Fair | Difficult | Untestable}
-**Critical Issues**: {number}
-**High Priority Issues**: {number}
-
-{2-3 sentence overview of code testability}
-
----
-
-## Issues & Recommendations
-
-{For each severity level (🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low), group issues following this pattern:}
-
-**{Issue Title}**
-- **Location**: [file.cs](file.cs#L{lines})
-- **Problem**: {Description of testability blocker}
-- **Impact**: {Why this makes testing impossible or difficult}
-- **Recommendation**: {Specific refactoring to enable testing}
-- **How This Helps Testing**: {Explain testability improvement}
-
----
-
-## Dependency Injection Analysis
-{Analyze hard-coded dependencies, constructor vs field injection, service locator patterns.}
-
-## External Dependencies
-{Analyze IO operations, network calls, time/date dependencies, randomness, database access.}
-
-## Complexity Analysis
-{Analyze cyclomatic complexity (>10), method length (>50 lines), nested conditionals.}
-
-## Law of Demeter Violations
-{Analyze chain calls, feature envy, inappropriate intimacy.}
-
-## Hidden Dependencies
-{Analyze singletons, static method calls, global state, direct instantiation.}
-
-## Observable Outcomes
-{Analyze void methods with side effects, hidden state changes, return values vs side effects.}
-
----
-
-## Conclusion
-
-{1-2 paragraph summary of overall testability level and most impactful improvements}
-
-**Testability Score**: {X/10}
-
-**Recommendation**: {✅ Code is testable | ⚠️ Address high-priority issues | ❌ Fix critical testability blockers}
-```
-
-</testability_report_format>
+> **Zero-findings rule**: If all dimensions pass, write ONLY the header stats line (all zeros) and `## Clean: All dimensions pass`. Do NOT describe what was analyzed, confirmed, or found to be good. The synthesizer only needs to know what to fix.
 
 ## 5. Update LessonsLearned
 

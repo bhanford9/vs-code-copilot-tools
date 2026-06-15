@@ -33,7 +33,9 @@ Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/LessonsLearned.G
 
 ## 1. Analyze Code Changes
 
-Read `/code-review/changeset.md` — contains the commit log, changed-file stat, and uncommitted file list pre-computed by the Orchestrator. Use your read/search tools to inspect specific files as needed.
+> **SINGLE-READ RULE**: Read every file in a **single `read_file` call** with `endLine: 99999`. Never read any file in multiple chunks. Each extra read_file call accumulates that file's content in context for ALL subsequent turns, multiplying cost.
+
+Read `/code-review/changeset-full.md` in one call — it contains the commit log, changed-file stat, and full diffs. Do NOT also read `changeset.md`; it is a subset of changeset-full.md. Use your read/search tools to inspect specific source files as needed.
 
 **Extract domain-level requirements** by analyzing:
 - What functionality is being added/modified?

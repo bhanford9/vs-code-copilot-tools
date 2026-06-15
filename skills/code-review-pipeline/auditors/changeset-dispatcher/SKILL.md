@@ -23,11 +23,11 @@ You do NOT read `parallel-brief.md` or any audit reports. You run in parallel wi
 
 Note whether `securitySurface` is `true` or `false`. If false, omit the security auditor row entirely from the index.
 
-### 2. Read changeset-full.md in ONE call
+### 2. Read all input files in ONE call each
 
-Read the full diff in a **single `read_file` call** using `startLine: 1` and a large `endLine` value (e.g. `99999`). Do NOT read it in chunks.
-
-> **Why:** Each `read_file` call is a separate LLM turn. Every subsequent turn pays the cost of all previously-read content still in context. Reading a 6,000-line file in 150-line chunks results in ~40 turns and processes roughly $\frac{40 \times 41}{2} \times 150 \approx 123{,}000$ effective lines — about 20× more expensive than a single read. The file is always well within the model's context window.
+> **SINGLE-READ RULE — applies to every file you read in this skill**: Use a **single `read_file` call** with `startLine: 1` and `endLine: 99999`. Do NOT read any file in multiple chunks, regardless of its size.
+>
+> **Why:** Each `read_file` call is a separate LLM turn. Every subsequent turn pays the cost of all previously-read content still in context. Reading a 6,000-line file in 150-line chunks results in ~40 turns and processes roughly $\frac{40 \times 41}{2} \times 150 \approx 123{,}000$ effective lines — about 20× more expensive than a single read. Every file you read (SKILL.md, LessonsLearned, changeset-full.md, session-config.json) stays in context for the rest of your turns.
 
 You will not re-read `changeset-full.md` after this step.
 
