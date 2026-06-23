@@ -88,9 +88,25 @@ Before reporting a test as missing, open the test file and search for the behavi
 
 ---
 
+### fetch-ado-workitem fails silently on new worktrees — check for .env before invoking
+
+The `fetch-ado-workitem` skill requires a `.env` file in the skill directory alongside `SKILL.md`. On first use in a worktree that was cloned or created fresh, this file does not exist. The script exits with a clear error, but the requirements auditor should detect this immediately and proceed with commit-log-based inference rather than prompting the user for a PAT interactively. Record this as a non-blocking condition: infer requirements from commits and note "ADO PAT not configured" in the audit report.
+
+---
+
 ### Requirements audit without a work item: group by feature area, not by file
 
 Structure the audit around intent-grouped feature areas inferred from the diff: (1) foundational abstractions, (2) refactors, (3) new entry points, (4) downstream behavior changes. This ordering surfaces Critical gaps that a file-by-file scan would miss.
+
+---
+
+### Section C slice bloat: structural/maintainability auditors hit the threshold when large implementation files are included in full
+
+When a changeset contains large implementation files (>300 lines) in Section C, structural-patterns and maintainability auditors often see slices that exceed the 75% threshold, triggering full-changeset fallback. Root cause: these auditors care about class shape and naming patterns, not method-body implementation details past the first ~300 lines.
+
+`build-slices.ps1` now applies a 300-line per-file cap for these auditors. With the cap, their slices drop to ~73% of full changeset (measured against a PR with a 1,318-line SkiaSharp renderer). Performance and ripple-effect auditors remain uncapped — they need full implementation bodies.
+
+Diagnostic signal: if structural-patterns or maintainability show "100% (threshold)" in `auditor-input-index.md`, they fell back to full changeset. The cap in `build-slices.ps1` prevents this for any file under 300 lines; for larger files, a `<!-- SECTION-C-TRUNCATED -->` marker tells the auditor content was capped.
 
 ---
 
