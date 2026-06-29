@@ -45,7 +45,7 @@ Read `csharp-diagnostics-report.tmp` in workspace root. Contains errors, warning
 
 ## Multi-Root Workspaces
 
-In multi-root workspaces, `csharp-diagnostics-report.tmp` is written to the **root of the workspace folder that was opened**, not necessarily the folder containing the `.sln` file. If the report isn't found, check sibling workspace folder roots.
+In multi-root workspaces, `csharp-diagnostics-report.tmp` is written to the **root of the workspace folder that was opened**, not necessarily the folder containing the `.slnx` file. If the report isn't found, check sibling workspace folder roots.
 
 ## Known Failure Modes
 

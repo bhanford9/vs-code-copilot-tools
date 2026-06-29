@@ -10,6 +10,11 @@ Only append if the session revealed a missing synthesis step, a conflict resolut
 
 ---
 
+### build-synthesis-input script only outputs 🟠+ reports: always read ALL audit reports for complete synthesis
+The `build-synthesis-input.ps1` script outputs only audits that contain 🟠 or higher findings. Audits rated "MERGE WITH CONDITIONS" with only 🟡 findings (e.g., Extensibility, Testability, Structural Patterns) are intentionally excluded from the script output. However, those audits contain 🟡 findings that must be included in the Medium section of the final report. Always read all audit files in `/code-review/` — not just the ones listed by the script — before writing the final report.
+
+---
+
 ### Three-auditor testing gap convergence: consolidate to High with Coverage auditor's recommendations
 When three auditors independently surface a testing gap from different angles, consolidate into one High finding. Use the Coverage auditor's specific test recommendations as the action items. Do not produce three separate Medium findings.
 
@@ -80,6 +85,11 @@ When Ripple Effect, Testability, and/or Extensibility overlap with Maintainabili
 
 ---
 
+### Three-auditor convergence rule generalizes beyond test gaps: any structural finding from 3+ auditors → High
+The "three-auditor testing gap convergence → High" rule applies equally when three auditors flag the same structural coupling issue from different angles (Maintainability = DRY, Testability = DI seam, Extensibility = DIP). Consolidate to one High compound finding using the Testability auditor's concrete fix recommendation as the primary action item.
+
+---
+
 ### Dead-code safety confirmation overrides specialist severity bump
 When the Requirements auditor rates a finding 🟠 but Code Correctness confirms the affected code path was dead in production (e.g., gated by a toggle that was always ON), use 🟡 in the final report. A confirmed dead-code argument is a factual safety claim that outweighs a specialist's architectural concern rating. Document both views in the finding body so the team has full context.
 
@@ -87,6 +97,26 @@ When the Requirements auditor rates a finding 🟠 but Code Correctness confirms
 
 ### Same element introduced in this PR: do not apply the pre-existing downgrade rule
 The rule "pre-existing issues rate lower than introduced issues" applies only to issues that existed BEFORE the PR. When an element was introduced in the current PR, do not downgrade its severity on pre-existing grounds.
+
+---
+
+### New interface method added but consuming classes not updated → 5-auditor convergence
+When a changeset adds a method to an interface but existing concrete-class callers still use the static/concrete method instead, this "interface added but not adopted" pattern will be independently flagged by Maintainability, Extensibility, Structural Patterns, Testability, and Performance auditors. In synthesis, consolidate all five into one High compound finding with numbered action bullets (one per auditor dimension). Do not produce five separate Medium findings.
+
+---
+
+### Security SKIPPED: omit Security from findings sections, keep one-liner in Summary by Category
+When the Security Auditor returns "SKIPPED — no security surface," do not include a Security heading in the Critical/High/Medium/Low sections. Include a single "No findings" line under the Security sub-heading in "Summary by Category" so reviewers know the audit ran. This avoids a blank section that implies the check was forgotten.
+
+---
+
+### Ripple Effect 🟡 with runtime-behavioral impact: assess functional severity independently of auditor rating
+A Ripple Effect 🟡 finding (e.g., a missing route in a navigation dispatch table) may be functionally a "fix before merge" bug even though the auditor rated it 🟡. In synthesis, when a Ripple Effect finding causes a broken user-visible behavior (not just an architectural gap), elevate it to the H (High) section of the final report under a "runtime bug" label regardless of the auditor's 🟡 rating. Document the auditor's original rating in the finding body.
+
+---
+
+### Root-cause High finding that drives other High findings: state the dependency in Next Steps
+When a blocking High finding is the upstream root cause of one or more other blocking High findings (e.g., a method's design flaw causes both per-render I/O and per-loop I/O in different callers), the Next Steps section should explicitly say "fixing High #N substantially resolves High #M."
 
 ---
 

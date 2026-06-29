@@ -6,7 +6,7 @@
 
 1. Read `code-review/auditor-input-index.md`
 2. Find your row by auditor name (`maintainability`)
-3. Read ONLY the files listed in your row — Changeset Input, Parallel Brief, and Pre-built Artifacts
+3. Read ONLY the files listed in your row — Changeset Input and Pre-built Artifacts
 4. Do NOT read `changeset-full.md` or source files unless your row's Changeset Input column explicitly points to them
 5. If your Changeset Input is `changeset-full.md`, proceed normally as if you had the full diff
 6. If you believe the slice excluded something relevant to your findings, note it in your audit output under a **Dispatcher Coverage Note** section
@@ -28,10 +28,6 @@ Use `## Clean` to list dimensions with no findings (e.g., "Dependency Hygiene, K
 
 ---
 
-You are the **MAINTAINABILITY AUDITOR**, one of the parallel auditors in the code review pipeline.
-
-Your mission: Evaluate how easy the code will be to understand, modify, and maintain over time, focusing on readability, design principles, and dependency management.
-
 <workflow>
 
 ## 0. Read LessonsLearned
@@ -43,137 +39,61 @@ Read the LessonsLearned files listed in Skill Metadata above. Apply any recorded
 ## 1. Evaluate Maintainability Dimensions
 
 ### Readability
-**Can developers quickly understand what the code does?**
-- Variable and function naming clarity
-- Code organization and structure
-- Consistent formatting and style
-- Appropriate abstractions
 - Magic numbers and strings
-- Complex expressions that need simplification
+- When a document claims behaviors are "test-verified" or states counts ("N entries," "M providers"), cross-reference against actual code before accepting as fact
 
 ### Single Responsibility Principle (SRP)
-**Does each unit do one thing well?**
-- Functions/methods with multiple responsibilities
-- Classes handling too many concerns
-- Mixed levels of abstraction
-- God objects or functions
-- Appropriate function/method length
 
 ### Modularity & Coupling
-**Are dependencies appropriate?**
-- Tight coupling between components
-- Circular dependencies
-- Inappropriate dependencies (e.g., high-level depending on low-level)
-- Module cohesion
-- Clear interfaces and boundaries
-- Dependency injection opportunities
+- When an interface method is newly added, scan all changeset callers for ones still using the concrete static/instance method — partial adoption is a coupling finding
+- After a toggle-promotion changeset, check classes whose toggle guard was removed for orphaned toggle-bag fields — these compile cleanly and evade dead-code tools; rate Medium
 
-### YAGNI (You Aren't Gonna Need It)
-**Is the code over-engineered?**
-- Premature abstractions
-- Unused parameters or return values
-- Complex patterns for simple problems
-- Generic solutions for specific needs
-- Framework/library overkill
+### YAGNI
+- New records/DTOs: verify each public property is read by a caller outside the declaring file — unpopulated-write-only properties compile cleanly and are invisible without a usage search
 
-### KISS (Keep It Simple, Stupid)
-**Is the code as simple as possible?**
-- Unnecessary complexity
-- Clever code that's hard to understand
-- Overly nested logic
-- Could simpler data structures work?
-- Simpler algorithms available?
+### KISS
 
 ### Dependency Hygiene
-**Are external dependencies managed well?**
-- Unnecessary dependencies added
-- Outdated or deprecated libraries
-- Heavy dependencies for light usage
-- Version constraints appropriate
-- Dependency conflicts
+
+### DRY: Hotspot Cross-Reference
+
+Slice-based auditing is structurally unlikely to catch DRY violations where each file independently implements the same operation — no single file looks wrong in isolation. Scan all changeset files together and compare any repeated conceptual operation for behavioral drift.
+
+**Common hotspot patterns to look for**:
+- String parsing / splitting / trimming (e.g., comma-separated value parsing with varying `.Trim()` / `.Replace(" ", "")` / whitespace normalization)
+- Path construction (same directory path assembled independently in multiple files)
+- Status or state string matching (e.g., pattern-matched against process output or log lines)
+- Null/empty guards repeated inline instead of delegated to a shared utility
+- New shared helper extracted from inline logic: verify all pre-existing inline copies were replaced — a helper coexisting with remaining copies creates multi-way divergence
+- Multiple new classes in the same namespace: scan private static methods for verbatim duplicates, especially mapping/conversion helpers
+- Cross-assembly: when a lower-level assembly (e.g., Core) defines a path-construction method, check higher-level assemblies (ViewModels, UI) for independent re-implementations
+
+**Severity guide**:
+- 🟠 High: Two or more implementations of the same logic exist **and** have measurably different behavior (different character classes stripped, different null handling, different edge-case results) — a behavioral inconsistency that can silently produce different outputs depending on which code path runs
+- 🟡 Medium: Two or more copies exist but behave identically — pure duplication with no behavioral gap yet, but a future maintainer editing one will miss the other
 
 ## 2. Identify Maintainability Issues
 
-Categorize by severity:
+Severity: 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low
 
-### 🔴 Critical - Will cause major maintenance problems
-- Extremely complex, unmaintainable code
-- Severe coupling that prevents changes
-- Code that violates core architectural principles
-- Dependency disasters
-
-### 🟠 High - Will hinder future development
-- Significant readability issues
-- Major SRP violations
-- Tight coupling affecting multiple areas
-- Over-engineering that complicates maintenance
-
-### 🟡 Medium - Could be improved
-- Moderate readability issues
-- Minor design principle violations
-- Some unnecessary complexity
-- Small refactoring opportunities
-
-### 🟢 Low - Nice to have improvements
-- Naming improvements
-- Minor simplifications
-- Style consistency
-
-## 3. Suggest Improvements
-
-For each issue, provide:
-- Specific code examples showing the problem
-- Concrete refactoring suggestions
-- Before/after code snippets where they clarify the fix
-- Explanation of why the improvement matters
-
-## 4. Write Maintainability Audit Report
+## 3. Write Maintainability Audit Report
 
 Write findings to `/code-review/maintainability-audit.md` using the audit report template (already in your context from Phase 0). Use the finding block fields defined in Skill Metadata above.
 
-## 5. Update LessonsLearned
+## 4. Update LessonsLearned
 
-After completing the audit, identify any **workflow process improvements** discovered during this session.
-
-A **workflow process improvement** is: a missing workflow step, a new checklist item, a tool-use rule, a process sequencing discovery, or a scoping rule that would make this type of audit more accurate or efficient in ANY future review — regardless of the codebase being reviewed.
-
-Write qualifying improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/maintainability/`.
+Write qualifying workflow process improvements to `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/maintainability/LessonsLearned.GLOBAL.md`.
 
 **Do NOT write**:
 - Codebase-specific observations, class names, method names, or file paths from the reviewed codebase
-- False-positive suppressions tied to this codebase’s architecture or conventions
-- Code-finding patterns, severity calibrations, or notes about what you found in this particular code
+- Code-finding patterns, severity calibrations, or findings about this particular code
 - Anything that would not apply word-for-word to a review of a completely different codebase
 
-`LessonsLearned.md` (the per-repo local file) **should remain empty** — there is no codebase knowledge category that belongs in the skill.
+`LessonsLearned.md` (the per-repo local file) **should remain empty**.
 
 </workflow>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
-- Output directory: `/code-review/`
-- Severity levels: Critical, High, Medium, Low
-- Actionable, specific recommendations with code examples
+Shared output conventions are already in your Phase 0 context (inlined in REVIEW-Auditor.agent.md).
 </conventions>
 
-<audit_principles>
-
-**Think like a future maintainer:**
-- Will I understand this code in 6 months?
-- What happens when requirements change?
-- How hard is it to debug this?
-- Can new team members contribute easily?
-
-**Balance pragmatism with idealism:**
-- Perfect code doesn't exist
-- Every abstraction has a cost
-- Sometimes "good enough" really is good enough
-- Context matters — simple CRUD vs complex domain logic
-
-**Focus on impact:**
-- Prioritize changes that make biggest difference
-- Don't nitpick trivial style issues
-- Consider refactoring cost vs benefit
-- Some technical debt is acceptable
-
-</audit_principles>

@@ -6,7 +6,7 @@
 
 1. Read `code-review/auditor-input-index.md`
 2. Find your row by auditor name (`structural-patterns`)
-3. Read ONLY the files listed in your row — Changeset Input, Parallel Brief, and Pre-built Artifacts
+3. Read ONLY the files listed in your row — Changeset Input and Pre-built Artifacts
 4. Do NOT read `changeset-full.md` or source files unless your row's Changeset Input column explicitly points to them
 5. If your Changeset Input is `changeset-full.md`, proceed normally as if you had the full diff
 6. If you believe the slice excluded something relevant to your findings, note it in your audit output under a **Dispatcher Coverage Note** section
@@ -39,9 +39,7 @@ And after `## Clean`, two additional sections are required:
 
 ---
 
-You are the **STRUCTURAL PATTERNS AUDITOR**, one of the parallel auditors in the code review pipeline.
-
-Your mission: Detect structural design smells — recurring patterns that signal a class, method, or interface is misdesigned, over-burdened, or coordinating poorly. Unlike other auditors, you work from an explicit, extensible **pattern catalog** rather than open-ended heuristics. Each pattern has a named signal and a named review question. You do not invent new findings on the fly — you apply the catalog faithfully, and you recommend additions for smells you observe that are not yet catalogued.
+> This auditor works from an explicit **pattern catalog** — not open-ended heuristics. Apply the catalog faithfully and recommend additions for uncatalogued smells.
 
 <workflow>
 
@@ -122,22 +120,17 @@ Write findings to `/code-review/structural-patterns-audit.md` using the audit re
 
 ## 6. Update LessonsLearned
 
-After completing the audit, identify any **workflow process improvements** discovered during this session.
-
-A **workflow process improvement** is: a missing workflow step, a new checklist item, a tool-use rule, a process sequencing discovery, or a scoping rule that would make this type of audit more accurate or efficient in ANY future review — regardless of the codebase being reviewed.
-
-Write qualifying improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/structural-patterns/`.
+Write qualifying workflow process improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/structural-patterns/`.
 
 **Do NOT write**:
 - Codebase-specific observations, class names, method names, or file paths from the reviewed codebase
-- False-positive suppressions tied to this codebase's architecture or conventions
-- Code-finding patterns, severity calibrations, or notes about what you found in this particular code
+- Code-finding patterns, severity calibrations, or findings about this particular code
 - Anything that would not apply word-for-word to a review of a completely different codebase
 
-`LessonsLearned.md` (the per-repo local file) **should remain empty** — there is no codebase knowledge category that belongs in the skill.
+`LessonsLearned.md` (the per-repo local file) **should remain empty**.
 
 </workflow>
 
 <conventions>
-Read `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md` for shared severity levels, output directory, and report structure rules.
+Shared output conventions are already in your Phase 0 context (inlined in REVIEW-Auditor.agent.md).
 </conventions>

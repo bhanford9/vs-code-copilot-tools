@@ -10,84 +10,76 @@ The index file is the single source of truth for what each auditor reads. After 
 
 ## Input
 
-- `code-review/changeset-full.md` — the full diff (written by `build-changeset.ps1`)
-- `code-review/session-config.json` — for `securitySurface` and any skip flags
+- `code-review/prelim-classify.json` — grep-based per-file auditor flags (written by `build-changeset.ps1` → `build-prelim-classify.ps1`)
+- `code-review/changeset-sections-AB.md` — Sections A+B only extract (written by the same script; no Section C content)
+- `code-review/session-config.json` — for `securitySurface` and `sectionCMode`
 
-You do NOT read `parallel-brief.md` or any audit reports. You run in parallel with the Requirements Auditor, which also reads `changeset-full.md`.
+You do NOT read `changeset-full.md` directly. You run in parallel with the Requirements Auditor.
 
 ---
 
 ## Task
 
-### 1. Read session-config.json
+### Step 1 — Read session-config.json
 
-Note whether `securitySurface` is `true` or `false`. If false, omit the security auditor row entirely from the index.
+Read `code-review/session-config.json` in a single call. Note `securitySurface` (omit security row if false) and `sectionCMode`.
 
-### 2. Read all input files in ONE call each
+### Step 2 — Read pre-classified inputs
 
-> **SINGLE-READ RULE — applies to every file you read in this skill**: Use a **single `read_file` call** with `startLine: 1` and `endLine: 99999`. Do NOT read any file in multiple chunks, regardless of its size.
->
-> **Why:** Each `read_file` call is a separate LLM turn. Every subsequent turn pays the cost of all previously-read content still in context. Reading a 6,000-line file in 150-line chunks results in ~40 turns and processes roughly $\frac{40 \times 41}{2} \times 150 \approx 123{,}000$ effective lines — about 20× more expensive than a single read. Every file you read (SKILL.md, LessonsLearned, changeset-full.md, session-config.json) stays in context for the rest of your turns.
+Read each of these two files in ONE call each (both are small, bounded artifacts):
 
-You will not re-read `changeset-full.md` after this step.
+- `code-review/prelim-classify.json` — grep-based per-file auditor flags produced by `build-prelim-classify.ps1`. Use as your starting point.
+- `code-review/changeset-sections-AB.md` — Sections A and B only, pre-extracted by `build-prelim-classify.ps1`. Contains commit messages and per-file diff CHUNKs, but NO Section C content. Read this file in full. Do NOT read `changeset-full.md`.
 
-### 3. Classify content per auditor
+### Step 3 — Classify per auditor and decide Section C inclusion
 
-For each auditor in the table below, determine which diff hunks and files belong in that auditor's slice. Apply the relevance table strictly — when uncertain, include.
+For each changed file in `prelim-classify.json`, decide per auditor whether to include in the manifest. Start from the JSON pre-classification. Review Section B CHUNK content to refine.
 
-**Over-include by default.** False negatives (relevant content excluded from a slice) are more costly to the pipeline than false positives (slightly larger slices).
+Additionally decide whether each file warrants Section C inclusion for each relevant auditor:
+- **Section C = YES (static):** structural-patterns, maintainability — always include Section C
+- **Section C = NO (default):** ripple-effect, unit-test-coverage, extensibility (usually), performance (usually)
+- **Section C = YES (LLM decides):** when the diff alone is insufficient to understand full method structure, class hierarchy, or DI pattern being changed
 
-### 4. Write slice files
+Apply the relevance table below. When uncertain about a file, include it.
 
-For each auditor whose slice would be **less than 75% of changeset-full.md by line count**, write a slice file to:
+### Step 4 — Write dispatch-manifest.json
 
+Write `code-review/dispatch-manifest.json` as compact JSON (no embedded content — just file lists and flags):
+
+```json
+{
+  "auditors": {
+    "unit-test-coverage": {
+      "files_B": ["File1.cs", "File2.cs"],
+      "files_C": [],
+      "include_section_D": false,
+      "include_section_E": true
+    },
+    "ripple-effect": {
+      "files_B": ["ChangedInterface.cs"],
+      "files_C": [],
+      "include_section_D": true,
+      "include_section_E": false
+    },
+    "maintainability": {
+      "files_B": ["File1.cs", "File2.cs"],
+      "files_C": ["File1.cs", "File2.cs"],
+      "include_section_D": false,
+      "include_section_E": false
+    }
+  }
+}
 ```
-code-review/slices/changeset-{auditor-name}.md
-```
 
-Each slice file MUST begin with this header block (fill in actual values):
+Omit the security auditor entry if `securitySurface=false`.
 
-```markdown
-<!-- DISPATCHER SLICE: {auditor-name} -->
-<!-- Coverage estimate: {N}% of changeset-full.md line count -->
-<!-- Included: {brief description of what was included} -->
-<!-- Excluded: {brief description of what was excluded} -->
-<!-- If you believe relevant content was excluded, note it in your audit findings under "Dispatcher Coverage Note" -->
-```
-
-After writing a slice, call the ratio measurement script to confirm the threshold:
+### Step 5 — Run build-slices.ps1
 
 ```powershell
-powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/measure-slice-ratio.ps1" `
-  -SlicePath "code-review/slices/changeset-{auditor-name}.md" `
-  -FullPath "code-review/changeset-full.md"
+powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/build-slices.ps1"
 ```
 
-- **ratio < 0.75** → keep the slice file; record its path in the index
-- **ratio >= 0.75** → delete the slice file; record `code-review/changeset-full.md` in the index instead and note "threshold exceeded" in the Coverage Est. column
-
-### 5. Write auditor-input-index.md
-
-Write `code-review/auditor-input-index.md` with this exact format:
-
-```markdown
-# Auditor Input Index
-_Generated by REVIEW-ChangesetDispatcher. Each auditor reads only the files listed in its row._
-
-| Auditor | Changeset Input | Parallel Brief | Pre-built Artifacts | Coverage Est. | Notes |
-|---------|----------------|----------------|---------------------|---------------|-------|
-| unit-test-coverage | {path} | code-review/parallel-brief.md | {path or —} | {N}% | {one-line summary} |
-| testability | {path} | code-review/parallel-brief.md | {path or —} | {N}% | {one-line summary} |
-| performance | {path} | code-review/parallel-brief.md | — | {N}% | {one-line summary} |
-| extensibility | {path} | code-review/parallel-brief.md | — | {N}% | {one-line summary} |
-| structural-patterns | {path} | code-review/parallel-brief.md | — | {N}% | {one-line summary} |
-| maintainability | {path} | code-review/parallel-brief.md | — | {N}% | {one-line summary} |
-| ripple-effect | {path} | code-review/parallel-brief.md | {path or —} | {N}% | {one-line summary} |
-```
-
-- Omit the security row if `securitySurface=false`; include it if `securitySurface=true`
-- Pre-built Artifacts: include path to `code-review/test-diffs.md` for unit-test-coverage and testability (if it exists); include path to `code-review/dead-code-candidates.md` for ripple-effect (if it exists)
-- Check existence with `Test-Path` before listing a pre-built artifact path
+This script assembles all slice files from the CHUNK markers in `changeset-full.md`, measures each slice ratio (threshold = 0.75), and writes `code-review/auditor-input-index.md`. Your job is done after this script completes.
 
 ---
 

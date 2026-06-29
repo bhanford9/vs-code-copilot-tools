@@ -12,3 +12,6 @@ Only append if the session revealed a missing audit step or process rule that wo
 ---
 ### Feature-toggle promotion changesets: runtime behavior is always neutral for performance
 When auditing a feature-toggle promotion (toggle permanently enabled, dual-case code removed), verify the toggle's prior production state via the requirements audit. If the toggle was already always-on in production, the promotion changes nothing at runtime. Mark Memory and Algorithm dimensions as Clean without deep investigation.
+
+### Verify render-scope of per-row methods via grep before assigning severity
+Before flagging a method as a hot-path render concern (🟠+), confirm it actually appears in markup per-row/per-cell rather than only in event handlers. Use grep on `.razor` files for the method name. A method called only from an `@onclick` or `@oncontextmenu` event handler is invoked once per user gesture — not per render cycle — and should be rated one severity level lower than the same method called inside a `@foreach` row template.

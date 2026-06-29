@@ -129,6 +129,13 @@ After writing the correctness report, also write `/code-review/parallel-brief.md
 - **Implementation**: key files changed, patterns used, notable decisions
 - **Auditor flags**: anything that might look suspicious but is intentional (confirmed-correct behaviors, documented deferrals, phased delivery)
 
+After writing `parallel-brief.md`, open `code-review/auditor-input-index.md` and replace the placeholder line:
+```
+<!-- BRIEF: pending — filled by Correctness Auditor in Stage 3 -->
+```
+with the full content of the brief (Intent, Key Requirements, Implementation, Auditor Flags sections).
+Use `replace_string_in_file` targeting that exact comment line.
+
 ## 6. Present Findings and Gate Decision
 
 **⛔ STOP POINT — YOUR TURN ENDS HERE**
@@ -176,10 +183,9 @@ Both files are at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/`.
 </audit_report_template>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
 - Output directory: `/code-review/`
 - File name: `code-correctness-audit.md`
-- Severity levels: Critical, High, Medium, Low
+- Severity levels: 🔴 Critical, 🟠 High, 🟡 Medium, 🟢 Low
 - Changes scope: Since the base branch (detected from session-config.json)
 - Actionable, specific recommendations
 </conventions>

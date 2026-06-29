@@ -47,3 +47,13 @@ When a changeset consists entirely of adding `sealed` to implementation classes 
 
 ### Toggle-promotion changesets: dual-case test removal is correct
 When a toggle-promotion changeset removes toggle-off test cases and replaces them with single unconditional tests, this is the correct pattern — not a coverage gap. Do not flag the removal of disabled-case tests as a coverage regression.
+
+---
+
+### Widened method signature: existing Verify calls silently omit new parameters
+When a changeset extends a method or interface with additional parameters, check all existing mock Verify/Assert calls on that method. A Verify that was correct before the change may now silently skip the new arguments — the test still compiles and passes but the new parameters are unverified. Flag any Verify call that does not match all current parameters as a coverage gap.
+
+---
+
+### Interface extension: compilation after a breaking change does not imply the new methods are covered
+When an interface undergoes a breaking change that renames an existing method AND adds new methods, verify that test suites not only update references to the renamed method but also add tests for every new method. A codebase that compiles after the interface break gives no signal about new-method coverage — check each implementing test fixture explicitly.

@@ -20,19 +20,16 @@ Read your own LL files:
 
 Apply any recorded patterns to improve synthesis quality.
 
-## 1. Read All Audit Reports
+## 1. Triage Audit Reports
 
-Load all audit reports from `/code-review/`:
-- `requirements-audit.md`
-- `code-correctness-audit.md`
-- `unit-test-coverage-audit.md`
-- `maintainability-audit.md`
-- `testability-audit.md`
-- `performance-audit.md`
-- `extensibility-audit.md`
-- `security-audit.md`
-- `ripple-effect-audit.md`
-- `structural-patterns-audit.md`
+Run the summary script and capture its output:
+```powershell
+powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/build-synthesis-input.ps1"
+```
+
+The script outputs one file path per line for every report that requires synthesis. Read each file in the output, then proceed to synthesis. If the output is empty, all audits are clean — write a brief final report reflecting that.
+
+Do NOT apply your own judgment about which reports to include or exclude — the script has already decided.
 
 ## 2. Analyze and Synthesize
 

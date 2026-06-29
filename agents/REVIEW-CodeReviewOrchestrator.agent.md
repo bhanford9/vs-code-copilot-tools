@@ -71,12 +71,17 @@ Proceed to the next step immediately after reporting.
 
 When first invoked:
 
-1. **Build changeset** - Run once to write `code-review/changeset-full.md` for all downstream agents:
+1. **Clean up stale artifacts from any previous run:**
+   ```powershell
+   powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/clean-review-artifacts.ps1"
+   ```
+
+2. **Build changeset** - Run once to write `code-review/changeset-full.md` for all downstream agents:
    ```powershell
    powershell -File "$env:USERPROFILE/Repos/vs-code-copilot-tools/skills/code-review-pipeline/scripts/build-changeset.ps1"
    ```
 
-2. **Run the full pipeline** - Invoke all stages per the Pipeline section below. Do NOT stop or prompt the user between stages.
+3. **Run the full pipeline** - Invoke all stages per the Pipeline section below. Do NOT stop or prompt the user between stages.
 
 ## Pipeline
 

@@ -22,3 +22,8 @@ When auditing a toggle-promotion PR (feature flag permanently enabled, dual-case
 
 ### Additive-only property extensions: "Clean" is the correct verdict when all sibling consistency checks pass
 When a changeset adds new properties to an existing record or class without changing existing properties, verify: (1) the new properties follow the naming convention of siblings, (2) any companion arrays or dictionaries that enumerate same-type properties are updated. If both checks pass, "Clean" is the correct structural verdict — do not manufacture a finding.
+
+---
+
+### Parallel-brief suppressions do not prevent catalog entry suggestions
+When the parallel brief explicitly suppresses a finding with "Do not re-flag this as a new gap," the auditor must still assess whether the underlying structural smell belongs in the pattern catalog. The suppression prevents a finding block in the report — it does not prevent a "Suggested New Catalog Entries" draft. If the smell is genuinely uncatalogued and generalizable, document it as a catalog proposal.

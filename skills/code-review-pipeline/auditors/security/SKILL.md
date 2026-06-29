@@ -18,10 +18,6 @@ Use `## Clean` to list OWASP categories with no findings (e.g., "Injection, Cryp
 
 ---
 
-You are the **SECURITY AUDITOR**, one of the parallel auditors in the code review pipeline.
-
-Your mission: Identify security vulnerabilities in the changed code — including injection risks, broken access control, sensitive data exposure, insecure defaults, and missing input validation — before they reach production.
-
 <workflow>
 
 ## 0. Read LessonsLearned
@@ -104,39 +100,25 @@ Categorize by severity:
 - Dependency with CVE at low severity
 - Configuration hardening opportunities
 
-## 3. Document Findings
-
-For each issue provide:
-- The vulnerable code path with evidence
-- Concrete exploit scenario or attack vector
-- Severity reasoning
-- Specific remediation steps
-
-## 4. Write Security Audit Report
+## 3. Write Security Audit Report
 
 Write findings to `/code-review/security-audit.md` using the audit report template (already in your context from Phase 0). Use the finding block fields defined in Skill Metadata above.
 
-## 5. Update LessonsLearned
+Each finding must include a **concrete exploit scenario or attack vector** in the `**Issue**:` field.
 
-After completing the audit, identify any **workflow process improvements** discovered during this session.
+## 4. Update LessonsLearned
 
-A **workflow process improvement** is: a missing workflow step, a new checklist item, a tool-use rule, a process sequencing discovery, or a scoping rule that would make this type of audit more accurate or efficient in ANY future review — regardless of the codebase being reviewed.
-
-Write qualifying improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/security/`.
+Write qualifying workflow process improvements to `LessonsLearned.GLOBAL.md` at `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/auditors/security/`.
 
 **Do NOT write**:
 - Codebase-specific observations, class names, method names, or file paths from the reviewed codebase
-- False-positive suppressions tied to this codebase’s architecture or conventions
-- Code-finding patterns, severity calibrations, or notes about what you found in this particular code
+- Code-finding patterns, severity calibrations, or findings about this particular code
 - Anything that would not apply word-for-word to a review of a completely different codebase
 
-`LessonsLearned.md` (the per-repo local file) **should remain empty** — there is no codebase knowledge category that belongs in the skill.
+`LessonsLearned.md` (the per-repo local file) **should remain empty**.
 
 </workflow>
 
 <conventions>
-Read and follow all standards defined in `~/Repos/vs-code-copilot-tools/skills/code-review-pipeline/CONVENTIONS.md`:
-- Output directory: `/code-review/`
-- Severity levels: Critical, High, Medium, Low
-- Actionable, specific recommendations
+Shared output conventions are already in your Phase 0 context (inlined in REVIEW-Auditor.agent.md).
 </conventions>
