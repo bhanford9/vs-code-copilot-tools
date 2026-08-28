@@ -43,3 +43,40 @@ Asking is always the right fallback. It is better to prompt the user with a clea
 When asking, be specific: explain what you're uncertain about and why. Give the user enough context to answer efficiently. One well-framed question is worth far more than a paragraph of hedging.
 
 > Silence or inaction is never the correct response to uncertainty. When in doubt, ask.
+
+---
+
+## Don't Stop at the First Nugget — NON-NEGOTIABLE RULE
+
+When investigating, debugging, ideating, or brainstorming, **finding one plausible answer is not the same as finding the right or complete one.**
+
+The first cause, first bug, or first idea feels satisfying to find — that satisfaction is a trap. It creates a false sense of "I was diligent, I can stop now" long before the job is actually done.
+
+- After finding a candidate cause/bug/idea, **keep looking before declaring victory.** Ask: "what else could explain this?" or "is there a better option?"
+- Treat the first finding as **a lead to verify, not a conclusion.** Confirm it actually explains all the symptoms/requirements before committing to it.
+- For debugging: check for compounding or unrelated secondary issues, not just the one that matches first.
+- For ideation/brainstorming: generate multiple distinct options before evaluating or recommending one.
+- Only stop searching when you've either exhausted the reasonable search space or have positive evidence (not just a plausible story) that you found the real answer.
+
+> Don't get tripped up on the duck — the first thing that looks like the answer is exactly where scrutiny should increase, not stop.
+
+---
+
+## Scan for Tech Debt in the Surrounding Area — NON-NEGOTIABLE RULE
+
+Everything is subject to refactor. A change that shrinks a file, or improves testability, extensibility, or maintainability is worth pursuing — but only when asked for. Your job while working is to **notice and flag these opportunities**, not to silently refactor unrelated code.
+
+**Whenever you read or edit a non-trivial file, scan the surrounding class/area for design smells — even ones completely tangential to your current task.** Don't limit scrutiny to the lines you're touching; you're building an ongoing picture of where the codebase needs love.
+
+Watch for:
+- **Data + behavior coupling**: a single class doing both state-holding and business logic where the two could be split (e.g. into a data object + a service/strategy).
+- **Missing seams for common patterns**: Strategy, Factory, Repository, Builder, Visitor, or simple inversion of control — where a hand-rolled `switch`/`if` chain, direct `new`, or static coupling is standing in for one of these and hurting testability/extensibility.
+- **Inheritance where composition would serve better** — deep or fragile hierarchies built to share code rather than model true "is-a" relationships.
+- **God objects / oversized files** — classes doing too much, hard to navigate, hard for a future dev or agent to scope down to "just the part I need."
+- **Tight coupling that blocks testing** — no interface/seam to substitute a dependency, forcing integration-style tests where units would do.
+
+When you spot one:
+1. **Mention it briefly** in your response — don't derail the current task or refactor unprompted.
+2. **Offer to turn it into a tangential work item** (a follow-up story/ticket) so it's tracked rather than lost. If the user agrees, use the appropriate work-item creation flow available in the workspace (e.g. `creating-azure-stories`).
+
+> Flag debt as you find it, everywhere, even off-task. Fix it only when asked.
