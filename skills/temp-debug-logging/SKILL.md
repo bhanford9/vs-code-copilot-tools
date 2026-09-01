@@ -144,6 +144,8 @@ Before writing any code, verify the plan covers:
 
 If a gap is found, revise the plan before implementing.
 
+- [ ] **Call-volume check (known recurring failure)**: Estimate how many times each log call site will fire for a realistic run (iterations × loop nesting × candidates). If any site will fire more than a few hundred times per run — common for anything inside an iterative solver/convergence loop — the plan MUST use the persistent-writer pattern from Step 5, not a naive per-call file write. This has caused **3x+ test slowdowns** in real sessions (an 8-minute test ballooning to ~26 minutes) — see the Known Pitfall callout below.
+
 ---
 
 ## Step 5: Implement the Logging
@@ -155,6 +157,51 @@ Log at each of the following:
 - **Intermediate computations** — capture values before and after any non-trivial transformation
 - **Method exit** — capture what is returned or set (skip if already captured at the computation site)
 - **Exception handlers** — log the exception message and any context, even if swallowed
+
+### ⚠️ Known Pitfall: Per-Call `File.AppendAllText` Causes Drastic Slowdowns (Recurring Problem)
+
+**This has happened more than once and is easy to reach for by default — do not use `File.AppendAllText` as the write primitive for any log call site that fires more than a few hundred times per run.**
+
+`File.AppendAllText` opens the file, seeks to the end, writes, and closes the handle **on every single call**. A naive implementation also re-checks `File.Exists` on every call to decide whether to write the header first. Under a `lock` (needed for thread safety), this serializes every log write behind a full open/close syscall pair.
+
+Concrete real-world case: a test that normally completes in **under 8 minutes** took **~26 minutes** (3x+ slower) once debug logging was added inside an iterative convergence/solver loop, logging per-item × per-key × per-candidate — thousands of calls per run, each doing a full open/close. The effect is dramatically worse when the log path is a Docker bind-mounted Windows volume — each file-handle open crosses the container's file-sharing virtualization layer (gRPC-FUSE or similar), which is far slower per syscall than native filesystem access.
+
+**Fix: use a persistent writer, opened once, kept open for the life of the process.**
+
+```csharp
+private static readonly Lock _lock = new();
+private static StreamWriter? _writer;
+
+private static StreamWriter GetWriter(string path, string header)
+{
+    if (_writer is not null)
+    {
+        return _writer;
+    }
+
+    var isNewFile = !File.Exists(path);
+    // AutoFlush keeps data crash-safe without reopening the file handle each call.
+    _writer = new StreamWriter(path, append: true) { AutoFlush = true };
+    if (isNewFile)
+    {
+        _writer.WriteLine(header);
+    }
+
+    return _writer;
+}
+
+public static void WriteLine(string path, string header, string line)
+{
+    lock (_lock)
+    {
+        GetWriter(path, header).WriteLine(line);
+    }
+}
+```
+
+This keeps the same call-site API and append-across-runs behavior the rest of this skill relies on, but opens the underlying file handle exactly once per process instead of once per call. `AutoFlush = true` still pushes each line to the OS immediately (so a crash or `Ctrl+C` doesn't lose buffered data), it just avoids the repeated open/close/path-resolution cost.
+
+If `AutoFlush = true` is still too slow for extremely hot call sites (tens of thousands+ per run), batch further: accumulate lines in a `List<string>`/`StringBuilder` behind the lock and flush every N lines or on a background timer — but only reach for this if the simpler persistent-writer fix isn't enough, since losing the last unflushed batch on a crash makes debugging harder.
 
 ---
 
@@ -181,16 +228,17 @@ Example:
 - Write to `_debug_logs/` at the repo root
 - Create nested directory structure if it helps organize by feature/component (`_debug_logs/order-processor/`, `_debug_logs/shipping-service/`)
 - Add `_debug_logs/` to `.gitignore` if not already present
-- Use `File.AppendAllText` (append) so multiple runs accumulate; the user can delete the file between runs to reset
+- Use a **persistent `StreamWriter` opened once per process, with `AutoFlush = true`** (see the Known Pitfall callout in Step 5) so multiple runs still accumulate on disk without reopening the file handle per call
 - Use `Interlocked.Increment` for counters in concurrent code
 - Log at component handoff points — the input going in and the result coming back out
 
 **❌ DON'T:**
-- Introduce logging libraries (NLog, Serilog, Microsoft.Extensions.Logging) — `File.AppendAllText` only
+- Introduce logging libraries (NLog, Serilog, Microsoft.Extensions.Logging) — plain `StreamWriter`/`File` APIs only
+- **Call `File.AppendAllText` per log entry for any call site that fires more than a few hundred times per run** — it opens/closes the file handle every call and has caused 3x+ test slowdowns (an 8-minute test running ~26 minutes); use the persistent-writer pattern instead. `File.AppendAllText` is only acceptable for low-frequency call sites (e.g., one entry per test run, not per iteration).
 - Log inside tight inner loops without bounding or summarizing (risk: multi-GB files for thousands×thousands iterations)
 - Remove or alter the functionality of code under investigation before getting log results — log alongside it
 - Commit the log files or the instrumentation code
-- Open a `StreamWriter` without closing it — prefer `File.AppendAllText` for simplicity unless performance is a problem
+- Leave a `StreamWriter` unflushed with `AutoFlush = false` unless you've also added an explicit periodic/batched flush — an unflushed buffer lost on crash defeats the purpose of debug logging
 
 ---
 
