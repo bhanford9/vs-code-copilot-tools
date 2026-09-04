@@ -33,7 +33,7 @@ Before doing any work, write this block verbatim, filled in:
 
 ## SDLC Readiness Check — NON-NEGOTIABLE RULE
 
-> **This is a separate gate from the Ambiguity Scan above.** The Ambiguity Scan covers local clarity for *any* non-trivial request. This gate covers whether enough of the bigger picture exists to responsibly start **new, significant SDLC-level work** — a new feature, a new initiative, an architecture change, a significant refactor. For small fixes, narrow well-defined edits, or anything that isn't opening new scope, the Ambiguity Scan alone is sufficient — skip this gate.
+> **This is a separate gate from the Ambiguity Scan above.** The Ambiguity Scan covers local clarity for *any* non-trivial request. This gate covers whether enough of the bigger picture exists to responsibly start **new, significant SDLC-level work** — a new feature, a new initiative, an architecture change, a significant refactor, or research/ideation/discovery aimed at scoping one of those. For small fixes, narrow well-defined edits, or anything that isn't opening new scope, the Ambiguity Scan alone is sufficient — skip this gate.
 
 **Before starting new significant work, you MUST output a SDLC Readiness Check.** If you cannot answer an element with genuine confidence, that is a signal the higher-level picture hasn't been painted yet — surface it rather than filling the row with a plausible-sounding guess.
 
@@ -54,7 +54,7 @@ Before doing any work, write this block verbatim, filled in:
 
 - ✅ = answerable with genuine confidence — stated by the user, verified in the codebase/docs, or safely inferred
 - ❓ = cannot be answered with genuine confidence — do not fabricate a plausible-sounding answer just to fill the row
-- N/A = element doesn't carry weight at this project phase/scope — state briefly why
+- N/A = element doesn't carry weight at this project phase/scope (research/ideation work naturally has more N/A rows) — state briefly why
 - **Any ❓ row blocks starting implementation.** Either go research it (docs, code, existing tools) or ask the user — do not proceed on a guess.
 - If every element is confidently answerable, proceed immediately after the block.
 - Both gates can fire for the same request: run the Ambiguity Scan for local task clarity, and additionally this check when the task itself represents new significant scope.
