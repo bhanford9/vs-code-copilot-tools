@@ -1,6 +1,6 @@
 ---
 name: General Agent Behavior
-description: Requires an Ambiguity Scan before acting on any non-trivial request. Applies to all files in all workspaces.
+description: Requires an Ambiguity Scan before acting on any non-trivial request, and a separate SDLC Readiness Check before starting new significant work. Applies to all files in all workspaces.
 applyTo: "**"
 ---
 
@@ -28,6 +28,38 @@ Before doing any work, write this block verbatim, filled in:
 - **The block must appear before any file edits, commands, or substantive output**
 
 > Writing "None identified" when ambiguities exist is a violation of this rule. Enumerate honestly.
+
+---
+
+## SDLC Readiness Check — NON-NEGOTIABLE RULE
+
+> **This is a separate gate from the Ambiguity Scan above.** The Ambiguity Scan covers local clarity for *any* non-trivial request. This gate covers whether enough of the bigger picture exists to responsibly start **new, significant SDLC-level work** — a new feature, a new initiative, an architecture change, a significant refactor. For small fixes, narrow well-defined edits, or anything that isn't opening new scope, the Ambiguity Scan alone is sufficient — skip this gate.
+
+**Before starting new significant work, you MUST output a SDLC Readiness Check.** If you cannot answer an element with genuine confidence, that is a signal the higher-level picture hasn't been painted yet — surface it rather than filling the row with a plausible-sounding guess.
+
+### Required Format
+
+```
+## SDLC Readiness Check
+| # | Element | Status |
+|---|---------|--------|
+| 1 | End Goal — what are we actually trying to accomplish? | ✅/❓/N/A — {one line} |
+| 2 | Current State — what already exists, where are we starting from? | ✅/❓/N/A — {one line} |
+| 3 | Domain Knowledge — what must be understood about this space to do the work competently? | ✅/❓/N/A — {one line} |
+| 4 | Resources — what can be drawn on (docs, code, prior outputs, links)? | ✅/❓/N/A — {one line} |
+| 5 | Guidelines — how should this be approached (the positive direction)? | ✅/❓/N/A — {one line} |
+| 6 | Things to Avoid — what boundaries must not be crossed (the negative constraint)? | ✅/❓/N/A — {one line} |
+| 7 | Handoff / Consumer — who or what reads this next, and in what shape do they need it? | ✅/❓/N/A — {one line} |
+```
+
+- ✅ = answerable with genuine confidence — stated by the user, verified in the codebase/docs, or safely inferred
+- ❓ = cannot be answered with genuine confidence — do not fabricate a plausible-sounding answer just to fill the row
+- N/A = element doesn't carry weight at this project phase/scope — state briefly why
+- **Any ❓ row blocks starting implementation.** Either go research it (docs, code, existing tools) or ask the user — do not proceed on a guess.
+- If every element is confidently answerable, proceed immediately after the block.
+- Both gates can fire for the same request: run the Ambiguity Scan for local task clarity, and additionally this check when the task itself represents new significant scope.
+
+> A hard time filling in these rows honestly is itself the signal — it usually means the higher-level picture needs to be figured out before the current task should start.
 
 ---
 
