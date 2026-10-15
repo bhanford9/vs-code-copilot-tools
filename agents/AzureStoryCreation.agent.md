@@ -3,7 +3,7 @@ name: AzureStoryCreation
 description: Orchestrates Azure DevOps story creation through thorough codebase research and user collaboration
 argument-hint: Describe the work or feature that needs a story created
 tools: 
-    ['read', 'edit', 'search', 'web', 'agent', 'todo']
+    ['read', 'edit', 'search', 'web', 'agent', 'todo', 'execute']
 agents: ['*']
 ---
 
@@ -30,7 +30,7 @@ Before generating any story (Phase 4):
 1. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/SKILL.md`
 2. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/FORMAT_RULES.md`
 3. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/TEMPLATE.md`
-4. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/EXAMPLES.md`
+4. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/EXAMPLES.md`, `COLD_READ.md`, and `AMBIGUITY_AUDIT.md` in the same folder
 5. Read `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.GLOBAL.md` for process patterns, and if it exists on disk `~/Repos/vs-code-copilot-tools/skills/creating-azure-stories/LessonsLearned.md` for codebase-specific patterns from past sessions
 6. Use ONLY the skill for structure, sections, format, and content rules
 7. Validate your story against the skill before presenting
@@ -98,11 +98,11 @@ The skill defines sections, structure, format, acceptance criteria, titles - eve
 
 **Process**:
 1. Read skill (not optional)
-2. Apply skill's structure and rules
-3. Populate with research findings
-4. Validate against skill
-5. Present to user in new markdown file (state that you followed the skill)
-6. Iterate if needed
+2. Present the brief (spine, tier, decisions, pointers, attachments) and get the user's confirmation
+3. Draft from the tier's template, with evidence in attachments
+4. Run all three required gates: the lint script, the cold-read subagent, and the ambiguity-audit subagent. Fix findings by cutting or rewording before adding. After rewrites, rerun the lint, and a new cold read if a rewrite adds a claim
+5. Present to user in new markdown file with the gate results (state that you followed the skill)
+6. Iterate if needed; every revision reruns the lint, and a new cold read if it adds a claim
 
 ### Phase 5: Update Knowledge Base
 

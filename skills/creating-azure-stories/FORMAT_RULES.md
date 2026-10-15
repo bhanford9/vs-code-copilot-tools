@@ -1,135 +1,67 @@
 # Azure Story Format Rules
 
-Detailed formatting requirements for each section of Azure DevOps stories.
-
-## Story Number
-- Automatically assigned by Azure DevOps (e.g., 12345)
-- Referenced as "Story #12345" when linking
+Rules for each section, plus the length goals and structural requirements the lint script checks. SKILL.md explains the reasoning.
 
 ## Title
-- 5-10 words
-- Clearly conveys what is being done
-- Example: "Add OAuth Authentication to API Gateway"
+- Aim for 4-8 words for XS, 4-10 otherwise; clarity matters more than the count.
+- Starts with a verb and names the change: "Remove the unused retry helper", not "Retry helper cleanup considerations".
 
-## Description Sections
+## Blocked By (Standard and Large)
+- `Story #ID: title` for each real blocker, or `None`.
+- Only true prerequisites. Do not describe coordination or merge order here.
 
-### Blocked By
+## Backing Content (Standard and Large)
+- What the subject is, in one plain sentence, then a concise statement of why it needs to change. "It doesn't handle X well" is often enough.
+- Aim for 80 words. Exceed that goal when needed for a clear introduction and clean transitions. The mechanism (why it happens) goes in Details; backstory, related stories, and how the problem was found go nowhere or in an attachment.
+- Describe the need as what someone sees, not how the code produces it.
 
-Lists dependencies that must complete before this story can start.
+## Goal (Standard and Large)
+- One sentence on the benefit: what should be better once this is done, in general terms. The reader wants to know why the work is worth doing.
+- State where we are trying to go, not where we are: "Tests should cope with slow-loading screens," not "Tests cope with slow-loading screens." The current state belongs in Backing Content.
+- Not what the code or tests will do: "Reports should stay correct when users filter by date" rather than "The filter includes the end date," and "Tests should cope with slow-loading screens" rather than "Tests can require a load to finish."
 
-**Format:**
-```markdown
-## Blocked By
-[work item references or "None identified"]
-```
-
-**Valid examples:**
-- `Story #12345: Database schema migration`
-- `Story #12346, Story #12347`
-- `External dependency: API vendor approval`
-- `None identified`
-
-### Backing Content
-
-Background and context explaining why work is needed.
-
-**Should answer:**
-- What problem does this solve?
-- What is the business justification?
-- What context does the team need?
-
-**Format:**
-```markdown
-## Backing Content
-[concise background and context]
-```
-
-**Keep it concise** but provide necessary context for team understanding.
-
-### Goal
-
-Product-level outcome description.
-
-**Requirements:**
-- 1-2 sentences maximum
-- Outcome-focused, not implementation
-- Written from product/user perspective
-- No technical implementation details
-
-**Format:**
-```markdown
-## Goal
-[1-2 sentence outcome description]
-```
-
-**Good examples:**
-- "Enable users to reset passwords without contacting support"
-- "Reduce API response time to under 200ms for improved user experience"
-
-**Bad examples:**
-- "Implement caching layer using Redis" (implementation detail)
-- "Refactor authentication service" (not outcome-focused)
-
-### Details
-
-Technical and project specifics.
-
-**Should include:**
-- Where in codebase work occurs (file paths as plain text)
-- Which components/features affected
-- Architecture/design diagrams (mermaid supported)
-- Integration points or affected systems
-
-**Must NOT include:**
-- Code snippets
-- Step-by-step implementation procedures
-- HOW to implement (only WHAT and WHERE)
-
-**Format:**
-```markdown
-## Details
-[technical specifics without implementation details]
-```
-
-**File path rules:**
-- Use backticks: `src/components/Header.tsx`
-- NEVER use markdown links: ~~`[Header](src/components/Header.tsx)`~~
-- Content gets copied to Azure DevOps where links don't work
+## Details (Standard and Large)
+- Where: file paths and function names.
+- What: the change as a concept or short pseudocode.
+- A current-code excerpt only if it shows the problem faster than prose.
+- What stays the same only if a developer might reasonably change it.
+- No step-by-step procedure and no working solution code.
+- When there's an attachment, a short paragraph that first says what is attached ("A script that shows the problem is attached as..."), then reads as a suggestion, not a command: how to run it, where the output appears, and what it shows today. Keep it low on detail.
 
 ## Acceptance Criteria
+- XS: 2-3. Standard and Large: 3-5.
+- Each is an observable result that someone other than the author can check.
+- Name real tests, pages, or commands rather than feature areas (`OrderFilterTests`, not "order filtering").
+- Not process ("code reviewed," "unit tests pass") and not a restatement of the implementation.
 
-High-level testable business requirements.
+## Length Goals and Structural Requirements
 
-**Requirements:**
-- 3-7 criteria per story
-- High-level and business-focused
-- Testable and verifiable
-- Observable behaviors or outcomes
-- NOT minor implementation details
-- NOT exhaustive test cases
+Word counts are goals, not caps. The lint script warns when a draft exceeds them, but readability, necessary context, and clean transitions take priority. Do not shorten a connected explanation into fragments or remove bridges between thoughts to meet a count. Structural requirements still fail lint when violated.
 
-**Format:**
-```markdown
-## Acceptance Criteria
-- [ ] [Testable requirement 1]
-- [ ] [Testable requirement 2]
-```
+| Check | XS | Standard | Large |
+|---|---|---|---|
+| Body word goal (excluding title, headings, code blocks, criteria) | 120 | 300 | 500 |
+| Backing Content word goal | n/a | 80 | 80 |
+| Code blocks | 2 | 2 | 2 |
+| Lines per code block | 6 | 6 | 6 |
+| Acceptance criteria | 2-3 | 3-5 | 3-5 |
+| Sections | Acceptance Criteria only | The five standard sections | The five standard sections |
 
-**Good examples:**
-- ✓ User can successfully authenticate using SSO
-- ✓ System processes payments within 3 seconds
-- ✓ Dashboard displays real-time data with no more than 5-second lag
-- ✓ Error messages are displayed in user's selected language
+## Wording to Avoid
 
-**Bad examples:**
-- ✗ Code must have proper error handling (too vague, implementation)
-- ✗ All buttons must be 32px height (too specific, minor detail)
-- ✗ Function must return HTTP 200 status (implementation detail)
-- ✗ Unit tests pass (not a business requirement)
+Fails lint, because it narrates the authoring process or defends the finding:
+- "I/we found, verified, confirmed, ran, checked, probed"
+- "verified against", "probe", "audit", "source inspection"
+- "is not a claim", "this story does not claim", "was not verified"
 
-## Markdown Guidelines
+Warns in lint; reread and usually rewrite:
+- Filler: "ensure", "robust", "comprehensive", "leverage", "seamless", "holistic", "it is important to note"
+- Abstract jargon when a plain phrase works: "contract", "boundary", "focused", "representative", "preserve existing ..."
+- More than three em dashes, or sentences averaging over 25 words
+- Backstory the reader can't see: "from before", "used to", "no longer", "originally", "previously", "the old", "was/were swapped/changed/renamed/moved/reordered". Describe the code as it is today.
 
-- Description section headers: `##` (H2 only — do not use `###`)
-- Acceptance criteria: checkbox format `- [ ]`
-- Code/file references: backticks only, no links
-- Work item references: "Story #[NUMBER]"
+## Markdown
+- H1 title, H2 sections, H3 only inside Large Details.
+- No other sections, such as Open Questions or Out of Scope. A choice left to the developer is one sentence in Details. Mention an exclusion only if a developer would reasonably assume it is included, also as one sentence in Details. The one exception is `## Kickoff Conversation`, allowed in Standard and Large stories just before Acceptance Criteria, only when the user agreed to it under SKILL.md's "When the Cold Read Keeps Growing the Story": who to talk to and two to four questions.
+- Criteria use `- [ ]`.
+- File paths and code names use backticks. No Markdown links; they break in Azure DevOps.

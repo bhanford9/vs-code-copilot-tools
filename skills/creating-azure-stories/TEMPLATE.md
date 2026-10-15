@@ -1,57 +1,65 @@
-# Azure Story Template
+# Azure Story Templates
 
-Use this complete template when creating Azure DevOps stories:
+Pick the tier during the brief (see SKILL.md). Placeholders in square brackets are replaced, never left in the draft.
 
-```markdown
-# Story #[NUMBER]: [Title]
+## XS
 
-## Blocked By
-[work item links or "None identified"]
-
-## Backing Content
-[background information and context for why the work is needed]
-
-## Goal
-[1-2 sentences describing product-level goal]
-
-## Details
-[specific technical and project details, including any diagrams. No code or implementation specifics. Just where and what the work is]
-
-## Acceptance Criteria
-- [ ] [High-level testable requirement 1]
-- [ ] [High-level testable requirement 2]
-- [ ] [High-level testable requirement 3]
-```
-
-## Complete Example
+For a rename, dead-code removal, message fix, small change in one or two files, or one mechanical change repeated across any number of files. None of these needs a design decision.
 
 ```markdown
-# Story #45821: Add User Profile Export Feature
+# [Title: 4-8 words, starting with a verb]
 
-## Blocked By
-Story #45789: User profile API endpoint updates
+[2-3 sentences: what is wrong, why it matters, and what to change.]
 
-## Backing Content
-Customer support has received 150+ requests for users to export their profile data in compliance with GDPR data portability requirements. This feature is required for EU market compliance and will reduce support ticket volume.
+`path/to/file.ext`: [what changes in this file]
 
-## Goal
-Enable users to download a complete copy of their profile data in a machine-readable format, satisfying GDPR data portability requirements.
-
-## Details
-Work will occur in the user profile module (`src/modules/profile/`) and export service (`src/services/export/`). 
-
-Components affected:
-- User profile dashboard UI
-- Export service API
-- Data transformation layer
-- Email notification system
-
-The export will generate JSON format files containing user profile data, preferences, activity history, and associated metadata. Files will be delivered via secure download link sent to user's registered email address.
+A script that [shows or lists what] is attached as `repro-name.cjs`. Run `node repro-name.cjs` from the repository root; [where the output appears].
 
 ## Acceptance Criteria
-- [ ] User can request profile data export from dashboard
-- [ ] Export includes all profile data, preferences, and activity history
-- [ ] Export file is delivered within 24 hours of request
-- [ ] Download link expires after 7 days
-- [ ] Export is available in JSON format
+- [ ] [Observable result]
+- [ ] [Observable result]
 ```
+
+No Blocked By, Backing Content, or Goal. Two or three criteria. Omit the attachment sentence when there is none. When a mechanical change spans many files, replace the file line with one sentence naming the folders and put the full site list in an attachment.
+
+## Standard
+
+The default: one area, a few files, a clear direction for the fix.
+
+```markdown
+# [Title: 4-10 words]
+
+## Blocked By
+[Story #ID: title] or None
+
+## Backing Content
+[What is wrong and why it matters, in a few short paragraphs that lead into each other.]
+
+## Goal
+[One sentence: the outcome when this is done.]
+
+## Details
+[Where the work is (file paths, function names), a short current-code excerpt if it shows the problem faster than prose, the fix direction as a concept or short pseudocode, and anything that must stay unchanged that a developer might reasonably change.]
+
+A script that shows the problem is attached as `repro-name.cjs`; [what it does, in a few words]. If you want to see it, copy it to the repository root and run `node repro-name.cjs`; [where the output appears]. [What it shows today, in one short sentence.]
+
+## Acceptance Criteria
+- [ ] [Observable result]
+- [ ] [Observable result]
+- [ ] [Observable result]
+```
+
+Three to five criteria. Omit the attachment paragraph when there is none.
+
+Only when the user agreed to it after the cold read kept growing the story (see SKILL.md), add this section just before Acceptance Criteria:
+
+```markdown
+## Kickoff Conversation
+Before starting, talk to [role or name] about:
+- [Question the story deliberately leaves to the conversation]
+- [Question]
+```
+
+## Large
+
+For a design decision, several areas, a behavior change others will notice, or a spike. Use the Standard template, with the higher word limit. H3 subheadings are allowed inside Details. When a choice is left to the developer, say so in one sentence in Details, with any constraints. Three to five criteria; if more are needed, split the story.

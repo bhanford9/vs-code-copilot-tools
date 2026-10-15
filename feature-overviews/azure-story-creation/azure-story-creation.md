@@ -48,9 +48,12 @@ The skill enforces the distinction between outcome-focused language (Goal/Accept
 
 | File | Role |
 |------|------|
-| [`skills/creating-azure-stories/SKILL.md`](../../skills/creating-azure-stories/SKILL.md) | Workflow checklist and required structure overview |
-| [`skills/creating-azure-stories/FORMAT_RULES.md`](../../skills/creating-azure-stories/FORMAT_RULES.md) | Detailed formatting requirements per section |
-| [`skills/creating-azure-stories/TEMPLATE.md`](../../skills/creating-azure-stories/TEMPLATE.md) | Canonical story template |
-| [`skills/creating-azure-stories/EXAMPLES.md`](../../skills/creating-azure-stories/EXAMPLES.md) | Good and bad story examples |
+| [`skills/creating-azure-stories/SKILL.md`](../../skills/creating-azure-stories/SKILL.md) | Workflow, audience, story arc, size tiers, and required gates |
+| [`skills/creating-azure-stories/FORMAT_RULES.md`](../../skills/creating-azure-stories/FORMAT_RULES.md) | Section rules, limits, and wording to avoid |
+| [`skills/creating-azure-stories/TEMPLATE.md`](../../skills/creating-azure-stories/TEMPLATE.md) | XS, Standard, and Large templates |
+| [`skills/creating-azure-stories/EXAMPLES.md`](../../skills/creating-azure-stories/EXAMPLES.md) | Example stories and a before-and-after rewrite |
+| [`skills/creating-azure-stories/COLD_READ.md`](../../skills/creating-azure-stories/COLD_READ.md) | Cold-read subagent prompt (required gate) |
+| [`skills/creating-azure-stories/AMBIGUITY_AUDIT.md`](../../skills/creating-azure-stories/AMBIGUITY_AUDIT.md) | Ambiguity-audit subagent prompt (required gate) |
+| [`skills/creating-azure-stories/scripts/Test-StoryDraft.ps1`](../../skills/creating-azure-stories/scripts/Test-StoryDraft.ps1) | Lint script (required gate) |
 | [`skills/creating-azure-stories/LessonsLearned.GLOBAL.md`](../../skills/creating-azure-stories/LessonsLearned.GLOBAL.md) | Accumulated process/format patterns (tracked in git) |
 | [`agents/AzureStoryCreation.agent.md`](../../agents/AzureStoryCreation.agent.md) | Full agent definition and phase-by-phase workflow |
