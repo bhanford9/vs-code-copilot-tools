@@ -60,6 +60,19 @@ All REVIEW-* agents must explicitly read `~/Repos/vs-code-copilot-tools/skills/c
 - Reports require specific file/line references with markdown links
 - Recommendations must be specific, actionable, and justified
 
+## Prepared Review Comments
+
+Every final-review item must include an inline `**Review Comment Location**` and `**Review Comment**` followed by a paste-ready blockquote. This applies to every Critical, High, Medium and Low finding, plus deferred questions. The FinalSynthesizer owns this requirement; intermediate auditors do not need additional output files.
+
+- Use a collaborative, speculative tone for every comment, including confirmed defects: ask `Could we...`, `Would this...`, or `Am I missing...` and explain the concrete concern without making an accusation. Tone must not weaken the evidence, severity, or merge condition in the analysis.
+- Every Location and Review Comment Location must show the file and 1-based line number in the visible link label, for example `[Widget.cs:134](../src/Widget.cs#L134)`. A line number hidden only in the link target is insufficient. Provide one verified primary comment anchor; prefer a line in the reviewed diff and label contextual anchors outside it.
+- For call-chain findings, add a `**Call Path**` naming the calling class/method or area, the affected callee, and downstream consumer(s), with visible file/line links for the relevant steps. State where the value or failure originates, is changed or lost, and surfaces. Name those classes/methods in the paste-ready comment itself; do not rely on vague references such as `the caller` or `the dialog`. Distinguish actual calls from return/result propagation, and disclose unverified intermediate steps rather than inventing a direct call.
+- Ask for the smallest useful confirmation, test, clarification or fix. Distinguish observed behavior from hypothetical future extensions; do not invent concerns or describe unproven behavior as certain.
+- Put the comment directly in its issue's priority section, even when findings are grouped or abbreviated. A separate speculative-comments section does not satisfy this requirement. Do not duplicate an issue as a second comment elsewhere or count its prepared wording as another finding.
+- Additional unresolved questions may have a separate section, but each still needs its own prepared comment and location. Keep unrated questions outside severity counts and merge blockers.
+- Include key prepared comments with their file/line links in the user-facing close-out, not only a link to the report.
+- Before completing synthesis, verify every individual finding and deferred question has both required fields and a nonempty paste-ready blockquote, with a valid anchor and visible line number. Check call-chain items for an explicit caller-to-consumer path in the finding and named participants in the comment.
+
 ## Pipeline Setup Patterns
 
 The following patterns recur during review initialization and agent configuration. Knowing them before the first `git diff` prevents a failed or misscoped run.
