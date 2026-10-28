@@ -24,11 +24,11 @@ The domain in these examples is invented. Match the shape and voice, not the sub
 ## Blocked By
 None
 
-## Backing Content
-The order list's date-range filter shows orders placed between two dates. It leaves out every order placed on the end date, and support has had three reports this month from users reconciling monthly totals.
+## Current State
+The order list's date-range filter shows orders placed between two dates, but it leaves out every order placed on the end date. Monthly totals built from it come up short, and support has had three reports this month.
 
 ## Goal
-Monthly totals from the order list should match the orders actually placed.
+The date-range filter should include every order placed on the end date. Monthly totals built from the order list should then match the orders actually placed.
 
 ## Details
 `src/orders/OrderFilter.ts`, in `buildDateRange`, sets the upper bound to midnight at the start of the end date, so anything later that day falls outside the range:
@@ -52,13 +52,14 @@ Before (reads as AI-generated):
 
 > The date-range filter does not consistently honor the inclusive end-date contract. Source inspection of `buildDateRange` confirms that the upper bound is computed at the start of the end date. This is not a claim that every report is affected; time-zone handling was not verified. The change must preserve existing start-date behavior, export compatibility, and representative filter consumers, and must not introduce a broader query redesign.
 
-After: the Backing Content in the Standard example, with the cause moved to Details.
+After: the Current State and Goal in the Standard example, with the cause moved to Details.
 
 What changed:
 - The symptom a user sees replaced jargon ("inclusive end-date contract").
 - Process narration ("Source inspection confirms") and the defensive caveat moved out. If the evidence matters, it goes in an attachment.
 - The list of things to preserve shrank to the one a developer might actually break (the inclusive start date), and moved to Details.
-- Backing Content now says only what the subject is and why it needs to change. The cause moved to Details.
+- Current State now says only what the subject is and what is wrong with it today, and the Goal says the same thing as the intended end state. The cause moved to Details.
+- The example has no Backing Content: Current State and Goal are enough to start, so no area background is needed.
 
 ## Acceptance Criteria
 

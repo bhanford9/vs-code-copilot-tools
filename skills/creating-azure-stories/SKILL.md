@@ -7,6 +7,8 @@ description: Create, rewrite, or review Azure DevOps work items (stories) sized 
 
 A story is a briefing for the developer who will do the work. It is not a record of how the problem was found or a defense of the finding. Write the least a developer needs to understand the problem, the direction of the fix, and what done means, and tell it as one connected story.
 
+Every Standard or Large story opens with two short sections that carry the whole briefing: **Current State** (where the system stands today) and **Goal** (the objective and its intent), written as a before and after. A reader who stops after the Goal should understand what the work is and why. Optional Backing Content adds short background on the area; Details covers where the work is, how far it goes, and the exceptions.
+
 ## Workflow
 
 ```
@@ -25,13 +27,13 @@ Azure Story Creation:
 ### 2. Brief (confirm before drafting)
 
 Show the user:
-- **Spine**: one sentence in the form "When X, Y happens because Z; change W so that V."
+- **Current State / Goal pair**: one sentence for where the system stands today and one for the objective of the work, written as a before and after.
 - **Tier** and the reason for it.
 - **Decisions already made** (for example, remove rather than fix). The story states these; it does not reopen them.
 - **Pointers**: file paths, function names, related story IDs.
 - **Attachments**: repro scripts, evidence output.
 
-Everything in the story must support the spine. Cut what does not.
+Everything in the story must support the Current State / Goal pair. Cut what does not.
 
 ### 3. Size tier
 
@@ -49,6 +51,7 @@ Word counts are goals, not hard limits. Choose the tier by the work's scope, not
 
 Write for a developer with medium familiarity:
 - They know the repository layout, languages, test framework, and tooling. Do not explain these.
+- Don't define terms that a developer who knows this repository already uses: its projects, test infrastructure, tools, and standard team vocabulary. Explain domain rules and anything specific to this investigation.
 - That familiarity does not include domain rules, unusual behavior, or edge-case exceptions. Explain any such rule needed to understand why the problem exists or why the fix is appropriate; do not send the reader to the code to learn the rule.
 - They do not know this investigation, its history, or the conversation that produced the story. Tell them only what they need from it.
 - They do not know the code's history or other work going on: past commits, earlier refactors, other stories, what the code "used to" do. Describe the code as it is today ("these calls pass the retry count where `sendRequest` expects the timeout"), not how it got that way ("these calls still use the order from before the swap"). Words like "still," "the old," "from before," "no longer," and "was changed" usually mean a sentence leans on history the reader can't see. If history changes what the developer must do, state it fully in one sentence with a story ID or commit; otherwise leave it out.
@@ -57,9 +60,10 @@ Write for a developer with medium familiarity:
 
 ## Telling the Story
 
-- Order: what the subject is, what is wrong, why it matters, where it is, what changes, what done looks like.
-- Open with one plain sentence saying what the subject is and what it's for, before anything about what's wrong with it. "`retryTwice` is the helper uploads used to retry once on failure" comes before "`retryTwice` swallows the final error."
-- Describe the problem first as what someone sees; put the mechanism in Details. Backing Content is only the subject and a concise need for change.
+- Order: Current State, Goal, optional background, Details, then what done looks like.
+- Current State and Goal are the core of the story. A reader who stops after the Goal should understand what the work is and why. Write them with the same framing so they read as a before and after. Details is for where, how far, and the exceptions.
+- Open Current State with one plain sentence saying what the subject is and what it's for, before anything about what's wrong with it. "`retryTwice` is the helper uploads used to retry once on failure" comes before "`retryTwice` swallows the final error."
+- Describe the problem first as what someone sees; put the mechanism in Details.
 - Each paragraph answers a question the previous one raised. If a paragraph could move anywhere, it is not connected: fix the transition or cut it.
 - Before detailing a solution with several parts, say what the parts are and why in one or two sentences. Then give each part's details. "Split each helper into two versions, because some callers must wait and others only want to try" comes before either version's rules.
 - Introduce everything before referring to it: terms, files, functions, attachments, and lists. Say that a thing exists ("six helper functions also wrap these waits," "a list is attached as...") before using "the" for it. Writing "the attached list" or "the six helpers" first is like saying "the hammer is broken" with no hammer in sight.
@@ -102,7 +106,7 @@ Attach evidence or leave it out. Never suggest how a demonstration could be buil
 Run all three gates on every draft before presenting it. Only the user may explicitly accept a failing gate after the remaining gaps are stated. The author must not waive missing domain context or transitions as implementation details.
 
 5. **Lint**: `pwsh -NoProfile -File <skill folder>/scripts/Test-StoryDraft.ps1 -Path <draft.md> -Tier <XS|Standard|Large>`. Fix failures and re-run. Treat warnings as prompts to reread, not automatic edits. Length warnings are advisory: retain words that improve readability or connect ideas, and remove only unnecessary material.
-6. **Cold read**: invoke the tool-less `StoryColdReader` with the prompt from COLD_READ.md and the pasted draft. Compare its answers with the spine. Check its missing-link and unexplained-rule findings for facts the research made obvious to you but the draft never states. A paraphrase is not a pass: unresolved domain terms, rules, backing facts, or transitions needed to understand the work fail the gate. Revise, rerun step 5, and repeat step 6 with a fresh `StoryColdReader`. If the restricted agent is unavailable, report the gate as blocked rather than substituting an unrestricted agent.
+6. **Cold read**: invoke the tool-less `StoryColdReader` with the prompt from COLD_READ.md and the pasted draft. Compare its answers with the Current State / Goal pair from the brief. Check its missing-link and unexplained-rule findings for facts the research made obvious to you but the draft never states. A paraphrase is not a pass: unresolved domain terms, rules, backing facts, or transitions needed to understand the work fail the gate. Revise, rerun step 5, and repeat step 6 with a fresh `StoryColdReader`. If the restricted agent is unavailable, report the gate as blocked rather than substituting an unrestricted agent.
 7. **Ambiguity audit**: hand off to a separate subagent as described below, using AMBIGUITY_AUDIT.md. It checks each sentence for other readings: unexpected endings, words with more than one meaning, unclear actors, unclear references, and task-versus-outcome phrasing. Rewrite every flagged sentence or state why the other reading isn't plausible. Then rerun step 5. If a rewrite adds a new claim or new information, as opposed to rewording, also rerun step 6 with a new subagent: new claims written with the investigation fresh in mind are where backstory slips in. The cold read doesn't replace this: readers skim past ambiguity when the overall meaning is clear.
 
 The same applies to later edits, including edits the user asks for: rerun step 5 every time, and step 6 when the edit adds a new claim or substantially changes the narrative flow.
@@ -128,7 +132,7 @@ A gate only works if the subagent reads the draft the way a stranger would. Anyt
 1. Start a new subagent for every gate run, including reruns after revisions.
 	For cold reads, use `StoryColdReader` only. Its `tools: []` and `agents: []` prevent codebase access and delegation. Paste the draft; do not ask it to open a draft file.
 2. Send the prompt from COLD_READ.md or AMBIGUITY_AUDIT.md as written, with only the inputs it asks for: the draft text, plus the words to avoid for the ambiguity audit.
-3. Add nothing else. Leave out the spine, the brief, your opinion of the draft, sentences you suspect, what earlier gates found, what changed since the last run, and the conversation.
+3. Add nothing else. Leave out the Current State / Goal pair, the brief, your opinion of the draft, sentences you suspect, what earlier gates found, what changed since the last run, and the conversation.
 4. Take the answer as returned. Don't send follow-up questions that hint at the answer you expect.
 
 ## Output

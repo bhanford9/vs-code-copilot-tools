@@ -55,14 +55,16 @@ if (-not $title) {
 
 # Sections.
 $sections = @($bodyLines | Where-Object { $_ -match '^## ' } | ForEach-Object { ($_ -replace '^## ', '').Trim() })
-$expected = switch ($Tier) {
-    'XS'       { @('Acceptance Criteria') }
-    'Standard' { @('Blocked By', 'Backing Content', 'Goal', 'Details', 'Acceptance Criteria') }
-    'Large'    { @('Blocked By', 'Backing Content', 'Goal', 'Details', 'Acceptance Criteria') }
-}
-if ($Tier -ne 'XS' -and $sections -contains 'Kickoff Conversation') {
-    $expected = @('Blocked By', 'Backing Content', 'Goal', 'Details', 'Kickoff Conversation', 'Acceptance Criteria')
-    Add-Result WARN 'Kickoff' 'Kickoff Conversation is only for stories the user agreed to keep short after the cold read kept growing them.'
+$expected = @('Acceptance Criteria')
+if ($Tier -ne 'XS') {
+    $expected = @('Blocked By', 'Current State', 'Goal')
+    if ($sections -contains 'Backing Content') { $expected += 'Backing Content' }
+    $expected += 'Details'
+    if ($sections -contains 'Kickoff Conversation') {
+        $expected += 'Kickoff Conversation'
+        Add-Result WARN 'Kickoff' 'Kickoff Conversation is only for stories the user agreed to keep short after the cold read kept growing them.'
+    }
+    $expected += 'Acceptance Criteria'
 }
 if (($sections -join '|') -ne ($expected -join '|')) {
     Add-Result FAIL 'Sections' "Found [$($sections -join ', ')]; expected [$($expected -join ', ')]."
@@ -88,22 +90,40 @@ if ($words -gt $limits.Words) {
     Add-Result WARN 'Length' "$words body words; the $Tier goal is $($limits.Words). Keep necessary context and transitions; trim only when readability is preserved."
 }
 
-# Backing Content is the subject plus a concise need; the mechanism belongs in Details.
-$goalIndex = [Array]::IndexOf([string[]] $bodyLines, '## Goal')
-if ($goalIndex -ge 0) {
-    $goal = @()
-    for ($i = $goalIndex + 1; $i -lt $bodyLines.Count -and $bodyLines[$i] -notmatch '^## '; $i++) { $goal += $bodyLines[$i] }
-    if (($goal -join ' ') -notmatch '\b(should|will)\b') {
-        Add-Result WARN 'Goal' 'Goal reads like the current state; state where we are trying to go ("should ...").'
+# Current State and Goal carry the briefing: 2-3 sentences each, read as a before and after.
+function Get-Section([string] $Name) {
+    $index = [Array]::IndexOf([string[]] $bodyLines, "## $Name")
+    if ($index -lt 0) { return $null }
+    $content = @()
+    for ($i = $index + 1; $i -lt $bodyLines.Count -and $bodyLines[$i] -notmatch '^## '; $i++) { $content += $bodyLines[$i] }
+    return ($content -join ' ').Trim()
+}
+function Get-SentenceCount([string] $Text) {
+    return @(($Text -replace '`[^`]*`', 'code') -split '(?<=[.!?])\s+' | Where-Object { $_ -match '\w' }).Count
+}
+foreach ($name in 'Current State', 'Goal') {
+    $section = Get-Section $name
+    if ($null -ne $section) {
+        $count = Get-SentenceCount $section
+        if ($count -lt 2 -or $count -gt 3) {
+            Add-Result WARN $name "$name has $count sentence(s); aim for 2-3."
+        }
     }
 }
-$backingIndex = [Array]::IndexOf([string[]] $bodyLines, '## Backing Content')
-if ($backingIndex -ge 0) {
-    $backing = @()
-    for ($i = $backingIndex + 1; $i -lt $bodyLines.Count -and $bodyLines[$i] -notmatch '^## '; $i++) { $backing += $bodyLines[$i] }
-    $backingWords = @(($backing -join ' ') -split '\s+' | Where-Object { $_ -match '\w' }).Count
+$goal = Get-Section 'Goal'
+if ($null -ne $goal) {
+    if ($goal -notmatch '\b(should|will)\b') {
+        Add-Result WARN 'Goal' 'Goal reads like the current state; state where we are trying to go ("should ...").'
+    }
+    if ($goal -match '`[^`]*/[^`]*`') {
+        Add-Result WARN 'Goal' 'Goal names a file path; keep locations in Details and state the objective and intent here.'
+    }
+}
+$backing = Get-Section 'Backing Content'
+if ($null -ne $backing) {
+    $backingWords = @($backing -split '\s+' | Where-Object { $_ -match '\w' }).Count
     if ($backingWords -gt 80) {
-        Add-Result WARN 'Backing' "$backingWords Backing Content words; aim for 80. Keep the subject and the need clear; move the mechanism to Details without breaking the explanation."
+        Add-Result WARN 'Backing' "$backingWords Backing Content words; aim for 80. Keep only the background the reader needs before Details, or drop the section."
     }
 }
 

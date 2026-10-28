@@ -32,14 +32,17 @@ The default: one area, a few files, a clear direction for the fix.
 ## Blocked By
 [Story #ID: title] or None
 
-## Backing Content
-[What is wrong and why it matters, in a few short paragraphs that lead into each other.]
+## Current State
+[2-3 sentences: where the system stands today for the part this work touches, and the problem or relevance if it isn't obvious.]
 
 ## Goal
-[One sentence: the outcome when this is done.]
+[2-3 sentences, framed like Current State: the objective of this work and what it is for. No steps or file lists.]
+
+## Backing Content
+[Optional. Short background on the area that the reader needs before Details makes sense. Delete this section when Current State and Goal are enough.]
 
 ## Details
-[Where the work is (file paths, function names), a short current-code excerpt if it shows the problem faster than prose, the fix direction as a concept or short pseudocode, and anything that must stay unchanged that a developer might reasonably change.]
+[Where the work is (file paths, class and function names), the mechanism if it helps, a short current-code excerpt if it shows the problem faster than prose, edge cases, constraints, decisions left to the developer, full lists of sites, and anything that must stay unchanged that a developer might reasonably change.]
 
 A script that shows the problem is attached as `repro-name.cjs`; [what it does, in a few words]. If you want to see it, copy it to the repository root and run `node repro-name.cjs`; [where the output appears]. [What it shows today, in one short sentence.]
 
@@ -49,7 +52,7 @@ A script that shows the problem is attached as `repro-name.cjs`; [what it does, 
 - [ ] [Observable result]
 ```
 
-Three to five criteria. Omit the attachment paragraph when there is none.
+Three to five criteria. Omit Backing Content when Current State and Goal are enough. Omit the attachment paragraph when there is none.
 
 Only when the user agreed to it after the cold read kept growing the story (see SKILL.md), add this section just before Acceptance Criteria:
 

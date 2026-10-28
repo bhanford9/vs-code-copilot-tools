@@ -10,20 +10,26 @@ Rules for each section, plus the length goals and structural requirements the li
 - `Story #ID: title` for each real blocker, or `None`.
 - Only true prerequisites. Do not describe coordination or merge order here.
 
-## Backing Content (Standard and Large)
-- What the subject is, in one plain sentence, then a concise statement of why it needs to change. "It doesn't handle X well" is often enough.
-- Aim for 80 words. Exceed that goal when needed for a clear introduction and clean transitions. The mechanism (why it happens) goes in Details; backstory, related stories, and how the problem was found go nowhere or in an attachment.
-- Describe the need as what someone sees, not how the code produces it.
+## Current State (Standard and Large)
+- Answers: where does the system stand today, for the part this work touches? 2-3 sentences, framed and worded like the Goal so the two read as a before and after.
+- Describe what is true now: the behavior, data, or limitation, plus the problem or relevance if it isn't obvious from that. No mechanism and no backstory.
+- Example: "The order list's date-range filter leaves out orders placed on the end date. Monthly totals built from it come up short, and support has had three reports this month."
 
 ## Goal (Standard and Large)
-- One sentence on the benefit: what should be better once this is done, in general terms. The reader wants to know why the work is worth doing.
-- State where we are trying to go, not where we are: "Tests should cope with slow-loading screens," not "Tests cope with slow-loading screens." The current state belongs in Backing Content.
-- Not what the code or tests will do: "Reports should stay correct when users filter by date" rather than "The filter includes the end date," and "Tests should cope with slow-loading screens" rather than "Tests can require a load to finish."
+- Answers: what is the objective of this work, and what is it for? 2-3 sentences at a high level, using the same framing as Current State so the change is clear by contrast.
+- State the objective and intent, not steps, file lists, or locations.
+- Example: "The date-range filter should include every order placed on the end date. Monthly totals built from the order list should then match the orders actually placed."
+- A reader who stops after the Goal should understand what they are doing and why.
+
+## Backing Content (Standard and Large, optional)
+- Use it only when the reader needs some short background on the area before Details makes sense, such as a domain rule or how two parts relate. Leave it out when Current State and Goal are enough.
+- Aim for 80 words. Background only: no mechanism, backstory, or evidence.
 
 ## Details (Standard and Large)
-- Where: file paths and function names.
-- What: the change as a concept or short pseudocode.
-- A current-code excerpt only if it shows the problem faster than prose.
+When Current State and Goal carry the briefing, Details is mostly where the work is plus light guidance. Do not restate the objective or re-argue why it matters. Answer each cold-read gap with a shorter Current State or Goal sentence, or a one-line pointer in Details, before adding explanation.
+- Where the work is: file paths, class and function names.
+- The mechanism (why it happens), with a current-code excerpt only if it shows the problem faster than prose.
+- Edge cases, constraints, decisions left to the developer, and full lists of sites.
 - What stays the same only if a developer might reasonably change it.
 - No step-by-step procedure and no working solution code.
 - When there's an attachment, a short paragraph that first says what is attached ("A script that shows the problem is attached as..."), then reads as a suggestion, not a command: how to run it, where the output appears, and what it shows today. Keep it low on detail.
@@ -41,11 +47,12 @@ Word counts are goals, not caps. The lint script warns when a draft exceeds them
 | Check | XS | Standard | Large |
 |---|---|---|---|
 | Body word goal (excluding title, headings, code blocks, criteria) | 120 | 300 | 500 |
-| Backing Content word goal | n/a | 80 | 80 |
+| Current State and Goal | n/a | 2-3 sentences each | 2-3 sentences each |
+| Backing Content word goal (when present) | n/a | 80 | 80 |
 | Code blocks | 2 | 2 | 2 |
 | Lines per code block | 6 | 6 | 6 |
 | Acceptance criteria | 2-3 | 3-5 | 3-5 |
-| Sections | Acceptance Criteria only | The five standard sections | The five standard sections |
+| Sections | Acceptance Criteria only | Blocked By, Current State, Goal, optional Backing Content, Details, Acceptance Criteria | Same as Standard |
 
 ## Wording to Avoid
 
